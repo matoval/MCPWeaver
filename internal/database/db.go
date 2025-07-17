@@ -25,7 +25,7 @@ func Open(dbPath string) (*DB, error) {
 
 	db := &DB{conn: conn}
 	
-	// TODO: Run migrations
+	// Run migrations
 	if err := db.migrate(); err != nil {
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
@@ -41,11 +41,7 @@ func (db *DB) Close() error {
 	return nil
 }
 
-// migrate runs database migrations
-func (db *DB) migrate() error {
-	// TODO: Implement database migrations
-	return fmt.Errorf("migrations not yet implemented")
-}
+// migrate is implemented in migrations.go
 
 // GetConn returns the underlying database connection
 func (db *DB) GetConn() *sql.DB {
