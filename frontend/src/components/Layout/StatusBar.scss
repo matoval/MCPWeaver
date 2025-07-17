@@ -1,0 +1,122 @@
+@import '../../styles/variables.scss';
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  height: $statusbar-height;
+  background-color: var(--statusbar-background);
+  border-top: 1px solid var(--statusbar-border);
+  padding: 0 $spacing-md;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  user-select: none;
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: $spacing-xs;
+    border-radius: $border-radius-sm;
+    transition: background-color $transition-fast;
+
+    &:hover {
+      background-color: var(--surface-hover);
+    }
+
+    &:focus {
+      outline: none;
+      background-color: var(--surface-hover);
+    }
+
+    .status-icon {
+      &.ready {
+        color: var(--success-500);
+      }
+
+      &.working {
+        color: var(--warning-500);
+        animation: pulse 2s infinite;
+      }
+
+      &.error {
+        color: var(--error-500);
+      }
+    }
+
+    .status-text {
+      font-weight: $font-weight-medium;
+    }
+  }
+
+  .operation-counter {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    margin-left: $spacing-md;
+    padding: $spacing-xs;
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+    border-radius: $border-radius-sm;
+    font-size: $font-size-xs;
+  }
+
+  .status-spacer {
+    flex: 1;
+  }
+
+  .resource-usage {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+
+    .resource-item {
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+      font-family: $font-family-mono;
+      font-size: $font-size-xs;
+    }
+  }
+
+  .system-health-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: $spacing-md;
+    margin-right: $spacing-sm;
+  }
+
+  .app-version {
+    font-family: $font-family-mono;
+    font-size: $font-size-xs;
+    color: var(--text-muted);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .status-bar {
+    padding: 0 $spacing-sm;
+    
+    .resource-usage {
+      display: none;
+    }
+    
+    .operation-counter {
+      margin-left: $spacing-sm;
+    }
+  }
+}

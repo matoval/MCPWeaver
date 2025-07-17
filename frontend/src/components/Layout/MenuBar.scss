@@ -1,0 +1,104 @@
+@import '../../styles/variables.scss';
+
+.menu-bar {
+  display: flex;
+  height: $menubar-height;
+  background-color: var(--menubar-background);
+  border-bottom: 1px solid var(--menubar-border);
+  padding: 0 $spacing-sm;
+  align-items: center;
+  font-size: $font-size-sm;
+  user-select: none;
+
+  .menu-item {
+    position: relative;
+
+    .menu-button {
+      background: none;
+      border: none;
+      padding: $spacing-xs $spacing-sm;
+      color: var(--text-primary);
+      cursor: pointer;
+      border-radius: $border-radius-sm;
+      transition: background-color $transition-fast;
+
+      &:hover {
+        background-color: var(--surface-hover);
+      }
+
+      &:focus {
+        outline: none;
+        background-color: var(--surface-hover);
+      }
+    }
+
+    .menu-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: $border-radius-md;
+      box-shadow: $shadow-lg;
+      padding: $spacing-xs 0;
+      min-width: 200px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-$spacing-xs);
+      transition: opacity $transition-fast, visibility $transition-fast, transform $transition-fast;
+      z-index: $z-index-dropdown;
+
+      .menu-dropdown-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: $spacing-xs $spacing-sm;
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        cursor: pointer;
+        text-align: left;
+        transition: background-color $transition-fast;
+
+        &:hover {
+          background-color: var(--surface-hover);
+        }
+
+        &:focus {
+          outline: none;
+          background-color: var(--surface-hover);
+        }
+
+        .menu-item-label {
+          flex: 1;
+        }
+
+        .menu-item-shortcut {
+          font-size: $font-size-xs;
+          color: var(--text-muted);
+          font-family: $font-family-mono;
+        }
+      }
+
+      .menu-separator {
+        height: 1px;
+        background-color: var(--border);
+        margin: $spacing-xs 0;
+      }
+    }
+
+    &:hover .menu-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .menu-bar {
+    display: none;
+  }
+}

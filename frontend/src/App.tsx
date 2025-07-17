@@ -1,20 +1,18 @@
 import React from 'react'
+import { ThemeProvider } from './contexts/ThemeContext'
+import Layout from './components/Layout/Layout'
+import Router from './components/Router/Router'
+import './styles/variables.scss'
+import './styles/themes.scss'
 import './App.css'
 
 const App: React.FC = () => {
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>MCPWeaver</h1>
-        <p>OpenAPI to MCP Server Generator</p>
-      </header>
-      <main className="app-main">
-        <div className="welcome-message">
-          <h2>Welcome to MCPWeaver</h2>
-          <p>Transform your OpenAPI specifications into Model Context Protocol (MCP) servers.</p>
-        </div>
-      </main>
-    </div>
+    <ThemeProvider>
+      <Layout>
+        <Router />
+      </Layout>
+    </ThemeProvider>
   )
 }
 
