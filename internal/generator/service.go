@@ -1,49 +1,231 @@
 package generator
 
 import (
-	"context"
 	"fmt"
-	"time"
+	"os"
+	"path/filepath"
+	"strings"
+	"text/template"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"MCPWeaver/internal/mapping"
+	"MCPWeaver/internal/parser"
 )
 
-// Service handles MCP server generation
+// TemplateData holds all data needed for template generation
+type TemplateData struct {
+	PackageName string
+	APITitle    string
+	APIVersion  string
+	BaseURL     string
+	Tools       []mapping.MCPTool
+}
+
+// Service handles MCP server code generation
 type Service struct {
-	// Add configuration fields as needed
+	outputDir string
 }
 
-// GenerationJob represents a generation job
-type GenerationJob struct {
-	ID          string    `json:"id"`
-	ProjectID   string    `json:"projectId"`
-	Status      string    `json:"status"`
-	Progress    float64   `json:"progress"`
-	CurrentStep string    `json:"currentStep"`
-	StartTime   time.Time `json:"startTime"`
-	EndTime     *time.Time `json:"endTime"`
-}
-
-// New creates a new generator service
-func New() *Service {
-	return &Service{}
-}
-
-// GenerateServer generates an MCP server from an OpenAPI specification
-func (s *Service) GenerateServer(ctx context.Context, spec *openapi3.T, projectID string) (*GenerationJob, error) {
-	// TODO: Implement MCP server generation
-	job := &GenerationJob{
-		ID:          generateID(),
-		ProjectID:   projectID,
-		Status:      "started",
-		Progress:    0.0,
-		CurrentStep: "Initializing generation",
-		StartTime:   time.Now(),
+// NewService creates a new code generator service
+func NewService(outputDir string) *Service {
+	return &Service{
+		outputDir: outputDir,
 	}
-	return job, fmt.Errorf("not yet implemented")
 }
 
-// generateID generates a unique ID for jobs
-func generateID() string {
-	return fmt.Sprintf("gen_%d", time.Now().UnixNano())
+// Generate creates a complete MCP server from parsed API and tools
+func (s *Service) Generate(api *parser.ParsedAPI, tools []mapping.MCPTool, serverName string) error {
+	// Create output directory
+	if err := os.MkdirAll(s.outputDir, 0750); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	// Prepare template data
+	data := TemplateData{
+		PackageName: s.sanitizePackageName(serverName),
+		APITitle:    api.Title,
+		APIVersion:  api.Version,
+		BaseURL:     api.BaseURL,
+		Tools:       tools,
+	}
+
+	// Generate main server file
+	if err := s.generateFromTemplate("server.go.tmpl", "main.go", data); err != nil {
+		return fmt.Errorf("failed to generate server file: %w", err)
+	}
+
+	// Generate go.mod file
+	if err := s.generateFromTemplate("go.mod.tmpl", "go.mod", data); err != nil {
+		return fmt.Errorf("failed to generate go.mod file: %w", err)
+	}
+
+	// Generate README
+	if err := s.generateREADME(data); err != nil {
+		return fmt.Errorf("failed to generate README: %w", err)
+	}
+
+	return nil
+}
+
+// generateFromTemplate processes a template and writes the output to a file
+func (s *Service) generateFromTemplate(templateName, outputFile string, data TemplateData) error {
+	// Validate template name to prevent path traversal
+	if !isValidTemplateName(templateName) {
+		return fmt.Errorf("invalid template name: %s", templateName)
+	}
+
+	// Read template from file system
+	templatePath := filepath.Join("templates", templateName)
+	// Validate template path is within templates directory
+	if !isPathSafe(templatePath, "templates") {
+		return fmt.Errorf("invalid template path: path traversal detected")
+	}
+
+	// #nosec G304 - templatePath is validated above to prevent path traversal
+	templateContent, err := os.ReadFile(templatePath)
+	if err != nil {
+		return fmt.Errorf("failed to read template %s: %w", templatePath, err)
+	}
+
+	// Parse template
+	tmpl, err := template.New(templateName).Parse(string(templateContent))
+	if err != nil {
+		return fmt.Errorf("failed to parse template %s: %w", templateName, err)
+	}
+
+	// Create output file
+	outputPath := filepath.Join(s.outputDir, outputFile)
+	// Validate output path is within output directory
+	if !isPathSafe(outputPath, s.outputDir) {
+		return fmt.Errorf("invalid output path: path traversal detected")
+	}
+
+	// #nosec G304 - outputPath is validated above to prevent path traversal
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file %s: %w", outputPath, err)
+	}
+	defer func() { _ = file.Close() }()
+
+	// Execute template
+	if err := tmpl.Execute(file, data); err != nil {
+		return fmt.Errorf("failed to execute template %s: %w", templateName, err)
+	}
+
+	return nil
+}
+
+// generateREADME creates a README file for the generated server
+func (s *Service) generateREADME(data TemplateData) error {
+	readmeContent := fmt.Sprintf(`# %s MCP Server
+
+Generated MCP server for %s (version %s).
+
+## Description
+
+This MCP server provides tools to interact with the %s API through the Model Context Protocol.
+
+## Available Tools
+
+`, data.PackageName, data.APITitle, data.APIVersion, data.APITitle)
+
+	for i, tool := range data.Tools {
+		readmeContent += fmt.Sprintf("%d. **%s** - %s\n", i+1, tool.Name, tool.Description)
+		if len(tool.InputSchema.Required) > 0 {
+			readmeContent += fmt.Sprintf("   - Required parameters: %s\n", strings.Join(tool.InputSchema.Required, ", "))
+		}
+		readmeContent += "\n"
+	}
+
+	readmeContent += fmt.Sprintf(`## Usage
+
+1. Build the server:
+   `+"```bash"+`
+   go build -o %s-server main.go
+   `+"```"+`
+
+2. Use with an MCP client (like Claude Desktop):
+   `+"```bash"+`
+   ./%s-server
+   `+"```"+`
+
+## API Base URL
+
+This server connects to: %s
+
+## Generated by
+
+MCPWeaver - Desktop OpenAPI to MCP Server Generator
+`, data.PackageName, data.PackageName, data.BaseURL)
+
+	readmePath := filepath.Join(s.outputDir, "README.md")
+	// Validate readme path is within output directory
+	if !isPathSafe(readmePath, s.outputDir) {
+		return fmt.Errorf("invalid readme path: path traversal detected")
+	}
+
+	return os.WriteFile(readmePath, []byte(readmeContent), 0600)
+}
+
+// sanitizePackageName creates a valid Go package name from a string
+func (s *Service) sanitizePackageName(name string) string {
+	if name == "" {
+		return "generated-mcp-server"
+	}
+
+	// Convert to lowercase and replace invalid characters
+	name = strings.ToLower(name)
+	name = strings.ReplaceAll(name, " ", "-")
+	name = strings.ReplaceAll(name, "_", "-")
+
+	// Remove any characters that aren't alphanumeric or hyphens
+	var result strings.Builder
+	for _, r := range name {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			result.WriteRune(r)
+		}
+	}
+
+	sanitized := result.String()
+
+	// Ensure it doesn't start with a number or hyphen
+	if len(sanitized) > 0 && (sanitized[0] >= '0' && sanitized[0] <= '9' || sanitized[0] == '-') {
+		sanitized = "mcp-" + strings.TrimLeft(sanitized, "-")
+	}
+
+	if sanitized == "" {
+		return "generated-mcp-server"
+	}
+
+	return sanitized
+}
+
+// isValidTemplateName validates that the template name is safe
+func isValidTemplateName(name string) bool {
+	// Template name should not contain path separators or path traversal
+	if strings.Contains(name, "..") || strings.Contains(name, "/") || strings.Contains(name, "\\") {
+		return false
+	}
+	return true
+}
+
+// isPathSafe validates that the target path is within the base directory
+// and doesn't contain path traversal attempts
+func isPathSafe(targetPath, baseDir string) bool {
+	// Clean the paths to resolve any . or .. elements
+	cleanTarget := filepath.Clean(targetPath)
+	cleanBase := filepath.Clean(baseDir)
+
+	// Check for path traversal attempts
+	if strings.Contains(cleanTarget, "..") {
+		return false
+	}
+
+	// Ensure target is within base directory
+	rel, err := filepath.Rel(cleanBase, cleanTarget)
+	if err != nil {
+		return false
+	}
+
+	// Check if relative path goes outside base directory
+	return !strings.HasPrefix(rel, "..") && !strings.HasPrefix(rel, "/")
 }
