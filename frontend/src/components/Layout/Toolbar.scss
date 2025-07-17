@@ -1,0 +1,115 @@
+@import '../../styles/variables.scss';
+
+.toolbar {
+  display: flex;
+  height: $toolbar-height;
+  background-color: var(--toolbar-background);
+  border-bottom: 1px solid var(--toolbar-border);
+  padding: 0 $spacing-md;
+  align-items: center;
+  user-select: none;
+
+  .toolbar-buttons {
+    display: flex;
+    gap: $spacing-sm;
+    align-items: center;
+
+    .toolbar-button {
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid transparent;
+      border-radius: $border-radius-md;
+      background-color: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      transition: all $transition-fast;
+
+      .toolbar-button-icon {
+        flex-shrink: 0;
+      }
+
+      .toolbar-button-label {
+        white-space: nowrap;
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--primary-500);
+      }
+
+      &.primary {
+        background-color: var(--button-primary-background);
+        color: var(--button-primary-text);
+        border-color: var(--button-primary-background);
+
+        &:hover:not(.disabled) {
+          background-color: var(--button-primary-hover);
+          border-color: var(--button-primary-hover);
+        }
+      }
+
+      &.secondary {
+        background-color: var(--button-secondary-background);
+        color: var(--button-secondary-text);
+        border-color: var(--button-secondary-border);
+
+        &:hover:not(.disabled) {
+          background-color: var(--button-secondary-hover);
+        }
+      }
+
+      &.success {
+        background-color: var(--success-500);
+        color: var(--text-inverse);
+        border-color: var(--success-500);
+
+        &:hover:not(.disabled) {
+          background-color: var(--success-600);
+          border-color: var(--success-600);
+        }
+      }
+
+      &.danger {
+        background-color: var(--error-500);
+        color: var(--text-inverse);
+        border-color: var(--error-500);
+
+        &:hover:not(.disabled) {
+          background-color: var(--error-600);
+          border-color: var(--error-600);
+        }
+      }
+
+      &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 1024px) {
+  .toolbar {
+    .toolbar-button {
+      .toolbar-button-label {
+        display: none;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 0 $spacing-sm;
+    
+    .toolbar-buttons {
+      gap: $spacing-xs;
+    }
+  }
+}
