@@ -69,56 +69,30 @@ func (em *ErrorManager) CreateNetworkError(message string, details map[string]st
 		WithDetails(details),
 		WithSeverity(ErrorSeverityHigh),
 		WithRecoverable(true),
-		WithSuggestions([]string{
-			"Check your internet connection",
-			"Try again in a few moments",
-			"Verify the service is available",
-		}),
+		WithSuggestions(NetworkSuggestions),
 	)
 }
 
 // CreateFileSystemError creates a file system error with recovery guidance
 func (em *ErrorManager) CreateFileSystemError(message string, filePath string, operation string) *APIError {
-	details := map[string]string{
-		"file_path":  filePath,
-		"operation":  operation,
-	}
-	
-	suggestions := []string{
-		"Check that the file or directory exists",
-		"Verify you have the necessary permissions",
-		"Ensure the path is correct",
-	}
-
 	return em.CreateError(
 		ErrorTypeFileSystem,
 		ErrCodeFileAccess,
 		message,
-		WithDetails(details),
-		WithSuggestions(suggestions),
+		WithDetails(createDetailsMap("file_path", filePath, "operation", operation)),
+		WithSuggestions(FileSystemSuggestions),
 		WithSeverity(ErrorSeverityMedium),
 	)
 }
 
 // CreateGenerationError creates a generation error with context
 func (em *ErrorManager) CreateGenerationError(message string, projectID string, step string) *APIError {
-	details := map[string]string{
-		"project_id": projectID,
-		"step":       step,
-	}
-	
-	suggestions := []string{
-		"Check the OpenAPI specification for errors",
-		"Verify the project configuration",
-		"Try regenerating the server",
-	}
-
 	return em.CreateError(
 		ErrorTypeGeneration,
 		ErrCodeGenerationError,
 		message,
-		WithDetails(details),
-		WithSuggestions(suggestions),
+		WithDetails(createDetailsMap("project_id", projectID, "step", step)),
+		WithSuggestions(GenerationSuggestions),
 		WithSeverity(ErrorSeverityHigh),
 		WithContext(&ErrorContext{
 			Operation: "generation",
@@ -130,24 +104,15 @@ func (em *ErrorManager) CreateGenerationError(message string, projectID string, 
 
 // CreateInternalError creates an internal error with debug information
 func (em *ErrorManager) CreateInternalError(message string, err error) *APIError {
-	details := map[string]string{
-		"internal_error": err.Error(),
-	}
-	
 	// Get stack trace
 	stackTrace := getStackTrace(2) // Skip this function and the caller
 	
-	suggestions := []string{
-		"This is an internal error. Please contact support if it persists",
-		"Try refreshing the page or restarting the application",
-	}
-
 	return em.CreateError(
 		ErrorTypeSystem,
 		ErrCodeInternalError,
 		message,
-		WithDetails(details),
-		WithSuggestions(suggestions),
+		WithDetails(createDetailsMap("internal_error", err.Error())),
+		WithSuggestions(InternalSuggestions),
 		WithSeverity(ErrorSeverityCritical),
 		WithRecoverable(true),
 		WithContext(&ErrorContext{
@@ -160,23 +125,12 @@ func (em *ErrorManager) CreateInternalError(message string, err error) *APIError
 
 // CreateDatabaseError creates a database error with recovery options
 func (em *ErrorManager) CreateDatabaseError(message string, operation string, table string) *APIError {
-	details := map[string]string{
-		"operation": operation,
-		"table":     table,
-	}
-	
-	suggestions := []string{
-		"Check database connectivity",
-		"Verify the operation is valid",
-		"Try again in a few moments",
-	}
-
 	return em.CreateError(
 		ErrorTypeDatabase,
 		ErrCodeDatabaseError,
 		message,
-		WithDetails(details),
-		WithSuggestions(suggestions),
+		WithDetails(createDetailsMap("operation", operation, "table", table)),
+		WithSuggestions(DatabaseSuggestions),
 		WithSeverity(ErrorSeverityHigh),
 		WithRecoverable(true),
 	)
@@ -253,6 +207,55 @@ func WithCorrelationID(correlationID string) ErrorOption {
 
 // Helper functions
 
+// createDetailsMap creates a details map from key-value pairs
+func createDetailsMap(pairs ...string) map[string]string {
+	details := make(map[string]string)
+	for i := 0; i < len(pairs)-1; i += 2 {
+		details[pairs[i]] = pairs[i+1]
+	}
+	return details
+}
+
+// Common suggestion collections
+var (
+	NetworkSuggestions = []string{
+		"Check your internet connection",
+		"Try again in a few moments",
+		"Verify the service is available",
+	}
+	
+	FileSystemSuggestions = []string{
+		"Check that the file or directory exists",
+		"Verify you have the necessary permissions",
+		"Ensure the path is correct",
+	}
+	
+	GenerationSuggestions = []string{
+		"Check the OpenAPI specification for errors",
+		"Verify the project configuration",
+		"Try regenerating the server",
+	}
+	
+	InternalSuggestions = []string{
+		"This is an internal error. Please contact support if it persists",
+		"Try refreshing the page or restarting the application",
+	}
+	
+	DatabaseSuggestions = []string{
+		"Check database connectivity",
+		"Verify the operation is valid",
+		"Try again in a few moments",
+	}
+)
+
+// asAPIError safely converts an error to APIError if possible
+func asAPIError(err error) (*APIError, bool) {
+	if apiErr, ok := err.(*APIError); ok {
+		return apiErr, true
+	}
+	return nil, false
+}
+
 // generateCorrelationID generates a unique correlation ID
 func generateCorrelationID() string {
 	return fmt.Sprintf("mcpw-%d-%d", time.Now().UnixNano(), rand.Intn(1000))
@@ -278,7 +281,7 @@ func getStackTrace(skip int) string {
 
 // IsRetryableError checks if an error can be retried
 func IsRetryableError(err error) bool {
-	if apiErr, ok := err.(*APIError); ok {
+	if apiErr, ok := asAPIError(err); ok {
 		return apiErr.IsRetryable()
 	}
 	return false
@@ -286,7 +289,7 @@ func IsRetryableError(err error) bool {
 
 // GetErrorSeverity returns the severity of an error
 func GetErrorSeverity(err error) ErrorSeverity {
-	if apiErr, ok := err.(*APIError); ok {
+	if apiErr, ok := asAPIError(err); ok {
 		return apiErr.Severity
 	}
 	return ErrorSeverityMedium
@@ -294,7 +297,7 @@ func GetErrorSeverity(err error) ErrorSeverity {
 
 // GetErrorSuggestions returns suggestions for an error
 func GetErrorSuggestions(err error) []string {
-	if apiErr, ok := err.(*APIError); ok {
+	if apiErr, ok := asAPIError(err); ok {
 		return apiErr.Suggestions
 	}
 	return []string{}
@@ -302,7 +305,7 @@ func GetErrorSuggestions(err error) []string {
 
 // GetErrorContext returns the context of an error
 func GetErrorContext(err error) *ErrorContext {
-	if apiErr, ok := err.(*APIError); ok {
+	if apiErr, ok := asAPIError(err); ok {
 		return apiErr.Context
 	}
 	return nil
@@ -310,7 +313,7 @@ func GetErrorContext(err error) *ErrorContext {
 
 // CategorizeError categorizes an error based on its type and code
 func CategorizeError(err error) string {
-	if apiErr, ok := err.(*APIError); ok {
+	if apiErr, ok := asAPIError(err); ok {
 		switch apiErr.Type {
 		case ErrorTypeValidation:
 			return "User Input Error"
