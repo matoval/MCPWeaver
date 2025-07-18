@@ -58,7 +58,24 @@ export class WailsRuntime {
             os: 'mock',
             arch: 'mock'
           }),
-          ExitApp: () => Promise.resolve(null)
+          ExitApp: () => Promise.resolve(null),
+          // File operations
+          SelectFile: (filters: any) => Promise.resolve('/mock/file/path.json'),
+          SelectDirectory: (title: string) => Promise.resolve('/mock/directory'),
+          SaveFile: (content: string, defaultPath: string, filters: any) => Promise.resolve('/mock/saved/file.json'),
+          ReadFile: (path: string) => Promise.resolve('{"mock": "content"}'),
+          WriteFile: (path: string, content: string) => Promise.resolve(null),
+          FileExists: (path: string) => Promise.resolve(true),
+          GetDefaultOpenAPIFilters: () => Promise.resolve([]),
+          ImportOpenAPISpec: (filePath: string) => Promise.resolve({ valid: true, content: '{}' }),
+          ImportOpenAPISpecFromURL: (url: string) => Promise.resolve({ valid: true, content: '{}' }),
+          ExportGeneratedServer: (projectId: string, targetDir: string) => Promise.resolve({ success: true }),
+          GetRecentFiles: () => Promise.resolve([]),
+          AddRecentFile: (filePath: string, fileType: string) => Promise.resolve(),
+          RemoveRecentFile: (filePath: string) => Promise.resolve(),
+          ClearRecentFiles: () => Promise.resolve(),
+          GetSupportedFileFormats: () => Promise.resolve(['application/json', 'application/yaml']),
+          DetectFileFormat: (content: string, filename: string) => Promise.resolve('json')
         }
       }
     };
@@ -174,11 +191,89 @@ export class WailsRuntime {
     if (!this.isReady) throw new Error('Wails runtime not ready');
     window.runtime.EventsOff(event);
   }
-
   // Error reporting
   public async reportError(errorReport: any) {
     if (!this.isReady) throw new Error('Wails runtime not ready');
     return await window.go.main.App.ReportError(errorReport);
+  // File operations
+  public async selectFile(filters: any[] = []) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.SelectFile(filters);
+  }
+
+  public async selectDirectory(title: string = 'Select Directory') {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.SelectDirectory(title);
+  }
+
+  public async saveFile(content: string, defaultPath: string = '', filters: any[] = []) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.SaveFile(content, defaultPath, filters);
+  }
+
+  public async readFile(path: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.ReadFile(path);
+  }
+
+  public async writeFile(path: string, content: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.WriteFile(path, content);
+  }
+
+  public async fileExists(path: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.FileExists(path);
+  }
+
+  public async getDefaultOpenAPIFilters() {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.GetDefaultOpenAPIFilters();
+  }
+
+  public async importOpenAPISpec(filePath: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.ImportOpenAPISpec(filePath);
+  }
+
+  public async importOpenAPISpecFromURL(url: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.ImportOpenAPISpecFromURL(url);
+  }
+
+  public async exportGeneratedServer(projectId: string, targetDir: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.ExportGeneratedServer(projectId, targetDir);
+  }
+
+  public async getRecentFiles() {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.GetRecentFiles();
+  }
+
+  public async addRecentFile(filePath: string, fileType: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.AddRecentFile(filePath, fileType);
+  }
+
+  public async removeRecentFile(filePath: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.RemoveRecentFile(filePath);
+  }
+
+  public async clearRecentFiles() {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.ClearRecentFiles();
+  }
+
+  public async getSupportedFileFormats() {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.GetSupportedFileFormats();
+  }
+
+  public async detectFileFormat(content: string, filename: string) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.DetectFileFormat(content, filename);
   }
 }
 
