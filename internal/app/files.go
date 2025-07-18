@@ -13,13 +13,69 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// SelectFile opens a file selection dialog
-func (a *App) SelectFile(filters []FileFilter) (string, error) {
-	if a.ctx == nil {
-		return "", a.createAPIError("internal", ErrCodeInternalError, "Application context not initialized", nil)
+// fileExists checks if a file exists and returns appropriate error
+func (a *App) fileExists(path string) error {
+	if path == "" {
+		return a.createAPIError("validation", ErrCodeValidation, "File path is required", nil)
 	}
 
-	// Convert filters to Wails format
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return a.createAPIError("file_system", ErrCodeFileAccess, "File does not exist", map[string]string{
+			"path": path,
+		})
+	} else if err != nil {
+		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to check file existence", map[string]string{
+			"path": path,
+			"error": err.Error(),
+		})
+	}
+
+	return nil
+}
+
+// dirExists checks if a directory exists and is writable
+func (a *App) dirExists(path string) error {
+	if path == "" {
+		return a.createAPIError("validation", ErrCodeValidation, "Directory path is required", nil)
+	}
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return a.createAPIError("file_system", ErrCodeFileAccess, "Directory does not exist", map[string]string{
+			"path": path,
+		})
+	}
+
+	// Test if directory is writable
+	testFile := filepath.Join(path, ".mcpweaver_test")
+	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
+		return a.createAPIError("file_system", ErrCodeFileAccess, "Directory is not writable", map[string]string{
+			"path": path,
+			"error": err.Error(),
+		})
+	}
+	os.Remove(testFile) // Clean up test file
+
+	return nil
+}
+
+// ensureDir ensures a directory exists, creating it if necessary
+func (a *App) ensureDir(path string) error {
+	if path == "" {
+		return a.createAPIError("validation", ErrCodeValidation, "Directory path is required", nil)
+	}
+
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to create directory", map[string]string{
+			"path": path,
+			"error": err.Error(),
+		})
+	}
+
+	return nil
+}
+
+// convertFilters converts FileFilter slice to Wails runtime.FileFilter slice
+func convertFilters(filters []FileFilter) []runtime.FileFilter {
 	wailsFilters := make([]runtime.FileFilter, len(filters))
 	for i, filter := range filters {
 		wailsFilters[i] = runtime.FileFilter{
@@ -27,11 +83,19 @@ func (a *App) SelectFile(filters []FileFilter) (string, error) {
 			Pattern:     filter.Pattern,
 		}
 	}
+	return wailsFilters
+}
+
+// SelectFile opens a file selection dialog
+func (a *App) SelectFile(filters []FileFilter) (string, error) {
+	if a.ctx == nil {
+		return "", a.createAPIError("internal", ErrCodeInternalError, "Application context not initialized", nil)
+	}
 
 	// Open file dialog
 	filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title:   "Select OpenAPI Specification",
-		Filters: wailsFilters,
+		Filters: convertFilters(filters),
 	})
 
 	if err != nil {
@@ -46,10 +110,8 @@ func (a *App) SelectFile(filters []FileFilter) (string, error) {
 	}
 
 	// Verify file exists and is readable
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return "", a.createAPIError("file_system", ErrCodeFileAccess, "Selected file does not exist", map[string]string{
-			"path": filePath,
-		})
+	if err := a.fileExists(filePath); err != nil {
+		return "", err
 	}
 
 	return filePath, nil
@@ -82,21 +144,9 @@ func (a *App) SelectDirectory(title string) (string, error) {
 	}
 
 	// Verify directory exists and is writable
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		return "", a.createAPIError("file_system", ErrCodeFileAccess, "Selected directory does not exist", map[string]string{
-			"path": dirPath,
-		})
+	if err := a.dirExists(dirPath); err != nil {
+		return "", err
 	}
-
-	// Test if directory is writable
-	testFile := filepath.Join(dirPath, ".mcpweaver_test")
-	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
-		return "", a.createAPIError("file_system", ErrCodeFileAccess, "Directory is not writable", map[string]string{
-			"path": dirPath,
-			"error": err.Error(),
-		})
-	}
-	os.Remove(testFile) // Clean up test file
 
 	return dirPath, nil
 }
@@ -107,20 +157,11 @@ func (a *App) SaveFile(content string, defaultPath string, filters []FileFilter)
 		return "", a.createAPIError("internal", ErrCodeInternalError, "Application context not initialized", nil)
 	}
 
-	// Convert filters to Wails format
-	wailsFilters := make([]runtime.FileFilter, len(filters))
-	for i, filter := range filters {
-		wailsFilters[i] = runtime.FileFilter{
-			DisplayName: filter.DisplayName,
-			Pattern:     filter.Pattern,
-		}
-	}
-
 	// Open save dialog
 	filePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		Title:           "Save File",
 		DefaultFilename: defaultPath,
-		Filters:         wailsFilters,
+		Filters:         convertFilters(filters),
 	})
 
 	if err != nil {
@@ -136,11 +177,8 @@ func (a *App) SaveFile(content string, defaultPath string, filters []FileFilter)
 
 	// Ensure directory exists
 	dir := filepath.Dir(filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", a.createAPIError("file_system", ErrCodeFileAccess, "Failed to create directory", map[string]string{
-			"path": dir,
-			"error": err.Error(),
-		})
+	if err := a.ensureDir(dir); err != nil {
+		return "", err
 	}
 
 	// Write content to file
@@ -156,15 +194,9 @@ func (a *App) SaveFile(content string, defaultPath string, filters []FileFilter)
 
 // ReadFile reads the content of a file
 func (a *App) ReadFile(path string) (string, error) {
-	if path == "" {
-		return "", a.createAPIError("validation", ErrCodeValidation, "File path is required", nil)
-	}
-
 	// Check if file exists
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return "", a.createAPIError("file_system", ErrCodeFileAccess, "File does not exist", map[string]string{
-			"path": path,
-		})
+	if err := a.fileExists(path); err != nil {
+		return "", err
 	}
 
 	// Read file content
@@ -187,11 +219,8 @@ func (a *App) WriteFile(path string, content string) error {
 
 	// Ensure directory exists
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to create directory", map[string]string{
-			"path": dir,
-			"error": err.Error(),
-		})
+	if err := a.ensureDir(dir); err != nil {
+		return err
 	}
 
 	// Write content to file
