@@ -10,26 +10,30 @@ import (
 	"MCPWeaver/internal/generator"
 	"MCPWeaver/internal/mapping"
 	"MCPWeaver/internal/parser"
+	"MCPWeaver/internal/validator"
 	
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct holds the application context and services
 type App struct {
-	ctx           context.Context
-	db            *sql.DB
-	projectRepo   *database.ProjectRepository
-	parserService *parser.Service
-	mappingService *mapping.Service
-	generatorService *generator.Service
-	settings      *AppSettings
+	ctx                 context.Context
+	db                  *sql.DB
+	projectRepo         *database.ProjectRepository
+	validationCacheRepo *database.ValidationCacheRepository
+	parserService       *parser.Service
+	mappingService      *mapping.Service
+	generatorService    *generator.Service
+	validatorService    *validator.Service
+	settings            *AppSettings
 }
 
 // NewApp creates a new application instance
 func NewApp() *App {
 	return &App{
-		parserService: parser.NewService(),
-		settings:      getDefaultSettings(),
+		parserService:    parser.NewService(),
+		validatorService: validator.New(),
+		settings:         getDefaultSettings(),
 	}
 }
 
@@ -47,6 +51,7 @@ func (a *App) OnStartup(ctx context.Context) error {
 	
 	// Initialize repositories
 	a.projectRepo = database.NewProjectRepository(dbWrapper)
+	a.validationCacheRepo = database.NewValidationCacheRepository(dbWrapper)
 	
 	// Load settings
 	settings, err := a.loadSettings()

@@ -125,6 +125,8 @@ type ValidationResult struct {
 	Suggestions    []string            `json:"suggestions"`
 	SpecInfo       *SpecInfo           `json:"specInfo,omitempty"`
 	ValidationTime time.Duration       `json:"validationTime"`
+	CacheHit       bool                `json:"cacheHit"`
+	ValidatedAt    time.Time           `json:"validatedAt"`
 }
 
 type ValidationError struct {
