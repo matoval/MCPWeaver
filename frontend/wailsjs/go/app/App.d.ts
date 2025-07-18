@@ -13,6 +13,8 @@ export function CreateProject(arg1:app.CreateProjectRequest):Promise<app.Project
 
 export function DeleteProject(arg1:string):Promise<void>;
 
+export function ExportProject(arg1:string):Promise<string>;
+
 export function ExportSettings():Promise<string>;
 
 export function FileExists(arg1:string):Promise<boolean>;
@@ -35,6 +37,8 @@ export function GetSettings():Promise<app.AppSettings>;
 
 export function GetSettingsFilePath():Promise<string>;
 
+export function ImportProject(arg1:string):Promise<app.Project>;
+
 export function ImportSettings():Promise<void>;
 
 export function OnShutdown(arg1:context.Context):Promise<void>;
@@ -46,6 +50,8 @@ export function ReadFile(arg1:string):Promise<string>;
 export function ResetSettings():Promise<void>;
 
 export function SaveFile(arg1:string,arg2:string,arg3:Array<app.FileFilter>):Promise<string>;
+
+export function SearchProjects(arg1:string):Promise<Array<app.Project>>;
 
 export function SelectDirectory(arg1:string):Promise<string>;
 

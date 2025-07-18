@@ -144,6 +144,23 @@
           span {
             font-size: $font-size-sm;
             color: var(--text-muted);
+            margin-bottom: $spacing-md;
+            display: block;
+          }
+
+          .empty-action {
+            padding: $spacing-sm $spacing-lg;
+            background-color: var(--primary-500);
+            color: var(--text-inverse);
+            border: none;
+            border-radius: $border-radius-md;
+            font-size: $font-size-sm;
+            cursor: pointer;
+            transition: all $transition-fast;
+
+            &:hover {
+              background-color: var(--primary-600);
+            }
           }
         }
       }

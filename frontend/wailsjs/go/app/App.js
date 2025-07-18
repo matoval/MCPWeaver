@@ -22,6 +22,10 @@ export function DeleteProject(arg1) {
   return window['go']['app']['App']['DeleteProject'](arg1);
 }
 
+export function ExportProject(arg1) {
+  return window['go']['app']['App']['ExportProject'](arg1);
+}
+
 export function ExportSettings() {
   return window['go']['app']['App']['ExportSettings']();
 }
@@ -66,6 +70,10 @@ export function GetSettingsFilePath() {
   return window['go']['app']['App']['GetSettingsFilePath']();
 }
 
+export function ImportProject(arg1) {
+  return window['go']['app']['App']['ImportProject'](arg1);
+}
+
 export function ImportSettings() {
   return window['go']['app']['App']['ImportSettings']();
 }
@@ -88,6 +96,10 @@ export function ResetSettings() {
 
 export function SaveFile(arg1, arg2, arg3) {
   return window['go']['app']['App']['SaveFile'](arg1, arg2, arg3);
+}
+
+export function SearchProjects(arg1) {
+  return window['go']['app']['App']['SearchProjects'](arg1);
 }
 
 export function SelectDirectory(arg1) {
