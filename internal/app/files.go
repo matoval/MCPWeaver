@@ -24,6 +24,32 @@ const (
 func (a *App) SelectFile(filters []FileFilter) (string, error) {
 	if a.ctx == nil {
 		return "", a.createAPIError("internal", ErrCodeInternalError, "Application context not initialized", nil)
+	}
+
+	// Open file dialog
+	filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:   "Select OpenAPI Specification",
+		Filters: convertFilters(filters),
+	})
+
+	if err != nil {
+		return "", a.createAPIError("file_system", ErrCodeFileAccess, "Failed to open file dialog", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	// Empty string means user cancelled
+	if filePath == "" {
+		return "", nil
+	}
+
+	// Verify file exists and is readable
+	if err := a.fileExists(filePath); err != nil {
+		return "", err
+	}
+
+	return filePath, nil
+}
 
 // fileExists checks if a file exists and returns appropriate error
 func (a *App) fileExists(path string) error {
@@ -96,37 +122,6 @@ func convertFilters(filters []FileFilter) []runtime.FileFilter {
 		}
 	}
 	return wailsFilters
-}
-
-// SelectFile opens a file selection dialog
-func (a *App) SelectFile(filters []FileFilter) (string, error) {
-	if a.ctx == nil {
-		return "", a.createAPIError("internal", ErrCodeInternalError, "Application context not initialized", nil)
-	}
-
-	// Open file dialog
-	filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:   "Select OpenAPI Specification",
-		Filters: convertFilters(filters),
-	})
-
-	if err != nil {
-		return "", a.createAPIError("file_system", ErrCodeFileAccess, "Failed to open file dialog", map[string]string{
-			"error": err.Error(),
-		})
-	}
-
-	// Empty string means user cancelled
-	if filePath == "" {
-		return "", nil
-	}
-
-	// Verify file exists and is readable
-	if err := a.fileExists(filePath); err != nil {
-		return "", err
-	}
-
-	return filePath, nil
 }
 
 // SelectDirectory opens a directory selection dialog
