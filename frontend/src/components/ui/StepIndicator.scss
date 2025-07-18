@@ -1,0 +1,255 @@
+// Step Indicator Styles
+.step-indicator {
+  display: flex;
+  width: 100%;
+  
+  &--horizontal {
+    flex-direction: row;
+    align-items: flex-start;
+    
+    .step-indicator__step-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      
+      &:last-child {
+        flex: 0 0 auto;
+      }
+    }
+    
+    .step-indicator__connector {
+      flex: 1;
+      height: 2px;
+      margin: 0 1rem;
+      background-color: var(--border-color, #e5e5e5);
+      position: relative;
+      top: 1rem;
+      
+      &--completed {
+        background-color: var(--success, #28a745);
+      }
+    }
+  }
+  
+  &--vertical {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .step-indicator__step-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .step-indicator__connector {
+      width: 2px;
+      height: 2rem;
+      margin: 0.5rem 0;
+      background-color: var(--border-color, #e5e5e5);
+      margin-left: 1rem;
+      
+      &--completed {
+        background-color: var(--success, #28a745);
+      }
+    }
+  }
+  
+  &--compact {
+    .step-indicator__step-content {
+      display: none;
+    }
+    
+    .step-indicator__step-marker {
+      margin-bottom: 0;
+    }
+  }
+  
+  &__step {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    
+    &--horizontal {
+      flex-direction: column;
+    }
+    
+    &--vertical {
+      flex-direction: row;
+      text-align: left;
+      
+      .step-indicator__step-content {
+        margin-left: 1rem;
+      }
+    }
+  }
+  
+  &__step-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    border: 2px solid var(--border-color, #e5e5e5);
+    background-color: var(--bg-primary, #ffffff);
+    color: var(--text-secondary, #666);
+    transition: all 0.2s ease;
+    position: relative;
+    
+    .step-indicator__step--pending & {
+      background-color: var(--bg-secondary, #f8f9fa);
+      color: var(--text-muted, #999);
+    }
+    
+    .step-indicator__step--active & {
+      background-color: var(--primary, #007bff);
+      border-color: var(--primary, #007bff);
+      color: white;
+    }
+    
+    .step-indicator__step--completed & {
+      background-color: var(--success, #28a745);
+      border-color: var(--success, #28a745);
+      color: white;
+    }
+    
+    .step-indicator__step--error & {
+      background-color: var(--danger, #dc3545);
+      border-color: var(--danger, #dc3545);
+      color: white;
+    }
+  }
+  
+  &__icon {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  &__number {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  
+  &__spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    
+    &-icon {
+      width: 1rem;
+      height: 1rem;
+      animation: spin 1s linear infinite;
+    }
+  }
+  
+  &__step-content {
+    margin-top: 0.5rem;
+    min-height: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  
+  &__step-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-primary, #1a1a1a);
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+    
+    .step-indicator__step--pending & {
+      color: var(--text-muted, #999);
+    }
+    
+    .step-indicator__step--active & {
+      color: var(--primary, #007bff);
+    }
+    
+    .step-indicator__step--completed & {
+      color: var(--success, #28a745);
+    }
+    
+    .step-indicator__step--error & {
+      color: var(--danger, #dc3545);
+    }
+  }
+  
+  &__step-description {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #666);
+    line-height: 1.3;
+    
+    .step-indicator__step--pending & {
+      color: var(--text-muted, #999);
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Dark theme support
+[data-theme="dark"] .step-indicator {
+  &__step-marker {
+    background-color: var(--bg-primary-dark, #2a2a2a);
+    border-color: var(--border-color-dark, #404040);
+    color: var(--text-secondary-dark, #a0a0a0);
+    
+    .step-indicator__step--pending & {
+      background-color: var(--bg-secondary-dark, #1a1a1a);
+      color: var(--text-muted-dark, #666);
+    }
+  }
+  
+  &__step-title {
+    color: var(--text-primary-dark, #e5e5e5);
+    
+    .step-indicator__step--pending & {
+      color: var(--text-muted-dark, #666);
+    }
+  }
+  
+  &__step-description {
+    color: var(--text-secondary-dark, #a0a0a0);
+    
+    .step-indicator__step--pending & {
+      color: var(--text-muted-dark, #666);
+    }
+  }
+  
+  &__connector {
+    background-color: var(--border-color-dark, #404040);
+  }
+}
+
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .step-indicator {
+    &__step-marker {
+      transition: none;
+    }
+    
+    &__spinner-icon {
+      animation: none;
+    }
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .step-indicator {
+    &__step-marker {
+      border-width: 3px;
+    }
+  }
+}
