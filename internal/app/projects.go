@@ -224,6 +224,111 @@ func (a *App) GetRecentProjects() ([]*Project, error) {
 	return projects, nil
 }
 
+// SearchProjects searches for projects by name
+func (a *App) SearchProjects(query string) ([]*Project, error) {
+	if query == "" {
+		return a.GetProjects()
+	}
+
+	dbProjects, err := a.projectRepo.SearchByName(query)
+	if err != nil {
+		return nil, a.createAPIError("internal", ErrCodeInternalError, "Failed to search projects", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	projects := make([]*Project, len(dbProjects))
+	for i, dbProject := range dbProjects {
+		projects[i] = a.dbProjectToAPI(dbProject)
+	}
+
+	return projects, nil
+}
+
+// ExportProject exports a project to a JSON file
+func (a *App) ExportProject(projectID string) (string, error) {
+	if projectID == "" {
+		return "", a.createAPIError("validation", ErrCodeValidation, "Project ID is required", nil)
+	}
+
+	project, err := a.GetProject(projectID)
+	if err != nil {
+		return "", err
+	}
+
+	// Create export data
+	exportData := map[string]interface{}{
+		"version":   "1.0.0",
+		"project":   project,
+		"exportedAt": time.Now().Format(time.RFC3339),
+	}
+
+	// Marshal to JSON
+	jsonData, err := json.MarshalIndent(exportData, "", "  ")
+	if err != nil {
+		return "", a.createAPIError("internal", ErrCodeInternalError, "Failed to export project", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	return string(jsonData), nil
+}
+
+// ImportProject imports a project from JSON data
+func (a *App) ImportProject(jsonData string) (*Project, error) {
+	if jsonData == "" {
+		return nil, a.createAPIError("validation", ErrCodeValidation, "JSON data is required", nil)
+	}
+
+	// Parse JSON
+	var exportData map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonData), &exportData); err != nil {
+		return nil, a.createAPIError("validation", ErrCodeValidation, "Invalid JSON format", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	// Extract project data
+	projectData, ok := exportData["project"].(map[string]interface{})
+	if !ok {
+		return nil, a.createAPIError("validation", ErrCodeValidation, "Invalid project data format", nil)
+	}
+
+	// Convert to project struct
+	projectJSON, err := json.Marshal(projectData)
+	if err != nil {
+		return nil, a.createAPIError("internal", ErrCodeInternalError, "Failed to process project data", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	var importedProject Project
+	if err := json.Unmarshal(projectJSON, &importedProject); err != nil {
+		return nil, a.createAPIError("validation", ErrCodeValidation, "Invalid project structure", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	// Create new project from imported data
+	createRequest := CreateProjectRequest{
+		Name:       importedProject.Name + " (Imported)",
+		SpecPath:   importedProject.SpecPath,
+		SpecURL:    importedProject.SpecURL,
+		OutputPath: importedProject.OutputPath,
+		Settings:   importedProject.Settings,
+	}
+
+	newProject, err := a.CreateProject(createRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// Send notification
+	a.emitNotification("success", "Project Imported", fmt.Sprintf("Project '%s' has been imported successfully", newProject.Name))
+
+	return newProject, nil
+}
+
 // dbProjectToAPI converts a database project to API project
 func (a *App) dbProjectToAPI(dbProject *database.Project) *Project {
 	var lastGenerated *time.Time

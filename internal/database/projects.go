@@ -151,8 +151,34 @@ func (r *ProjectRepository) Delete(id string) error {
 	return nil
 }
 
-// GetByName retrieves projects by name (useful for search)
-func (r *ProjectRepository) GetByName(name string) ([]*Project, error) {
+// GetByName retrieves a single project by exact name match
+func (r *ProjectRepository) GetByName(name string) (*Project, error) {
+	query := `
+		SELECT id, name, spec_path, spec_url, output_path, settings, status, 
+			   created_at, updated_at, last_generated, generation_count
+		FROM projects 
+		WHERE name = ?
+	`
+	
+	project := &Project{}
+	err := r.db.conn.QueryRow(query, name).Scan(
+		&project.ID, &project.Name, &project.SpecPath, &project.SpecURL,
+		&project.OutputPath, &project.Settings, &project.Status,
+		&project.CreatedAt, &project.UpdatedAt, &project.LastGenerated,
+		&project.GenerationCount)
+	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("project not found")
+		}
+		return nil, fmt.Errorf("failed to get project by name: %w", err)
+	}
+	
+	return project, nil
+}
+
+// SearchByName retrieves projects by name (useful for search)
+func (r *ProjectRepository) SearchByName(name string) ([]*Project, error) {
 	query := `
 		SELECT id, name, spec_path, spec_url, output_path, settings, status, 
 			   created_at, updated_at, last_generated, generation_count
