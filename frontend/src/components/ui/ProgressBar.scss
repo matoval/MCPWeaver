@@ -1,0 +1,163 @@
+// Progress Bar Styles
+.progress-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary, #1a1a1a);
+    margin-bottom: 0.25rem;
+  }
+  
+  &__track {
+    position: relative;
+    height: 8px;
+    background-color: var(--bg-secondary, #f5f5f5);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  &__fill {
+    height: 100%;
+    background-color: var(--primary, #007bff);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    position: relative;
+    
+    &--animated {
+      background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+      );
+      background-size: 20px 20px;
+      animation: progress-bar-stripes 1s linear infinite;
+    }
+  }
+  
+  &__percentage {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary, #666);
+    align-self: flex-end;
+  }
+  
+  // Variants
+  &--primary {
+    .progress-bar__fill {
+      background-color: var(--primary, #007bff);
+    }
+  }
+  
+  &--success {
+    .progress-bar__fill {
+      background-color: var(--success, #28a745);
+    }
+  }
+  
+  &--warning {
+    .progress-bar__fill {
+      background-color: var(--warning, #ffc107);
+    }
+  }
+  
+  &--danger {
+    .progress-bar__fill {
+      background-color: var(--danger, #dc3545);
+    }
+  }
+  
+  // Sizes
+  &--sm {
+    .progress-bar__track {
+      height: 6px;
+    }
+    
+    .progress-bar__label {
+      font-size: 0.75rem;
+    }
+    
+    .progress-bar__percentage {
+      font-size: 0.625rem;
+    }
+  }
+  
+  &--md {
+    .progress-bar__track {
+      height: 8px;
+    }
+  }
+  
+  &--lg {
+    .progress-bar__track {
+      height: 12px;
+    }
+    
+    .progress-bar__label {
+      font-size: 1rem;
+    }
+    
+    .progress-bar__percentage {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+@keyframes progress-bar-stripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 0;
+  }
+}
+
+// Dark theme support
+[data-theme="dark"] .progress-bar {
+  &__label {
+    color: var(--text-primary-dark, #e5e5e5);
+  }
+  
+  &__track {
+    background-color: var(--bg-secondary-dark, #2a2a2a);
+  }
+  
+  &__percentage {
+    color: var(--text-secondary-dark, #a0a0a0);
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .progress-bar {
+    &__track {
+      border: 1px solid currentColor;
+    }
+    
+    &__fill {
+      border: 1px solid currentColor;
+    }
+  }
+}
+
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar {
+    &__fill {
+      transition: none;
+      
+      &--animated {
+        animation: none;
+      }
+    }
+  }
+}
