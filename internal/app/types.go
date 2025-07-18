@@ -66,6 +66,7 @@ type GenerationJob struct {
 	EndTime     *time.Time         `json:"endTime,omitempty"`
 	Results     *GenerationResults `json:"results,omitempty"`
 	Errors      []GenerationError  `json:"errors,omitempty"`
+	Warnings    []string           `json:"warnings,omitempty"`
 }
 
 type GenerationStatus string
@@ -91,7 +92,7 @@ type GenerationResults struct {
 type GeneratedFile struct {
 	Path        string `json:"path"`
 	Type        string `json:"type"`
-	Size        int64  `json:"size"`
+	Size        int    `json:"size"`
 	LinesOfCode int    `json:"linesOfCode"`
 }
 
