@@ -27,21 +27,26 @@ type App struct {
 	validatorService    *validator.Service
 	settings            *AppSettings
 	errorManager        *ErrorManager
+	performanceMonitor  *PerformanceMonitor
 }
 
 // NewApp creates a new application instance
 func NewApp() *App {
 	return &App{
-		parserService:    parser.NewService(),
-		validatorService: validator.New(),
-		settings:         getDefaultSettings(),
-		errorManager:     NewErrorManager(),
+		parserService:      parser.NewService(),
+		validatorService:   validator.New(),
+		settings:           getDefaultSettings(),
+		errorManager:       NewErrorManager(),
+		performanceMonitor: NewPerformanceMonitor(),
 	}
 }
 
 // OnStartup is called when the app starts, before the frontend is loaded
 func (a *App) OnStartup(ctx context.Context) error {
 	a.ctx = ctx
+	
+	// Record startup time
+	startupStart := time.Now()
 	
 	// Initialize database
 	dbPath := "./mcpweaver.db"
@@ -64,10 +69,15 @@ func (a *App) OnStartup(ctx context.Context) error {
 	}
 	a.settings = settings
 	
+	// Record startup time
+	startupDuration := time.Since(startupStart)
+	a.performanceMonitor.RecordStartupTime(startupDuration)
+	
 	// Emit startup event
 	runtime.EventsEmit(a.ctx, "system:startup", map[string]interface{}{
 		"timestamp": time.Now(),
 		"version":   "1.0.0",
+		"startup_time": startupDuration.String(),
 	})
 	
 	return nil
@@ -93,6 +103,21 @@ func (a *App) OnShutdown(ctx context.Context) error {
 	}
 	
 	return nil
+}
+
+// GetPerformanceMetrics returns current performance metrics
+func (a *App) GetPerformanceMetrics() *PerformanceMetrics {
+	return a.performanceMonitor.GetMetrics()
+}
+
+// GetMemoryUsage returns current memory usage in MB
+func (a *App) GetMemoryUsage() float64 {
+	return a.performanceMonitor.GetMemoryUsageMB()
+}
+
+// ForceGarbageCollection forces garbage collection
+func (a *App) ForceGarbageCollection() {
+	a.performanceMonitor.ForceGC()
 }
 
 // OnDomReady is called after the frontend dom is ready
