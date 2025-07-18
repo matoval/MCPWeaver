@@ -26,6 +26,7 @@ type App struct {
 	generatorService    *generator.Service
 	validatorService    *validator.Service
 	settings            *AppSettings
+	errorManager        *ErrorManager
 }
 
 // NewApp creates a new application instance
@@ -34,6 +35,7 @@ func NewApp() *App {
 		parserService:    parser.NewService(),
 		validatorService: validator.New(),
 		settings:         getDefaultSettings(),
+		errorManager:     NewErrorManager(),
 	}
 }
 
@@ -121,6 +123,18 @@ func (a *App) createAPIError(errorType, code, message string, details map[string
 // emitError emits an error event to the frontend
 func (a *App) emitError(err *APIError) {
 	runtime.EventsEmit(a.ctx, "system:error", err)
+}
+
+// ReportError reports an error from the frontend
+func (a *App) ReportError(errorReport map[string]interface{}) error {
+	// Log the error
+	fmt.Printf("Frontend Error Report: %+v\n", errorReport)
+	
+	// Here you could send the error to a logging service, database, or monitoring system
+	// For now, we'll just emit it as a system event
+	runtime.EventsEmit(a.ctx, "system:error-report", errorReport)
+	
+	return nil
 }
 
 // emitNotification emits a notification event to the frontend
