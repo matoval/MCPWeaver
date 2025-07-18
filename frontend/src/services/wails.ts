@@ -174,6 +174,12 @@ export class WailsRuntime {
     if (!this.isReady) throw new Error('Wails runtime not ready');
     window.runtime.EventsOff(event);
   }
+
+  // Error reporting
+  public async reportError(errorReport: any) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.ReportError(errorReport);
+  }
 }
 
 // Export singleton instance
