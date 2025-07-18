@@ -320,4 +320,60 @@ export interface RetryResult {
   totalDelay: number;
   startTime: string;
   endTime: string;
+
+// File Import/Export Types
+export interface ImportResult {
+  content: string;
+  valid: boolean;
+  specInfo?: SpecInfo;
+  errors?: string[];
+  warnings?: string[];
+  importedFrom: 'file' | 'url';
+  filePath?: string;
+  sourceUrl?: string;
+  fileSize: number;
+  importedAt: string;
+}
+
+export interface ExportResult {
+  projectId: string;
+  projectName: string;
+  targetDir: string;
+  exportedFiles: ExportedFile[];
+  totalFiles: number;
+  totalSize: number;
+  exportedAt: string;
+}
+
+export interface ExportedFile {
+  name: string;
+  path: string;
+  size: number;
+  modifiedTime: string;
+}
+
+export interface FileOperationProgress {
+  operationId: string;
+  type: 'import' | 'export';
+  progress: number;
+  currentFile: string;
+  totalFiles: number;
+  processedFiles: number;
+  startTime: string;
+  elapsedTime: number;
+  estimatedRemaining: number;
+}
+
+export interface FileFilter {
+  displayName: string;
+  pattern: string;
+  extensions: string[];
+}
+
+export interface RecentFile {
+  path: string;
+  name: string;
+  size: number;
+  lastAccessed: string;
+  type: 'spec' | 'export';
 }

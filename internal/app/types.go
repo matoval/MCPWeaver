@@ -184,6 +184,7 @@ type AppSettings struct {
 	AutoSave           bool               `json:"autoSave"`
 	DefaultOutputPath  string             `json:"defaultOutputPath"`
 	RecentProjects     []string           `json:"recentProjects"`
+	RecentFiles        []string           `json:"recentFiles"`
 	WindowSettings     WindowSettings     `json:"windowSettings"`
 	EditorSettings     EditorSettings     `json:"editorSettings"`
 	GenerationSettings GenerationSettings `json:"generationSettings"`
@@ -408,4 +409,55 @@ type SystemError struct {
 	Message     string    `json:"message"`
 	Timestamp   time.Time `json:"timestamp"`
 	Recoverable bool      `json:"recoverable"`
+}
+
+// Import/Export Types
+type ImportResult struct {
+	Content      string    `json:"content"`
+	Valid        bool      `json:"valid"`
+	SpecInfo     *SpecInfo `json:"specInfo,omitempty"`
+	Errors       []string  `json:"errors,omitempty"`
+	Warnings     []string  `json:"warnings,omitempty"`
+	ImportedFrom string    `json:"importedFrom"` // "file" or "url"
+	FilePath     string    `json:"filePath,omitempty"`
+	SourceURL    string    `json:"sourceUrl,omitempty"`
+	FileSize     int64     `json:"fileSize"`
+	ImportedAt   time.Time `json:"importedAt"`
+}
+
+type ExportResult struct {
+	ProjectID     string         `json:"projectId"`
+	ProjectName   string         `json:"projectName"`
+	TargetDir     string         `json:"targetDir"`
+	ExportedFiles []ExportedFile `json:"exportedFiles"`
+	TotalFiles    int            `json:"totalFiles"`
+	TotalSize     int64          `json:"totalSize"`
+	ExportedAt    time.Time      `json:"exportedAt"`
+}
+
+type ExportedFile struct {
+	Name         string    `json:"name"`
+	Path         string    `json:"path"`
+	Size         int64     `json:"size"`
+	ModifiedTime time.Time `json:"modifiedTime"`
+}
+
+type FileOperationProgress struct {
+	OperationID        string `json:"operationId"`
+	Type               string `json:"type"` // "import" or "export"
+	Progress           int    `json:"progress"`
+	CurrentFile        string `json:"currentFile"`
+	TotalFiles         int    `json:"totalFiles"`
+	ProcessedFiles     int    `json:"processedFiles"`
+	StartTime          string `json:"startTime"`
+	ElapsedTime        int64  `json:"elapsedTime"`
+	EstimatedRemaining int64  `json:"estimatedRemaining"`
+}
+
+type RecentFile struct {
+	Path         string `json:"path"`
+	Name         string `json:"name"`
+	Size         int64  `json:"size"`
+	LastAccessed string `json:"lastAccessed"`
+	Type         string `json:"type"` // "spec" or "export"
 }
