@@ -1,0 +1,320 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/sourcegraph/jsonrpc2"
+	"github.com/sourcegraph/jsonrpc2/handler"
+)
+
+// MCPServer represents the MCP server for {{.APITitle}}
+type MCPServer struct {
+	baseURL string
+	client  *http.Client
+}
+
+// NewMCPServer creates a new MCP server instance
+func NewMCPServer(baseURL string) *MCPServer {
+	return &MCPServer{
+		baseURL: baseURL,
+		client: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+	}
+}
+
+// Tool represents an MCP tool
+type Tool struct {
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	InputSchema InputSchema `json:"inputSchema"`
+}
+
+// InputSchema represents the JSON schema for tool input
+type InputSchema struct {
+	Type       string              `json:"type"`
+	Properties map[string]Property `json:"properties"`
+	Required   []string            `json:"required"`
+}
+
+// Property represents a property in the input schema
+type Property struct {
+	Type        string    `json:"type"`
+	Description string    `json:"description,omitempty"`
+	Example     any       `json:"example,omitempty"`
+	Enum        []string  `json:"enum,omitempty"`
+	Format      string    `json:"format,omitempty"`
+	Items       *Property `json:"items,omitempty"`
+}
+
+// ToolRequest represents a tool execution request
+type ToolRequest struct {
+	Name      string                 `json:"name"`
+	Arguments map[string]interface{} `json:"arguments"`
+}
+
+// ToolResponse represents a tool execution response
+type ToolResponse struct {
+	Content []Content `json:"content"`
+	IsError bool      `json:"isError"`
+}
+
+// Content represents response content
+type Content struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+// Available tools
+var tools = []Tool{
+{{range .Tools}}	{
+		Name:        "{{.Name}}",
+		Description: "{{.Description}}",
+		InputSchema: InputSchema{
+			Type:       "object",
+			Properties: map[string]Property{
+{{range $key, $prop := .InputSchema.Properties}}				"{{$key}}": {
+					Type:        "{{$prop.Type}}",
+					Description: "{{$prop.Description}}",
+{{if $prop.Format}}					Format:      "{{$prop.Format}}",
+{{end}}{{if $prop.Enum}}					Enum:        []string{{"{"}}{{range $i, $v := $prop.Enum}}{{if $i}}, {{end}}"{{$v}}"{{end}}{{"}"}},
+{{end}}{{if $prop.Items}}					Items:       &Property{Type: "{{$prop.Items.Type}}"},
+{{end}}				},
+{{end}}			},
+			Required: []string{{"{"}}{{range $i, $req := .InputSchema.Required}}{{if $i}}, {{end}}"{{$req}}"{{end}}{{"}"}},
+		},
+	},
+{{end}}}
+
+// Handle MCP requests
+func (s *MCPServer) handleRequest(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+	switch req.Method {
+	case "initialize":
+		return s.handleInitialize(ctx, req)
+	case "tools/list":
+		return s.handleToolsList(ctx, req)
+	case "tools/call":
+		return s.handleToolCall(ctx, req)
+	default:
+		return nil, &jsonrpc2.Error{
+			Code:    jsonrpc2.CodeMethodNotFound,
+			Message: fmt.Sprintf("Method not found: %s", req.Method),
+		}
+	}
+}
+
+// Handle initialize request
+func (s *MCPServer) handleInitialize(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+	return map[string]interface{}{
+		"protocolVersion": "2024-11-05",
+		"capabilities": map[string]interface{}{
+			"tools": map[string]interface{}{},
+		},
+		"serverInfo": map[string]interface{}{
+			"name":    "{{.PackageName}}",
+			"version": "1.0.0",
+		},
+	}, nil
+}
+
+// Handle tools/list request
+func (s *MCPServer) handleToolsList(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+	return map[string]interface{}{
+		"tools": tools,
+	}, nil
+}
+
+// Handle tools/call request
+func (s *MCPServer) handleToolCall(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+	var toolReq ToolRequest
+	if err := json.Unmarshal(*req.Params, &toolReq); err != nil {
+		return nil, &jsonrpc2.Error{
+			Code:    jsonrpc2.CodeInvalidParams,
+			Message: fmt.Sprintf("Invalid parameters: %v", err),
+		}
+	}
+
+	// Find the tool
+	var tool *Tool
+	for i := range tools {
+		if tools[i].Name == toolReq.Name {
+			tool = &tools[i]
+			break
+		}
+	}
+
+	if tool == nil {
+		return nil, &jsonrpc2.Error{
+			Code:    jsonrpc2.CodeMethodNotFound,
+			Message: fmt.Sprintf("Tool not found: %s", toolReq.Name),
+		}
+	}
+
+	// Execute the tool
+	response, err := s.executeTool(ctx, tool, toolReq.Arguments)
+	if err != nil {
+		return ToolResponse{
+			Content: []Content{
+				{
+					Type: "text",
+					Text: fmt.Sprintf("Error executing tool: %v", err),
+				},
+			},
+			IsError: true,
+		}, nil
+	}
+
+	return response, nil
+}
+
+// Execute a tool
+func (s *MCPServer) executeTool(ctx context.Context, tool *Tool, args map[string]interface{}) (ToolResponse, error) {
+	switch tool.Name {
+{{range .Tools}}	case "{{.Name}}":
+		return s.execute{{.Name | title}}(ctx, args)
+{{end}}	default:
+		return ToolResponse{
+			Content: []Content{
+				{
+					Type: "text",
+					Text: fmt.Sprintf("Unknown tool: %s", tool.Name),
+				},
+			},
+			IsError: true,
+		}, nil
+	}
+}
+
+{{range .Tools}}
+// execute{{.Name | title}} executes the {{.Name}} tool
+func (s *MCPServer) execute{{.Name | title}}(ctx context.Context, args map[string]interface{}) (ToolResponse, error) {
+	// Build request URL
+	url := s.baseURL + "{{.Path}}"
+	
+	// Replace path parameters
+	for key, value := range args {
+		placeholder := "{" + key + "}"
+		if strings.Contains(url, placeholder) {
+			url = strings.ReplaceAll(url, placeholder, fmt.Sprintf("%v", value))
+		}
+	}
+
+	// Create HTTP request
+	var req *http.Request
+	var err error
+
+	{{if or (eq .Method "POST") (eq .Method "PUT") (eq .Method "PATCH")}}
+	// Handle request body for {{.Method}} requests
+	var body io.Reader
+	if bodyData, exists := args["body"]; exists {
+		bodyJSON, err := json.Marshal(bodyData)
+		if err != nil {
+			return ToolResponse{}, fmt.Errorf("failed to marshal request body: %w", err)
+		}
+		body = strings.NewReader(string(bodyJSON))
+	}
+	
+	req, err = http.NewRequestWithContext(ctx, "{{.Method}}", url, body)
+	if err != nil {
+		return ToolResponse{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	{{else}}
+	req, err = http.NewRequestWithContext(ctx, "{{.Method}}", url, nil)
+	if err != nil {
+		return ToolResponse{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	{{end}}
+
+	// Add query parameters
+	query := req.URL.Query()
+	for key, value := range args {
+		if key != "body" && !strings.Contains("{{.Path}}", "{"+key+"}") {
+			query.Add(key, fmt.Sprintf("%v", value))
+		}
+	}
+	req.URL.RawQuery = query.Encode()
+
+	// Execute request
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return ToolResponse{}, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ToolResponse{}, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	// Check for HTTP errors
+	if resp.StatusCode >= 400 {
+		return ToolResponse{
+			Content: []Content{
+				{
+					Type: "text",
+					Text: fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(responseBody)),
+				},
+			},
+			IsError: true,
+		}, nil
+	}
+
+	// Return successful response
+	return ToolResponse{
+		Content: []Content{
+			{
+				Type: "text",
+				Text: string(responseBody),
+			},
+		},
+		IsError: false,
+	}, nil
+}
+{{end}}
+
+func main() {
+	// Get base URL from environment or use default
+	baseURL := os.Getenv("API_BASE_URL")
+	if baseURL == "" {
+		baseURL = "{{.BaseURL}}"
+	}
+
+	server := NewMCPServer(baseURL)
+	
+	// Create JSON-RPC handler
+	h := handler.NewMap()
+	h.Handle("initialize", func(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+		return server.handleInitialize(ctx, req)
+	})
+	h.Handle("tools/list", func(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+		return server.handleToolsList(ctx, req)
+	})
+	h.Handle("tools/call", func(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+		return server.handleToolCall(ctx, req)
+	})
+
+	// Create connection using stdio
+	conn := jsonrpc2.NewConn(
+		context.Background(),
+		jsonrpc2.NewBufferedStream(os.Stdin, os.Stdout),
+		h,
+	)
+
+	log.Printf("MCP server for {{.APITitle}} started")
+	
+	// Wait for connection to close
+	<-conn.Done()
+}
