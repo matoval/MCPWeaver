@@ -4,21 +4,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MCPWeaver is an open-source desktop application that transforms OpenAPI specifications into Model Context Protocol (MCP) servers. This is a **specifications-only repository** - the actual implementation code will be in a separate repository.
+MCPWeaver is an open-source desktop application that transforms OpenAPI specifications into Model Context Protocol (MCP) servers. This repository contains the **active implementation** with both specifications and working code.
 
 ## Repository Structure
 
-This repository contains comprehensive specification documents that define the complete system architecture, API contracts, and implementation requirements:
+This repository contains both specification documents and the implemented codebase:
 
 ```
 MCPWeaver/
-├── specs/
+├── specs/                            # Specification documents
 │   ├── PROJECT-SPECIFICATION.md      # Overall project vision and requirements
 │   ├── ARCHITECTURE-SPECIFICATION.md # Technical architecture (Wails-based)
 │   ├── API-SPECIFICATION.md          # Internal API contracts
 │   ├── DATA-MODELS-SPECIFICATION.md  # Database schemas and data structures
 │   ├── OBSERVABILITY-SPECIFICATION.md # Monitoring and logging
 │   └── UI-SPECIFICATION.md           # User interface design
+├── internal/                         # Go backend implementation
+│   ├── app/                          # Main application logic
+│   │   ├── app.go                    # Application context and lifecycle
+│   │   ├── files.go                  # File operations and I/O
+│   │   ├── types.go                  # Type definitions
+│   │   ├── errors.go                 # Error handling system
+│   │   └── ...                       # Other app modules
+│   ├── database/                     # Database layer
+│   ├── generator/                    # Code generation engine
+│   ├── mapping/                      # OpenAPI to MCP mapping
+│   ├── parser/                       # OpenAPI parsing
+│   └── validator/                    # Specification validation
+├── frontend/                         # React/TypeScript frontend
+│   ├── src/
+│   │   ├── components/               # React components
+│   │   ├── services/                 # API services
+│   │   ├── types/                    # TypeScript types
+│   │   └── ...                       # Other frontend modules
+│   └── ...                           # Frontend config files
 ├── README.md                         # Project overview
 └── LICENSE                          # AGPL v3 license
 ```
@@ -42,7 +61,7 @@ MCPWeaver is designed as a **Wails v2 desktop application** with:
 
 ## Development Commands
 
-**Note**: This is a specifications repository. The actual implementation will use:
+The repository contains a fully functional Wails v2 application. Use these commands:
 
 ```bash
 # Wails development
@@ -108,16 +127,38 @@ The application uses **Wails context binding** for frontend-backend communicatio
 
 ## Error Handling
 
-All errors follow consistent format:
+The application implements comprehensive error handling with multiple layers:
+
+### Backend Error System
+All errors use the `APIError` type with enhanced features:
 ```go
 type APIError struct {
-    Type      string            `json:"type"`
-    Code      string            `json:"code"`
-    Message   string            `json:"message"`
-    Details   map[string]string `json:"details,omitempty"`
-    Timestamp time.Time         `json:"timestamp"`
+    Type          string            `json:"type"`
+    Code          string            `json:"code"`
+    Message       string            `json:"message"`
+    Details       map[string]string `json:"details,omitempty"`
+    Timestamp     time.Time         `json:"timestamp"`
+    Suggestions   []string          `json:"suggestions,omitempty"`
+    CorrelationID string            `json:"correlationId,omitempty"`
+    Severity      ErrorSeverity     `json:"severity"`
+    Recoverable   bool              `json:"recoverable"`
+    RetryAfter    *time.Duration    `json:"retryAfter,omitempty"`
+    Context       *ErrorContext     `json:"context,omitempty"`
 }
 ```
+
+### Frontend Error System
+- **ErrorBoundary**: React component that catches JavaScript errors
+- **Error Display**: User-friendly error messages with recovery options
+- **Retry Logic**: Automatic retry with exponential backoff
+- **Error Reporting**: Integrated GitHub issue creation for bugs
+
+### Error Categories
+- **Validation Errors**: User input validation with suggestions
+- **File System Errors**: File operation failures with recovery guidance
+- **Network Errors**: Connection issues with retry mechanisms
+- **Generation Errors**: Code generation failures with context
+- **Internal Errors**: System errors with debugging information
 
 ## Security Requirements
 
@@ -126,29 +167,120 @@ type APIError struct {
 - **Template Security**: Sandboxed template execution
 - **Local Storage**: Encrypted sensitive data
 
-## Implementation Phases
+## Implementation Status
 
-1. **Phase 1**: Foundation (Weeks 1-2) - Core architecture
-2. **Phase 2**: Core MVP (Weeks 3-4) - Basic functionality
-3. **Phase 3**: Polish (Weeks 5-6) - Error handling, optimization
-4. **Phase 4**: Release (Weeks 7-8) - Packaging, documentation
+The project has progressed through multiple phases:
+
+### ✅ Completed Features
+- **Core Architecture**: Wails v2 application structure
+- **File Import/Export System**: OpenAPI spec import from files and URLs
+- **Error Handling System**: Comprehensive error management with recovery
+- **Type System**: Complete type definitions for all entities
+- **Database Layer**: SQLite integration with repositories
+- **Project Management**: Basic project CRUD operations
+- **Validation System**: OpenAPI specification validation
+- **Recent Files**: File history tracking
+- **Progress Tracking**: Real-time operation progress
+
+### 🚧 In Progress
+- **Code Generation**: MCP server generation from OpenAPI specs
+- **Frontend Components**: React UI components
+- **Template System**: Custom generation templates
+
+### 📋 Planned
+- **Advanced UI Features**: Complete user interface
+- **Performance Optimization**: Meeting performance requirements
+- **Cross-Platform Testing**: Windows, macOS, Linux validation
+- **Documentation**: User guides and API documentation
+
+## Code Patterns and Best Practices
+
+### Backend (Go)
+1. **Error Handling**: Always use `createAPIError()` for consistent error responses
+2. **Helper Functions**: Extract common logic into reusable helper functions (e.g., `fileExists()`, `ensureDir()`)
+3. **Context Validation**: Check `a.ctx` for nil before Wails runtime calls
+4. **Resource Cleanup**: Always clean up temporary files and close connections
+5. **Structured Types**: Use comprehensive type definitions with JSON tags
+
+### Frontend (React/TypeScript)
+1. **Error Boundaries**: Wrap components with `ErrorBoundary` for error recovery
+2. **Type Safety**: Use TypeScript interfaces that match backend types
+3. **Error Reporting**: Integrate with backend error reporting system
+4. **Progress Tracking**: Show progress for long-running operations
+5. **Retry Logic**: Implement automatic retry with exponential backoff
+
+### File Operations
+1. **Validation**: Always validate file existence and permissions
+2. **Helper Functions**: Use centralized helpers (`fileExists`, `dirExists`, `ensureDir`)
+3. **Progress Tracking**: Emit progress events for file operations
+4. **Error Context**: Include file paths and operation details in errors
+5. **Cleanup**: Remove temporary files after operations
 
 ## Testing Requirements
 
-- **Unit Tests**: >90% code coverage
+- **Unit Tests**: >90% code coverage (especially for helper functions)
 - **Integration Tests**: Full workflow testing
 - **Performance Tests**: Meet all performance requirements
 - **Cross-Platform Tests**: Windows, macOS, Linux validation
+- **Error Handling Tests**: Comprehensive error scenario testing
 
 ## Contributing Guidelines
 
-When implementing MCPWeaver:
+When working on MCPWeaver:
 
-1. **Follow specifications exactly** - all implementation details are defined
-2. **Implement incrementally** - follow the development phases
-3. **Test thoroughly** - meet coverage and performance requirements
-4. **Document extensively** - maintain specification alignment
-5. **Validate continuously** - ensure spec compliance throughout development
+1. **Follow Existing Patterns**: Use established error handling and code organization patterns
+2. **Extract Common Logic**: Create helper functions for repeated operations
+3. **Test Thoroughly**: Include unit tests for new functionality
+4. **Document Changes**: Update specifications and documentation
+5. **Maintain Consistency**: Follow existing naming conventions and structure
+
+## API Methods Reference
+
+### File Operations (internal/app/files.go)
+
+- `SelectFile(filters)` - Opens file selection dialog
+- `SelectDirectory(title)` - Opens directory selection dialog  
+- `SaveFile(content, defaultPath, filters)` - Opens save file dialog
+- `ReadFile(path)` - Reads file content
+- `WriteFile(path, content)` - Writes content to file
+- `FileExists(path)` - Checks if file exists
+- `ImportOpenAPISpec(filePath)` - Imports OpenAPI spec from file
+- `ImportOpenAPISpecFromURL(url)` - Imports OpenAPI spec from URL
+- `ExportGeneratedServer(projectID, targetDir)` - Exports generated server
+- `AddRecentFile(filePath, fileType)` - Adds file to recent files
+- `GetRecentFiles()` - Gets list of recent files
+- `ClearRecentFiles()` - Clears recent files list
+
+### Error Handling (internal/app/errors.go)
+
+- `CreateError(errType, code, message, options...)` - Creates APIError
+- `CreateValidationError(message, details, suggestions)` - Creates validation error
+- `CreateNetworkError(message, details)` - Creates network error
+- `CreateFileSystemError(message, filePath, operation)` - Creates file system error
+- `CreateGenerationError(message, projectID, step)` - Creates generation error
+- `CreateInternalError(message, err)` - Creates internal error
+- `CreateErrorCollection(operation, totalItems)` - Creates error collection
+
+### Helper Functions
+
+- `fileExists(path)` - Internal file existence check
+- `dirExists(path)` - Internal directory existence and writability check
+- `ensureDir(path)` - Creates directory if it doesn't exist
+- `convertFilters(filters)` - Converts FileFilter to Wails format
+
+## Event System
+
+### Emitted Events
+
+- `system:startup` - Application startup
+- `system:ready` - DOM ready
+- `system:shutdown` - Application shutdown
+- `system:error` - Error occurred
+- `system:notification` - System notification
+- `file:progress` - File operation progress
+- `project:created` - Project creation
+- `generation:progress` - Generation progress
+- `generation:completed` - Generation completion
 
 ## Related Projects
 

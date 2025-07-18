@@ -9,11 +9,56 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
+
+// Compiled regex patterns for preprocessing (cached for performance)
+var (
+	tupleRegexOnce      sync.Once
+	tupleRegex          *regexp.Regexp
+	additionalItemsOnce sync.Once
+	additionalItemsRegex *regexp.Regexp
+	lookAheadOnce       sync.Once
+	lookAheadRegex      *regexp.Regexp
+	negLookAheadOnce    sync.Once
+	negLookAheadRegex   *regexp.Regexp
+)
+
+// getTupleRegex returns the compiled tuple regex pattern
+func getTupleRegex() *regexp.Regexp {
+	tupleRegexOnce.Do(func() {
+		tupleRegex = regexp.MustCompile(`(\s+items:\s*\n\s+)- (type: object\s*\n(?:\s+properties:\s*\n(?:\s+[^\n-]*\n)*)?)`)
+	})
+	return tupleRegex
+}
+
+// getAdditionalItemsRegex returns the compiled additional items regex pattern
+func getAdditionalItemsRegex() *regexp.Regexp {
+	additionalItemsOnce.Do(func() {
+		additionalItemsRegex = regexp.MustCompile(`(?m)^\s+additionalItems:.*\n`)
+	})
+	return additionalItemsRegex
+}
+
+// getLookAheadRegex returns the compiled lookahead regex pattern
+func getLookAheadRegex() *regexp.Regexp {
+	lookAheadOnce.Do(func() {
+		lookAheadRegex = regexp.MustCompile(`\(\?\=[^)]*\)`)
+	})
+	return lookAheadRegex
+}
+
+// getNegLookAheadRegex returns the compiled negative lookahead regex pattern
+func getNegLookAheadRegex() *regexp.Regexp {
+	negLookAheadOnce.Do(func() {
+		negLookAheadRegex = regexp.MustCompile(`\(\?\![^)]*\)`)
+	})
+	return negLookAheadRegex
+}
 
 // toTitle converts the first character of a string to uppercase
 func toTitle(s string) string {
@@ -354,14 +399,13 @@ func (s *Service) preprocessSpecData(data []byte) []byte {
 	content := string(data)
 
 	// Fix 1: Handle tuple-style array items
-	tuplePattern := `(\s+items:\s*\n\s+)- (type: object\s*\n(?:\s+properties:\s*\n(?:\s+[^\n-]*\n)*)?)`
-	tupleRegex := regexp.MustCompile(tuplePattern)
+	tupleRegex := getTupleRegex()
 	if tupleRegex.MatchString(content) {
 		content = tupleRegex.ReplaceAllString(content, `${1}$2`)
 	}
 
 	// Fix 2: Remove additionalItems which is not well supported
-	additionalItemsRegex := regexp.MustCompile(`(?m)^\s+additionalItems:.*\n`)
+	additionalItemsRegex := getAdditionalItemsRegex()
 	content = additionalItemsRegex.ReplaceAllString(content, "")
 
 	// Fix 3: Handle unsupported regex patterns
@@ -394,10 +438,10 @@ func (s *Service) preprocessSpecData(data []byte) []byte {
 					if strings.Contains(patternPart, "(?=.*[a-z])") && strings.Contains(patternPart, "(?=.*[A-Z])") {
 						patternPart = "^[a-zA-Z0-9]+$"
 					} else {
-						// Remove lookahead/lookbehind for other patterns
-						lookAheadRegex := regexp.MustCompile(`\(\?\=[^)]*\)`)
+						// Remove lookahead/lookbehind for other patterns using cached regex
+						lookAheadRegex := getLookAheadRegex()
 						patternPart = lookAheadRegex.ReplaceAllString(patternPart, "")
-						negLookAheadRegex := regexp.MustCompile(`\(\?\![^)]*\)`)
+						negLookAheadRegex := getNegLookAheadRegex()
 						patternPart = negLookAheadRegex.ReplaceAllString(patternPart, "")
 					}
 

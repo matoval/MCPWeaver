@@ -195,6 +195,8 @@ export class WailsRuntime {
   public async reportError(errorReport: any) {
     if (!this.isReady) throw new Error('Wails runtime not ready');
     return await window.go.main.App.ReportError(errorReport);
+  }
+
   // File operations
   public async selectFile(filters: any[] = []) {
     if (!this.isReady) throw new Error('Wails runtime not ready');
