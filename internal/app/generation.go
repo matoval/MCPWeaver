@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -209,26 +210,57 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 
 	a.updateJobProgress(job, GenerationStatusValidating, 0.8, "Validating generated code")
 
-	// Step 4: Validate generated code (basic file existence check)
-	generatedFiles := []GeneratedFile{
-		{
-			Path: filepath.Join(project.OutputPath, "main.go"),
-			Type: "server",
-			Size: 0, // TODO: Get actual file size
-			LinesOfCode: 0, // TODO: Count lines
-		},
-		{
-			Path: filepath.Join(project.OutputPath, "go.mod"),
-			Type: "module",
-			Size: 0,
-			LinesOfCode: 0,
-		},
-		{
-			Path: filepath.Join(project.OutputPath, "README.md"),
-			Type: "documentation",
-			Size: 0,
-			LinesOfCode: 0,
-		},
+	// Step 4: Validate generated code
+	validationResult, err := a.generatorService.ValidateGeneratedCode()
+	if err != nil {
+		a.handleGenerationError(job, fmt.Sprintf("Failed to validate generated code: %v", err))
+		return
+	}
+
+	// Check validation result
+	if !validationResult.IsValid {
+		errorMsg := fmt.Sprintf("Generated code validation failed: %s", strings.Join(validationResult.Errors, "; "))
+		a.handleGenerationError(job, errorMsg)
+		return
+	}
+
+	// Add warnings to job if any
+	if len(validationResult.Warnings) > 0 {
+		job.Warnings = validationResult.Warnings
+	}
+
+	// Get file statistics
+	generatedFiles := []GeneratedFile{}
+	expectedFiles := []string{"main.go", "go.mod", "README.md"}
+	
+	for _, filename := range expectedFiles {
+		filePath := filepath.Join(project.OutputPath, filename)
+		if info, err := os.Stat(filePath); err == nil {
+			var fileType string
+			switch filename {
+			case "main.go":
+				fileType = "server"
+			case "go.mod":
+				fileType = "module"
+			case "README.md":
+				fileType = "documentation"
+			default:
+				fileType = "other"
+			}
+			
+			// Count lines of code
+			linesOfCode := 0
+			if content, err := os.ReadFile(filePath); err == nil {
+				linesOfCode = len(strings.Split(string(content), "\n"))
+			}
+			
+			generatedFiles = append(generatedFiles, GeneratedFile{
+				Path: filePath,
+				Type: fileType,
+				Size: int(info.Size()),
+				LinesOfCode: linesOfCode,
+			})
+		}
 	}
 
 	// Step 5: Complete generation
@@ -245,7 +277,7 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 			TotalEndpoints:  len(parsedAPI.Operations),
 			GeneratedTools:  len(tools),
 			ProcessingTime:  endTime.Sub(job.StartTime),
-			SpecComplexity:  "medium", // TODO: Calculate complexity
+			SpecComplexity:  a.calculateSpecComplexity(parsedAPI, tools),
 			TemplateVersion: "1.0.0",
 		},
 	}
@@ -348,4 +380,65 @@ func (a *App) updateProjectGeneration(projectID string) {
 // generateJobID generates a unique job ID
 func generateJobID() string {
 	return fmt.Sprintf("gen_%d", time.Now().UnixNano())
+}
+
+// calculateSpecComplexity calculates the complexity of the OpenAPI spec
+func (a *App) calculateSpecComplexity(api *parser.ParsedAPI, tools []mapping.MCPTool) string {
+	score := 0
+	
+	// Base score from number of operations
+	operationCount := len(api.Operations)
+	if operationCount > 50 {
+		score += 3
+	} else if operationCount > 20 {
+		score += 2
+	} else if operationCount > 10 {
+		score += 1
+	}
+	
+	// Score from number of tools generated
+	toolCount := len(tools)
+	if toolCount > 50 {
+		score += 3
+	} else if toolCount > 20 {
+		score += 2
+	} else if toolCount > 10 {
+		score += 1
+	}
+	
+	// Score from parameter complexity
+	totalParams := 0
+	for _, op := range api.Operations {
+		totalParams += len(op.Parameters)
+		if op.RequestBody != nil {
+			totalParams += 1 // Count request body as additional complexity
+		}
+	}
+	
+	if totalParams > 100 {
+		score += 3
+	} else if totalParams > 50 {
+		score += 2
+	} else if totalParams > 20 {
+		score += 1
+	}
+	
+	// Score from server configuration
+	if len(api.Servers) > 3 {
+		score += 1
+	}
+	
+	// Determine complexity level
+	switch {
+	case score >= 8:
+		return "very high"
+	case score >= 6:
+		return "high"
+	case score >= 4:
+		return "medium"
+	case score >= 2:
+		return "low"
+	default:
+		return "very low"
+	}
 }

@@ -60,12 +60,22 @@ func NewService(baseURL string) *Service {
 // MapOperationsToTools converts OpenAPI operations to MCP tools
 func (s *Service) MapOperationsToTools(operations []parser.Operation) ([]MCPTool, error) {
 	var tools []MCPTool
+	toolNames := make(map[string]int) // Track duplicate names
 
 	for _, op := range operations {
 		tool, err := s.mapOperationToTool(op)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map operation %s: %w", op.ID, err)
 		}
+
+		// Handle duplicate tool names
+		if count, exists := toolNames[tool.Name]; exists {
+			toolNames[tool.Name] = count + 1
+			tool.Name = fmt.Sprintf("%s_%d", tool.Name, count+1)
+		} else {
+			toolNames[tool.Name] = 1
+		}
+
 		tools = append(tools, tool)
 	}
 
@@ -200,42 +210,56 @@ func (s *Service) mapParameterToProperty(param parser.Parameter) (Property, erro
 		Example:     param.Example,
 	}
 
-	if param.Schema != nil && param.Schema.Value != nil {
-		schema := param.Schema.Value
-
-		// Map basic type
-		if schema.Type != nil && len(*schema.Type) > 0 {
-			property.Type = (*schema.Type)[0]
-		}
-
-		// Map format
-		if schema.Format != "" {
-			property.Format = schema.Format
-		}
-
-		// Map enum values
-		if len(schema.Enum) > 0 {
-			for _, enumVal := range schema.Enum {
-				if str, ok := enumVal.(string); ok {
-					property.Enum = append(property.Enum, str)
-				}
-			}
-		}
-
-		// Handle array types
-		if property.Type == "array" && schema.Items != nil && schema.Items.Value != nil {
-			items := &Property{}
-			if schema.Items.Value.Type != nil && len(*schema.Items.Value.Type) > 0 {
-				items.Type = (*schema.Items.Value.Type)[0]
-			}
-			if schema.Items.Value.Format != "" {
-				items.Format = schema.Items.Value.Format
-			}
-			property.Items = items
-		}
-	} else {
-		// Default to string if no schema
+	// Handle missing schema gracefully
+	if param.Schema == nil || param.Schema.Value == nil {
 		property.Type = "string"
+		return property, nil
+	}
+
+	schema := param.Schema.Value
+
+	// Map basic type with error handling
+	if schema.Type != nil && len(*schema.Type) > 0 {
+		schemaType := (*schema.Type)[0]
+		// Validate type is supported
+		supportedTypes := map[string]bool{
+			"string": true, "number": true, "integer": true, 
+			"boolean": true, "array": true, "object": true,
+		}
+		if !supportedTypes[schemaType] {
+			return property, fmt.Errorf("unsupported parameter type: %s", schemaType)
+		}
+		property.Type = schemaType
+	} else {
+		property.Type = "string"
+	}
+
+	// Map format with validation
+	if schema.Format != "" {
+		property.Format = schema.Format
+	}
+
+	// Map enum values with type safety
+	if len(schema.Enum) > 0 {
+		for _, enumVal := range schema.Enum {
+			if str, ok := enumVal.(string); ok {
+				property.Enum = append(property.Enum, str)
+			}
+		}
+	}
+
+	// Handle array types with proper validation
+	if property.Type == "array" && schema.Items != nil && schema.Items.Value != nil {
+		items := &Property{}
+		if schema.Items.Value.Type != nil && len(*schema.Items.Value.Type) > 0 {
+			items.Type = (*schema.Items.Value.Type)[0]
+		} else {
+			items.Type = "string"
+		}
+		if schema.Items.Value.Format != "" {
+			items.Format = schema.Items.Value.Format
+		}
+		property.Items = items
 	}
 
 	return property, nil
