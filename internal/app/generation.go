@@ -14,10 +14,24 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// Active generation jobs
+// Active generation jobs with cleanup
 var (
 	activeJobs = make(map[string]*GenerationJob)
 	jobsMutex  = &sync.RWMutex{}
+)
+
+// Memory pools for generation
+var (
+	stringPool = sync.Pool{
+		New: func() interface{} {
+			return make([]string, 0, 10)
+		},
+	}
+	mapPool = sync.Pool{
+		New: func() interface{} {
+			return make(map[string]interface{}, 10)
+		},
+	}
 )
 
 // GenerateServer starts the generation process for a project
@@ -41,6 +55,9 @@ func (a *App) GenerateServer(projectID string) (*GenerationJob, error) {
 		}
 	}
 	jobsMutex.RUnlock()
+
+	// Clean up completed jobs before adding new one
+	a.cleanupCompletedJobs()
 
 	// Create generation job
 	job := &GenerationJob{
@@ -85,6 +102,21 @@ func (a *App) GetGenerationJob(jobID string) (*GenerationJob, error) {
 	}
 
 	return job, nil
+}
+
+// cleanupCompletedJobs removes completed jobs from memory to prevent memory leaks
+func (a *App) cleanupCompletedJobs() {
+	jobsMutex.Lock()
+	defer jobsMutex.Unlock()
+	
+	for id, job := range activeJobs {
+		if job.Status == GenerationStatusCompleted || job.Status == GenerationStatusFailed {
+			// Only keep jobs for the last 5 minutes
+			if time.Since(job.StartTime) > 5*time.Minute {
+				delete(activeJobs, id)
+			}
+		}
+	}
 }
 
 // CancelGeneration cancels an active generation job
@@ -146,7 +178,12 @@ func (a *App) GetGenerationHistory(projectID string) ([]*GenerationJob, error) {
 
 // runGeneration executes the generation process
 func (a *App) runGeneration(job *GenerationJob, project *Project) {
+	// Start performance monitoring
+	overallTimer := a.performanceMonitor.StartTimer("generation", "overall")
 	defer func() {
+		overallTimer()
+		// Force garbage collection after generation
+		a.performanceMonitor.ForceGC()
 		if r := recover(); r != nil {
 			a.handleGenerationError(job, fmt.Sprintf("Generation panicked: %v", r))
 		}
@@ -154,6 +191,8 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 
 	// Step 1: Parse OpenAPI specification
 	a.updateJobProgress(job, GenerationStatusParsing, 0.1, "Parsing OpenAPI specification")
+	parseTimer := a.performanceMonitor.StartTimer("generation", "parse")
+	defer parseTimer()
 
 	var specPath string
 	if project.SpecPath != "" {
@@ -181,6 +220,8 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 	}
 
 	a.updateJobProgress(job, GenerationStatusMapping, 0.3, "Mapping operations to MCP tools")
+	mappingTimer := a.performanceMonitor.StartTimer("generation", "mapping")
+	defer mappingTimer()
 
 	// Step 2: Map operations to MCP tools
 	baseURL := parsedAPI.BaseURL
@@ -196,6 +237,8 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 	}
 
 	a.updateJobProgress(job, GenerationStatusGenerating, 0.5, "Generating MCP server code")
+	generateTimer := a.performanceMonitor.StartTimer("generation", "generate")
+	defer generateTimer()
 
 	// Step 3: Generate server code
 	if a.generatorService == nil {
@@ -209,6 +252,8 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 	}
 
 	a.updateJobProgress(job, GenerationStatusValidating, 0.8, "Validating generated code")
+	validationTimer := a.performanceMonitor.StartTimer("generation", "validation")
+	defer validationTimer()
 
 	// Step 4: Validate generated code
 	validationResult, err := a.generatorService.ValidateGeneratedCode()

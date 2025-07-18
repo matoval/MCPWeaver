@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -11,6 +12,12 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"gopkg.in/yaml.v3"
+)
+
+// Performance constants for file operations
+const (
+	maxFileSize = 10 * 1024 * 1024 // 10MB max file size
+	bufferSize  = 64 * 1024        // 64KB buffer for file operations
 )
 
 // SelectFile opens a file selection dialog
@@ -179,10 +186,19 @@ func (a *App) ReadFile(path string) (string, error) {
 	return string(content), nil
 }
 
-// WriteFile writes content to a file
+// WriteFile writes content to a file with size validation
 func (a *App) WriteFile(path string, content string) error {
 	if path == "" {
 		return a.createAPIError("validation", ErrCodeValidation, "File path is required", nil)
+	}
+
+	// Validate content size
+	if len(content) > maxFileSize {
+		return a.createAPIError("file_system", ErrCodeFileAccess, "Content too large", map[string]string{
+			"path": path,
+			"size": fmt.Sprintf("%d", len(content)),
+			"max_size": fmt.Sprintf("%d", maxFileSize),
+		})
 	}
 
 	// Ensure directory exists
