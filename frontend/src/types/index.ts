@@ -268,3 +268,56 @@ export interface GenerationFailedEvent extends WailsEvent<{ jobId: string; type:
 export interface GenerationCancelledEvent extends WailsEvent<GenerationJob> {}
 export interface ProjectUpdatedEvent extends WailsEvent<Project> {}
 export interface SystemNotificationEvent extends WailsEvent<Notification> {}
+
+// Error Handling Types
+export interface APIError {
+  type: string;
+  code: string;
+  message: string;
+  details?: Record<string, string>;
+  timestamp: string;
+  suggestions?: string[];
+  correlationId?: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  recoverable: boolean;
+  retryAfter?: number;
+  context?: ErrorContext;
+}
+
+export interface ErrorContext {
+  operation?: string;
+  component?: string;
+  projectId?: string;
+  userId?: string;
+  sessionId?: string;
+  requestId?: string;
+  stackTrace?: string;
+  metadata?: Record<string, string>;
+}
+
+export interface ErrorCollection {
+  errors: APIError[];
+  warnings: APIError[];
+  operation: string;
+  totalItems: number;
+  failedItems: number;
+  timestamp: string;
+}
+
+export interface RetryPolicy {
+  maxRetries: number;
+  initialDelay: number;
+  maxDelay: number;
+  backoffMultiplier: number;
+  jitterEnabled: boolean;
+  retryableErrors: string[];
+}
+
+export interface RetryResult {
+  success: boolean;
+  attempts: number;
+  lastError?: APIError;
+  totalDelay: number;
+  startTime: string;
+  endTime: string;
+}

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"time"
 
 	"MCPWeaver/internal/mapping"
@@ -247,12 +248,17 @@ type TemplateVariable struct {
 
 // Error Types
 type APIError struct {
-	Type        string            `json:"type"`
-	Code        string            `json:"code"`
-	Message     string            `json:"message"`
-	Details     map[string]string `json:"details,omitempty"`
-	Timestamp   time.Time         `json:"timestamp"`
-	Suggestions []string          `json:"suggestions,omitempty"`
+	Type          string            `json:"type"`
+	Code          string            `json:"code"`
+	Message       string            `json:"message"`
+	Details       map[string]string `json:"details,omitempty"`
+	Timestamp     time.Time         `json:"timestamp"`
+	Suggestions   []string          `json:"suggestions,omitempty"`
+	CorrelationID string            `json:"correlationId,omitempty"`
+	Severity      ErrorSeverity     `json:"severity"`
+	Recoverable   bool              `json:"recoverable"`
+	RetryAfter    *time.Duration    `json:"retryAfter,omitempty"`
+	Context       *ErrorContext     `json:"context,omitempty"`
 }
 
 // Error implements the error interface for APIError
@@ -260,15 +266,126 @@ func (e *APIError) Error() string {
 	return e.Message
 }
 
+// IsRetryable returns true if the error can be retried
+func (e *APIError) IsRetryable() bool {
+	return e.Recoverable && e.RetryAfter != nil
+}
+
+// GetRetryDelay returns the suggested retry delay
+func (e *APIError) GetRetryDelay() time.Duration {
+	if e.RetryAfter != nil {
+		return *e.RetryAfter
+	}
+	return 0
+}
+
+// ErrorSeverity defines the severity level of an error
+type ErrorSeverity string
+
+const (
+	ErrorSeverityLow      ErrorSeverity = "low"
+	ErrorSeverityMedium   ErrorSeverity = "medium"
+	ErrorSeverityHigh     ErrorSeverity = "high"
+	ErrorSeverityCritical ErrorSeverity = "critical"
+)
+
+// ErrorContext provides additional context about where an error occurred
+type ErrorContext struct {
+	Operation   string            `json:"operation"`
+	Component   string            `json:"component"`
+	ProjectID   string            `json:"projectId,omitempty"`
+	UserID      string            `json:"userId,omitempty"`
+	SessionID   string            `json:"sessionId,omitempty"`
+	RequestID   string            `json:"requestId,omitempty"`
+	StackTrace  string            `json:"stackTrace,omitempty"`
+	Metadata    map[string]string `json:"metadata,omitempty"`
+}
+
+// ErrorCollection aggregates multiple errors for batch operations
+type ErrorCollection struct {
+	Errors      []APIError `json:"errors"`
+	Warnings    []APIError `json:"warnings"`
+	Operation   string     `json:"operation"`
+	TotalItems  int        `json:"totalItems"`
+	FailedItems int        `json:"failedItems"`
+	Timestamp   time.Time  `json:"timestamp"`
+}
+
+// HasErrors returns true if there are any errors
+func (ec *ErrorCollection) HasErrors() bool {
+	return len(ec.Errors) > 0
+}
+
+// HasWarnings returns true if there are any warnings
+func (ec *ErrorCollection) HasWarnings() bool {
+	return len(ec.Warnings) > 0
+}
+
+// Error implements the error interface for ErrorCollection
+func (ec *ErrorCollection) Error() string {
+	if len(ec.Errors) == 0 {
+		return "no errors"
+	}
+	if len(ec.Errors) == 1 {
+		return ec.Errors[0].Error()
+	}
+	return fmt.Sprintf("%d errors occurred during %s", len(ec.Errors), ec.Operation)
+}
+
+// RetryPolicy defines retry behavior for operations
+type RetryPolicy struct {
+	MaxRetries      int           `json:"maxRetries"`
+	InitialDelay    time.Duration `json:"initialDelay"`
+	MaxDelay        time.Duration `json:"maxDelay"`
+	BackoffMultiplier float64     `json:"backoffMultiplier"`
+	JitterEnabled   bool          `json:"jitterEnabled"`
+	RetryableErrors []string      `json:"retryableErrors"`
+}
+
+// DefaultRetryPolicy returns a default retry policy
+func DefaultRetryPolicy() RetryPolicy {
+	return RetryPolicy{
+		MaxRetries:        3,
+		InitialDelay:      time.Second,
+		MaxDelay:          30 * time.Second,
+		BackoffMultiplier: 2.0,
+		JitterEnabled:     true,
+		RetryableErrors: []string{
+			ErrCodeNetworkError,
+			ErrCodeInternalError,
+			ErrCodeDatabaseError,
+		},
+	}
+}
+
 // Error constants
 const (
-	ErrCodeValidation    = "VALIDATION_ERROR"
-	ErrCodeNotFound      = "NOT_FOUND"
-	ErrCodeInternalError = "INTERNAL_ERROR"
-	ErrCodeFileAccess    = "FILE_ACCESS_ERROR"
-	ErrCodeNetworkError  = "NETWORK_ERROR"
-	ErrCodeParsingError  = "PARSING_ERROR"
+	ErrCodeValidation      = "VALIDATION_ERROR"
+	ErrCodeNotFound        = "NOT_FOUND"
+	ErrCodeInternalError   = "INTERNAL_ERROR"
+	ErrCodeFileAccess      = "FILE_ACCESS_ERROR"
+	ErrCodeNetworkError    = "NETWORK_ERROR"
+	ErrCodeParsingError    = "PARSING_ERROR"
 	ErrCodeGenerationError = "GENERATION_ERROR"
+	ErrCodeDatabaseError   = "DATABASE_ERROR"
+	ErrCodePermissionError = "PERMISSION_ERROR"
+	ErrCodeRateLimitError  = "RATE_LIMIT_ERROR"
+	ErrCodeTimeoutError    = "TIMEOUT_ERROR"
+	ErrCodeConfigError     = "CONFIG_ERROR"
+	ErrCodeAuthError       = "AUTH_ERROR"
+)
+
+// Error type constants
+const (
+	ErrorTypeValidation   = "validation"
+	ErrorTypeSystem       = "system"
+	ErrorTypeNetwork      = "network"
+	ErrorTypeFileSystem   = "filesystem"
+	ErrorTypeDatabase     = "database"
+	ErrorTypeGeneration   = "generation"
+	ErrorTypePermission   = "permission"
+	ErrorTypeConfiguration = "configuration"
+	ErrorTypeAuthentication = "authentication"
 )
 
 // Event Types
