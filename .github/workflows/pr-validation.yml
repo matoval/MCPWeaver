@@ -1,0 +1,284 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+
+env:
+  GO_VERSION: '1.23'
+  NODE_VERSION: '20'
+  WAILS_VERSION: 'v2.10.1'
+
+jobs:
+  # Quick validation job
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+          cd frontend && npm ci && cd ..
+
+      - name: Run Go linter
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          working-directory: .
+
+      - name: Run Go tests
+        run: |
+          go test ./... -v -race -coverprofile=coverage.out
+          go tool cover -func=coverage.out
+
+      - name: Run frontend linting
+        run: |
+          cd frontend
+          npm run lint || echo "No lint script found"
+          cd ..
+
+      - name: Check Go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Build check
+        run: |
+          wails build -clean -skipbindings -s
+        env:
+          CGO_ENABLED: 1
+
+      - name: Security scan
+        uses: securecodewarrior/github-action-add-sarif@v1
+        if: always()
+        with:
+          sarif-file: 'gosec-report.sarif'
+        continue-on-error: true
+
+  # Cross-platform build test
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build test
+        run: |
+          wails build -clean -skipbindings
+        env:
+          CGO_ENABLED: 1
+
+  # Documentation check
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check documentation
+        run: |
+          # Check for required documentation files
+          files=("README.md" "CLAUDE.md" "specs/PROJECT-SPECIFICATION.md")
+          for file in "${files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "Missing required documentation: $file"
+              exit 1
+            fi
+          done
+          
+          # Check for changelog or release notes
+          if [[ ! -f "CHANGELOG.md" && ! -f "RELEASES.md" ]]; then
+            echo "Consider adding a CHANGELOG.md or RELEASES.md file"
+          fi
+
+      - name: Spell check
+        uses: streetsidesoftware/cspell-action@v5
+        with:
+          files: "**/*.md"
+          incremental_files_only: false
+        continue-on-error: true
+
+  # Performance regression test
+  performance:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run benchmarks
+        run: |
+          go test ./... -bench=. -benchmem -run=^$ > benchmark-new.txt || echo "No benchmarks found"
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Run base benchmarks
+        run: |
+          cd base
+          go test ./... -bench=. -benchmem -run=^$ > ../benchmark-base.txt || echo "No benchmarks found"
+          cd ..
+
+      - name: Compare benchmarks
+        run: |
+          if [[ -f benchmark-base.txt && -f benchmark-new.txt ]]; then
+            echo "Benchmark comparison:"
+            echo "Base:"
+            cat benchmark-base.txt
+            echo "Current:"
+            cat benchmark-new.txt
+            
+            # Simple performance regression check
+            if command -v benchcmp >/dev/null 2>&1; then
+              benchcmp benchmark-base.txt benchmark-new.txt
+            else
+              echo "benchcmp not available, manual comparison needed"
+            fi
+          else
+            echo "Benchmark files not found, skipping comparison"
+          fi
+
+  # Security checks
+  security:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run Gosec Security Scanner
+        uses: securecodewarrior/github-action-gosec@master
+        with:
+          args: '-fmt sarif -out gosec-report.sarif ./...'
+        continue-on-error: true
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: gosec-report.sarif
+        continue-on-error: true
+
+      - name: Dependency vulnerability scan
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+        continue-on-error: true
+
+  # Dependency review
+  dependency-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          allow-dependencies-licenses: 'MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC'
+
+  # Summary job
+  pr-summary:
+    needs: [validate, build-test, docs, performance, security, dependency-review]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR Summary
+        run: |
+          echo "# Pull Request Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Validation: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Cross-platform Build: ${{ needs.build-test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Documentation: ${{ needs.docs.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance: ${{ needs.performance.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Dependency Review: ${{ needs.dependency-review.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Determine overall status
+          if [[ "${{ needs.validate.result }}" == "success" && 
+                "${{ needs.build-test.result }}" == "success" && 
+                "${{ needs.docs.result }}" == "success" ]]; then
+            echo "✅ **Overall Status: PASSED**" >> $GITHUB_STEP_SUMMARY
+            echo "This pull request passed all required checks and is ready for review." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Overall Status: FAILED**" >> $GITHUB_STEP_SUMMARY
+            echo "This pull request has failing checks that need to be addressed." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
