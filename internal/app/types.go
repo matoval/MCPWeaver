@@ -240,11 +240,174 @@ const (
 )
 
 type TemplateVariable struct {
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	Type         string `json:"type"`
-	DefaultValue string `json:"defaultValue"`
-	Required     bool   `json:"required"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Type         string   `json:"type"`
+	DefaultValue string   `json:"defaultValue"`
+	Required     bool     `json:"required"`
+	Options      []string `json:"options,omitempty"` // For enum/select type variables
+	Validation   string   `json:"validation,omitempty"` // Validation regex or rules
+}
+
+// Template Management Types
+type CreateTemplateRequest struct {
+	Name        string             `json:"name" validate:"required,min=1,max=100"`
+	Description string             `json:"description" validate:"max=500"`
+	Version     string             `json:"version" validate:"required,semver"`
+	Author      string             `json:"author" validate:"max=100"`
+	Type        TemplateType       `json:"type" validate:"required"`
+	Path        string             `json:"path" validate:"required"`
+	Variables   []TemplateVariable `json:"variables,omitempty"`
+}
+
+type UpdateTemplateRequest struct {
+	Name        *string             `json:"name,omitempty"`
+	Description *string             `json:"description,omitempty"`
+	Version     *string             `json:"version,omitempty"`
+	Author      *string             `json:"author,omitempty"`
+	Type        *TemplateType       `json:"type,omitempty"`
+	Path        *string             `json:"path,omitempty"`
+	Variables   *[]TemplateVariable `json:"variables,omitempty"`
+}
+
+type TemplateValidationResult struct {
+	Valid        bool                    `json:"valid"`
+	Errors       []TemplateError         `json:"errors,omitempty"`
+	Warnings     []TemplateWarning       `json:"warnings,omitempty"`
+	Suggestions  []string                `json:"suggestions,omitempty"`
+	Performance  *TemplatePerformance    `json:"performance,omitempty"`
+	Dependencies []TemplateDependency    `json:"dependencies,omitempty"`
+}
+
+type TemplateError struct {
+	Type     string `json:"type"`
+	Message  string `json:"message"`
+	Line     int    `json:"line,omitempty"`
+	Column   int    `json:"column,omitempty"`
+	Severity string `json:"severity"`
+}
+
+type TemplateWarning struct {
+	Type       string `json:"type"`
+	Message    string `json:"message"`
+	Line       int    `json:"line,omitempty"`
+	Suggestion string `json:"suggestion,omitempty"`
+}
+
+type TemplatePerformance struct {
+	RenderTime    time.Duration `json:"renderTime"`
+	MemoryUsage   int64         `json:"memoryUsage"`
+	Complexity    string        `json:"complexity"` // "low", "medium", "high"
+	CacheHit      bool          `json:"cacheHit"`
+}
+
+type TemplateDependency struct {
+	Name     string `json:"name"`
+	Version  string `json:"version"`
+	Required bool   `json:"required"`
+	Type     string `json:"type"` // "system", "library", "template"
+}
+
+type TemplateImportRequest struct {
+	Source      string            `json:"source"` // "file", "url", "marketplace"
+	Path        string            `json:"path,omitempty"`
+	URL         string            `json:"url,omitempty"`
+	MarketplaceID string          `json:"marketplaceId,omitempty"`
+	ImportOptions TemplateImportOptions `json:"options,omitempty"`
+}
+
+type TemplateImportOptions struct {
+	OverwriteExisting bool     `json:"overwriteExisting"`
+	ValidateOnly      bool     `json:"validateOnly"`
+	IncludeDependencies bool   `json:"includeDependencies"`
+	TargetType        TemplateType `json:"targetType,omitempty"`
+}
+
+type TemplateExportRequest struct {
+	TemplateID    string                `json:"templateId"`
+	Format        string                `json:"format"` // "zip", "tar", "single"
+	TargetPath    string                `json:"targetPath"`
+	ExportOptions TemplateExportOptions `json:"options,omitempty"`
+}
+
+type TemplateExportOptions struct {
+	IncludeDocumentation bool `json:"includeDocumentation"`
+	IncludeExamples     bool `json:"includeExamples"`
+	IncludeDependencies bool `json:"includeDependencies"`
+	Minify              bool `json:"minify"`
+}
+
+type TemplateTestRequest struct {
+	TemplateID   string                 `json:"templateId"`
+	TestData     map[string]interface{} `json:"testData"`
+	TestOptions  TemplateTestOptions    `json:"options,omitempty"`
+}
+
+type TemplateTestOptions struct {
+	ValidateOutput    bool `json:"validateOutput"`
+	MeasurePerformance bool `json:"measurePerformance"`
+	GenerateReport    bool `json:"generateReport"`
+}
+
+type TemplateTestResult struct {
+	Success     bool                    `json:"success"`
+	Output      string                  `json:"output,omitempty"`
+	Errors      []TemplateError         `json:"errors,omitempty"`
+	Warnings    []TemplateWarning       `json:"warnings,omitempty"`
+	Performance *TemplatePerformance    `json:"performance,omitempty"`
+	Report      *TemplateTestReport     `json:"report,omitempty"`
+}
+
+type TemplateTestReport struct {
+	TemplateID      string        `json:"templateId"`
+	TestExecutedAt  time.Time     `json:"testExecutedAt"`
+	ExecutionTime   time.Duration `json:"executionTime"`
+	OutputSize      int64         `json:"outputSize"`
+	VariablesUsed   []string      `json:"variablesUsed"`
+	FunctionsUsed   []string      `json:"functionsUsed"`
+	Recommendations []string      `json:"recommendations"`
+}
+
+// Template Marketplace Types
+type TemplateMarketplaceItem struct {
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Version     string             `json:"version"`
+	Author      string             `json:"author"`
+	Type        TemplateType       `json:"type"`
+	Tags        []string           `json:"tags"`
+	Rating      float64            `json:"rating"`
+	Downloads   int                `json:"downloads"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+	License     string             `json:"license"`
+	Repository  string             `json:"repository,omitempty"`
+	HomePage    string             `json:"homePage,omitempty"`
+	Screenshots []string           `json:"screenshots,omitempty"`
+	Variables   []TemplateVariable `json:"variables"`
+	Dependencies []TemplateDependency `json:"dependencies"`
+}
+
+type TemplateSearchRequest struct {
+	Query       string       `json:"query,omitempty"`
+	Type        TemplateType `json:"type,omitempty"`
+	Tags        []string     `json:"tags,omitempty"`
+	Author      string       `json:"author,omitempty"`
+	MinRating   float64      `json:"minRating,omitempty"`
+	SortBy      string       `json:"sortBy,omitempty"` // "name", "rating", "downloads", "created", "updated"
+	SortOrder   string       `json:"sortOrder,omitempty"` // "asc", "desc"
+	Limit       int          `json:"limit,omitempty"`
+	Offset      int          `json:"offset,omitempty"`
+}
+
+type TemplateSearchResult struct {
+	Items      []TemplateMarketplaceItem `json:"items"`
+	Total      int                       `json:"total"`
+	Limit      int                       `json:"limit"`
+	Offset     int                       `json:"offset"`
+	HasMore    bool                      `json:"hasMore"`
+	SearchTime time.Duration             `json:"searchTime"`
 }
 
 // Error Types

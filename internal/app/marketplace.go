@@ -1,0 +1,583 @@
+package app
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// TemplateMarketplaceItem represents a template in the marketplace
+type TemplateMarketplaceItem struct {
+	ID           string                `json:"id"`
+	Name         string                `json:"name"`
+	Description  string                `json:"description"`
+	Version      string                `json:"version"`
+	Author       string                `json:"author"`
+	Type         string                `json:"type"`
+	Tags         []string              `json:"tags"`
+	Rating       float64               `json:"rating"`
+	Downloads    int                   `json:"downloads"`
+	CreatedAt    string                `json:"createdAt"`
+	UpdatedAt    string                `json:"updatedAt"`
+	License      string                `json:"license"`
+	Repository   string                `json:"repository,omitempty"`
+	HomePage     string                `json:"homePage,omitempty"`
+	Screenshots  []string              `json:"screenshots,omitempty"`
+	Variables    []TemplateVariable    `json:"variables"`
+	Dependencies []TemplateDependency  `json:"dependencies"`
+	DownloadURL  string                `json:"downloadUrl"`
+	Size         int64                 `json:"size"`
+	Checksum     string                `json:"checksum"`
+}
+
+// TemplateSearchRequest represents search parameters for marketplace
+type TemplateSearchRequest struct {
+	Query     string `json:"query"`
+	Type      string `json:"type"`
+	Tags      string `json:"tags"`
+	Author    string `json:"author"`
+	MinRating string `json:"minRating"`
+	SortBy    string `json:"sortBy"`
+	SortOrder string `json:"sortOrder"`
+	Limit     string `json:"limit"`
+	Offset    string `json:"offset"`
+}
+
+// TemplateSearchResult represents search results from marketplace
+type TemplateSearchResult struct {
+	Items      []TemplateMarketplaceItem `json:"items"`
+	Total      int                       `json:"total"`
+	Limit      int                       `json:"limit"`
+	Offset     int                       `json:"offset"`
+	HasMore    bool                      `json:"hasMore"`
+	SearchTime string                    `json:"searchTime"`
+}
+
+// MarketplaceConfig holds marketplace configuration
+type MarketplaceConfig struct {
+	BaseURL    string        `json:"baseUrl"`
+	APIKey     string        `json:"apiKey,omitempty"`
+	Timeout    time.Duration `json:"timeout"`
+	MaxRetries int           `json:"maxRetries"`
+	CacheAge   time.Duration `json:"cacheAge"`
+}
+
+// MarketplaceCache represents cached marketplace data
+type MarketplaceCache struct {
+	Data      interface{} `json:"data"`
+	ExpiresAt time.Time   `json:"expiresAt"`
+	Key       string      `json:"key"`
+}
+
+// Default marketplace configuration
+var defaultMarketplaceConfig = MarketplaceConfig{
+	BaseURL:    "https://api.mcpweaver.org/marketplace", // Placeholder URL
+	Timeout:    30 * time.Second,
+	MaxRetries: 3,
+	CacheAge:   10 * time.Minute,
+}
+
+// SearchMarketplaceTemplates searches for templates in the marketplace
+func (a *App) SearchMarketplaceTemplates(ctx context.Context, request TemplateSearchRequest) (*TemplateSearchResult, error) {
+	startTime := time.Now()
+
+	// Check cache first
+	cacheKey := fmt.Sprintf("search:%s:%s:%s", request.Query, request.Type, request.Tags)
+	if cached, found := a.getMarketplaceCache(cacheKey); found {
+		if result, ok := cached.(*TemplateSearchResult); ok {
+			return result, nil
+		}
+	}
+
+	// Build search URL with parameters
+	searchURL, err := a.buildSearchURL(request)
+	if err != nil {
+		return nil, createMarketplaceError("Invalid search parameters", err.Error(), "search")
+	}
+
+	// Make HTTP request to marketplace API
+	client := &http.Client{
+		Timeout: defaultMarketplaceConfig.Timeout,
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", searchURL, nil)
+	if err != nil {
+		return nil, createMarketplaceError("Failed to create search request", err.Error(), "search")
+	}
+
+	// Add authentication if available
+	if defaultMarketplaceConfig.APIKey != "" {
+		req.Header.Set("Authorization", "Bearer "+defaultMarketplaceConfig.APIKey)
+	}
+	req.Header.Set("User-Agent", "MCPWeaver/1.0")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, createMarketplaceError("Failed to search marketplace", err.Error(), "search")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, createMarketplaceError(
+			fmt.Sprintf("Marketplace search failed with status %d", resp.StatusCode),
+			string(body),
+			"search",
+		)
+	}
+
+	var result TemplateSearchResult
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, createMarketplaceError("Failed to parse search results", err.Error(), "search")
+	}
+
+	// Set search time
+	result.SearchTime = time.Since(startTime).String()
+
+	// Cache results
+	a.setMarketplaceCache(cacheKey, &result)
+
+	return &result, nil
+}
+
+// GetMarketplaceTemplate retrieves detailed information about a specific template
+func (a *App) GetMarketplaceTemplate(ctx context.Context, templateID string) (*TemplateMarketplaceItem, error) {
+	if templateID == "" {
+		return nil, createMarketplaceError("Template ID is required", "", "get")
+	}
+
+	// Check cache first
+	cacheKey := fmt.Sprintf("template:%s", templateID)
+	if cached, found := a.getMarketplaceCache(cacheKey); found {
+		if template, ok := cached.(*TemplateMarketplaceItem); ok {
+			return template, nil
+		}
+	}
+
+	// Build template URL
+	templateURL := fmt.Sprintf("%s/templates/%s", defaultMarketplaceConfig.BaseURL, templateID)
+
+	// Make HTTP request
+	client := &http.Client{
+		Timeout: defaultMarketplaceConfig.Timeout,
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", templateURL, nil)
+	if err != nil {
+		return nil, createMarketplaceError("Failed to create template request", err.Error(), "get")
+	}
+
+	// Add authentication if available
+	if defaultMarketplaceConfig.APIKey != "" {
+		req.Header.Set("Authorization", "Bearer "+defaultMarketplaceConfig.APIKey)
+	}
+	req.Header.Set("User-Agent", "MCPWeaver/1.0")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, createMarketplaceError("Failed to get template from marketplace", err.Error(), "get")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, createMarketplaceError("Template not found in marketplace", templateID, "get")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, createMarketplaceError(
+			fmt.Sprintf("Failed to get template with status %d", resp.StatusCode),
+			string(body),
+			"get",
+		)
+	}
+
+	var template TemplateMarketplaceItem
+	if err := json.NewDecoder(resp.Body).Decode(&template); err != nil {
+		return nil, createMarketplaceError("Failed to parse template data", err.Error(), "get")
+	}
+
+	// Cache template
+	a.setMarketplaceCache(cacheKey, &template)
+
+	return &template, nil
+}
+
+// DownloadMarketplaceTemplate downloads a template from the marketplace
+func (a *App) DownloadMarketplaceTemplate(ctx context.Context, templateID, targetPath string) error {
+	if templateID == "" {
+		return createMarketplaceError("Template ID is required", "", "download")
+	}
+
+	if targetPath == "" {
+		return createMarketplaceError("Target path is required", "", "download")
+	}
+
+	// Get template information first
+	template, err := a.GetMarketplaceTemplate(ctx, templateID)
+	if err != nil {
+		return err
+	}
+
+	if template.DownloadURL == "" {
+		return createMarketplaceError("Template download URL not available", templateID, "download")
+	}
+
+	// Download the template file
+	client := &http.Client{
+		Timeout: 5 * time.Minute, // Longer timeout for downloads
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", template.DownloadURL, nil)
+	if err != nil {
+		return createMarketplaceError("Failed to create download request", err.Error(), "download")
+	}
+
+	// Add authentication if available
+	if defaultMarketplaceConfig.APIKey != "" {
+		req.Header.Set("Authorization", "Bearer "+defaultMarketplaceConfig.APIKey)
+	}
+	req.Header.Set("User-Agent", "MCPWeaver/1.0")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return createMarketplaceError("Failed to download template", err.Error(), "download")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return createMarketplaceError(
+			fmt.Sprintf("Download failed with status %d", resp.StatusCode),
+			template.DownloadURL,
+			"download",
+		)
+	}
+
+	// Write to target file
+	if err := a.WriteFile(targetPath, ""); err != nil {
+		return createMarketplaceError("Failed to create target file", err.Error(), "download")
+	}
+
+	// Copy response body to file
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return createMarketplaceError("Failed to read download data", err.Error(), "download")
+	}
+
+	if err := a.WriteFile(targetPath, string(data)); err != nil {
+		return createMarketplaceError("Failed to write downloaded template", err.Error(), "download")
+	}
+
+	// Verify checksum if available
+	if template.Checksum != "" {
+		// TODO: Implement checksum verification
+	}
+
+	return nil
+}
+
+// GetMarketplaceCategories retrieves available template categories
+func (a *App) GetMarketplaceCategories(ctx context.Context) ([]string, error) {
+	// Check cache first
+	cacheKey := "categories"
+	if cached, found := a.getMarketplaceCache(cacheKey); found {
+		if categories, ok := cached.([]string); ok {
+			return categories, nil
+		}
+	}
+
+	// Build categories URL
+	categoriesURL := fmt.Sprintf("%s/categories", defaultMarketplaceConfig.BaseURL)
+
+	// Make HTTP request
+	client := &http.Client{
+		Timeout: defaultMarketplaceConfig.Timeout,
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", categoriesURL, nil)
+	if err != nil {
+		return nil, createMarketplaceError("Failed to create categories request", err.Error(), "categories")
+	}
+
+	req.Header.Set("User-Agent", "MCPWeaver/1.0")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, createMarketplaceError("Failed to get categories from marketplace", err.Error(), "categories")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, createMarketplaceError(
+			fmt.Sprintf("Failed to get categories with status %d", resp.StatusCode),
+			string(body),
+			"categories",
+		)
+	}
+
+	var categories []string
+	if err := json.NewDecoder(resp.Body).Decode(&categories); err != nil {
+		return nil, createMarketplaceError("Failed to parse categories", err.Error(), "categories")
+	}
+
+	// Sort categories alphabetically
+	sort.Strings(categories)
+
+	// Cache categories
+	a.setMarketplaceCache(cacheKey, categories)
+
+	return categories, nil
+}
+
+// GetMarketplaceTags retrieves popular template tags
+func (a *App) GetMarketplaceTags(ctx context.Context, limit int) ([]string, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+
+	// Check cache first
+	cacheKey := fmt.Sprintf("tags:%d", limit)
+	if cached, found := a.getMarketplaceCache(cacheKey); found {
+		if tags, ok := cached.([]string); ok {
+			return tags, nil
+		}
+	}
+
+	// Build tags URL
+	tagsURL := fmt.Sprintf("%s/tags?limit=%d", defaultMarketplaceConfig.BaseURL, limit)
+
+	// Make HTTP request
+	client := &http.Client{
+		Timeout: defaultMarketplaceConfig.Timeout,
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", tagsURL, nil)
+	if err != nil {
+		return nil, createMarketplaceError("Failed to create tags request", err.Error(), "tags")
+	}
+
+	req.Header.Set("User-Agent", "MCPWeaver/1.0")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, createMarketplaceError("Failed to get tags from marketplace", err.Error(), "tags")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, createMarketplaceError(
+			fmt.Sprintf("Failed to get tags with status %d", resp.StatusCode),
+			string(body),
+			"tags",
+		)
+	}
+
+	var tags []string
+	if err := json.NewDecoder(resp.Body).Decode(&tags); err != nil {
+		return nil, createMarketplaceError("Failed to parse tags", err.Error(), "tags")
+	}
+
+	// Cache tags
+	a.setMarketplaceCache(cacheKey, tags)
+
+	return tags, nil
+}
+
+// PublishTemplateToMarketplace publishes a local template to the marketplace
+func (a *App) PublishTemplateToMarketplace(ctx context.Context, templateID string, publishInfo map[string]interface{}) error {
+	if templateID == "" {
+		return createMarketplaceError("Template ID is required", "", "publish")
+	}
+
+	// Get local template
+	template, err := a.GetTemplate(ctx, templateID)
+	if err != nil {
+		return createMarketplaceError("Failed to get local template", err.Error(), "publish")
+	}
+
+	if template.IsBuiltIn {
+		return createMarketplaceError("Cannot publish built-in templates", templateID, "publish")
+	}
+
+	// Prepare publish payload
+	publishData := map[string]interface{}{
+		"name":         template.Name,
+		"description":  template.Description,
+		"version":      template.Version,
+		"author":       template.Author,
+		"type":         template.Type,
+		"variables":    template.Variables,
+		"license":      publishInfo["license"],
+		"tags":         publishInfo["tags"],
+		"repository":   publishInfo["repository"],
+		"homePage":     publishInfo["homePage"],
+		"screenshots":  publishInfo["screenshots"],
+		"isUpdate":     publishInfo["isUpdate"],
+	}
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(publishData)
+	if err != nil {
+		return createMarketplaceError("Failed to prepare publish data", err.Error(), "publish")
+	}
+
+	// Build publish URL
+	publishURL := fmt.Sprintf("%s/templates", defaultMarketplaceConfig.BaseURL)
+
+	// Make HTTP request
+	client := &http.Client{
+		Timeout: 2 * time.Minute, // Longer timeout for uploads
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", publishURL, strings.NewReader(string(jsonData)))
+	if err != nil {
+		return createMarketplaceError("Failed to create publish request", err.Error(), "publish")
+	}
+
+	// Add authentication (required for publishing)
+	if defaultMarketplaceConfig.APIKey == "" {
+		return createMarketplaceError("API key required for publishing", "", "publish")
+	}
+	req.Header.Set("Authorization", "Bearer "+defaultMarketplaceConfig.APIKey)
+	req.Header.Set("User-Agent", "MCPWeaver/1.0")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return createMarketplaceError("Failed to publish template", err.Error(), "publish")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return createMarketplaceError(
+			fmt.Sprintf("Publish failed with status %d", resp.StatusCode),
+			string(body),
+			"publish",
+		)
+	}
+
+	return nil
+}
+
+// Helper function to build search URL with parameters
+func (a *App) buildSearchURL(request TemplateSearchRequest) (string, error) {
+	baseURL := fmt.Sprintf("%s/search", defaultMarketplaceConfig.BaseURL)
+	params := make([]string, 0)
+
+	if request.Query != "" {
+		params = append(params, fmt.Sprintf("q=%s", request.Query))
+	}
+	if request.Type != "" {
+		params = append(params, fmt.Sprintf("type=%s", request.Type))
+	}
+	if request.Tags != "" {
+		params = append(params, fmt.Sprintf("tags=%s", request.Tags))
+	}
+	if request.Author != "" {
+		params = append(params, fmt.Sprintf("author=%s", request.Author))
+	}
+	if request.MinRating != "" {
+		if rating, err := strconv.ParseFloat(request.MinRating, 64); err == nil && rating >= 0 && rating <= 5 {
+			params = append(params, fmt.Sprintf("min_rating=%.1f", rating))
+		}
+	}
+	if request.SortBy != "" {
+		validSorts := map[string]bool{
+			"name": true, "rating": true, "downloads": true, "created": true, "updated": true,
+		}
+		if validSorts[request.SortBy] {
+			params = append(params, fmt.Sprintf("sort=%s", request.SortBy))
+		}
+	}
+	if request.SortOrder != "" && (request.SortOrder == "asc" || request.SortOrder == "desc") {
+		params = append(params, fmt.Sprintf("order=%s", request.SortOrder))
+	}
+	if request.Limit != "" {
+		if limit, err := strconv.Atoi(request.Limit); err == nil && limit > 0 && limit <= 100 {
+			params = append(params, fmt.Sprintf("limit=%d", limit))
+		}
+	}
+	if request.Offset != "" {
+		if offset, err := strconv.Atoi(request.Offset); err == nil && offset >= 0 {
+			params = append(params, fmt.Sprintf("offset=%d", offset))
+		}
+	}
+
+	if len(params) > 0 {
+		return fmt.Sprintf("%s?%s", baseURL, strings.Join(params, "&")), nil
+	}
+
+	return baseURL, nil
+}
+
+// Cache management functions
+var marketplaceCache = make(map[string]MarketplaceCache)
+
+func (a *App) getMarketplaceCache(key string) (interface{}, bool) {
+	if cached, exists := marketplaceCache[key]; exists {
+		if time.Now().Before(cached.ExpiresAt) {
+			return cached.Data, true
+		}
+		// Clean up expired cache
+		delete(marketplaceCache, key)
+	}
+	return nil, false
+}
+
+func (a *App) setMarketplaceCache(key string, data interface{}) {
+	marketplaceCache[key] = MarketplaceCache{
+		Data:      data,
+		ExpiresAt: time.Now().Add(defaultMarketplaceConfig.CacheAge),
+		Key:       key,
+	}
+}
+
+// ClearMarketplaceCache clears all marketplace cache
+func (a *App) ClearMarketplaceCache() {
+	marketplaceCache = make(map[string]MarketplaceCache)
+}
+
+// GetMarketplaceConfig returns current marketplace configuration
+func (a *App) GetMarketplaceConfig() MarketplaceConfig {
+	return defaultMarketplaceConfig
+}
+
+// SetMarketplaceConfig updates marketplace configuration
+func (a *App) SetMarketplaceConfig(config MarketplaceConfig) error {
+	if config.BaseURL == "" {
+		return createMarketplaceError("Base URL is required", "", "config")
+	}
+	if config.Timeout <= 0 {
+		config.Timeout = 30 * time.Second
+	}
+	if config.MaxRetries < 0 {
+		config.MaxRetries = 3
+	}
+	if config.CacheAge <= 0 {
+		config.CacheAge = 10 * time.Minute
+	}
+
+	defaultMarketplaceConfig = config
+	return nil
+}
+
+// Helper function to create marketplace-specific errors
+func createMarketplaceError(message, details, operation string) error {
+	return createError("marketplace", "MARKETPLACE_ERROR", message, map[string]string{
+		"details":   details,
+		"operation": operation,
+	})
+}

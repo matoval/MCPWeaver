@@ -377,3 +377,189 @@ export interface RecentFile {
   lastAccessed: string;
   type: 'spec' | 'export';
 }
+
+// Template System Types
+export interface Template {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  type: TemplateType;
+  path: string;
+  isBuiltIn: boolean;
+  variables: TemplateVariable[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TemplateType = 'default' | 'custom' | 'plugin';
+
+export interface TemplateVariable {
+  name: string;
+  description: string;
+  type: string;
+  defaultValue: string;
+  required: boolean;
+  options?: string[];
+  validation?: string;
+}
+
+export interface CreateTemplateRequest {
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  type: TemplateType;
+  path: string;
+  variables?: TemplateVariable[];
+}
+
+export interface UpdateTemplateRequest {
+  name?: string;
+  description?: string;
+  version?: string;
+  author?: string;
+  type?: TemplateType;
+  path?: string;
+  variables?: TemplateVariable[];
+}
+
+export interface TemplateValidationResult {
+  valid: boolean;
+  errors?: TemplateError[];
+  warnings?: TemplateWarning[];
+  suggestions?: string[];
+  performance?: TemplatePerformance;
+  dependencies?: TemplateDependency[];
+}
+
+export interface TemplateError {
+  type: string;
+  message: string;
+  line?: number;
+  column?: number;
+  severity: string;
+}
+
+export interface TemplateWarning {
+  type: string;
+  message: string;
+  line?: number;
+  suggestion?: string;
+}
+
+export interface TemplatePerformance {
+  renderTime: string; // Duration as string
+  memoryUsage: number;
+  complexity: string;
+  cacheHit: boolean;
+}
+
+export interface TemplateDependency {
+  name: string;
+  version: string;
+  required: boolean;
+  type: string;
+}
+
+export interface TemplateTestRequest {
+  templateId: string;
+  testData: Record<string, any>;
+  options?: TemplateTestOptions;
+}
+
+export interface TemplateTestOptions {
+  validateOutput?: boolean;
+  measurePerformance?: boolean;
+  generateReport?: boolean;
+}
+
+export interface TemplateTestResult {
+  success: boolean;
+  output?: string;
+  errors?: TemplateError[];
+  warnings?: TemplateWarning[];
+  performance?: TemplatePerformance;
+  report?: TemplateTestReport;
+}
+
+export interface TemplateTestReport {
+  templateId: string;
+  testExecutedAt: string;
+  executionTime: string;
+  outputSize: number;
+  variablesUsed: string[];
+  functionsUsed: string[];
+  recommendations: string[];
+}
+
+export interface TemplateImportRequest {
+  source: string;
+  path?: string;
+  url?: string;
+  marketplaceId?: string;
+  options?: TemplateImportOptions;
+}
+
+export interface TemplateImportOptions {
+  overwriteExisting?: boolean;
+  validateOnly?: boolean;
+  includeDependencies?: boolean;
+  targetType?: TemplateType;
+}
+
+export interface TemplateExportRequest {
+  templateId: string;
+  format: string;
+  targetPath: string;
+  options?: TemplateExportOptions;
+}
+
+export interface TemplateExportOptions {
+  includeDocumentation?: boolean;
+  includeExamples?: boolean;
+  includeDependencies?: boolean;
+  minify?: boolean;
+}
+
+export interface TemplateMarketplaceItem {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  type: TemplateType;
+  tags: string[];
+  rating: number;
+  downloads: number;
+  createdAt: string;
+  updatedAt: string;
+  license: string;
+  repository?: string;
+  homePage?: string;
+  screenshots?: string[];
+  variables: TemplateVariable[];
+  dependencies: TemplateDependency[];
+}
+
+export interface TemplateSearchRequest {
+  query?: string;
+  type?: TemplateType;
+  tags?: string[];
+  author?: string;
+  minRating?: number;
+  sortBy?: string;
+  sortOrder?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TemplateSearchResult {
+  items: TemplateMarketplaceItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+  searchTime: string;
+}
