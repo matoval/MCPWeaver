@@ -27,8 +27,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -71,15 +69,14 @@ jobs:
 
       - name: Build check
         run: |
-          wails build -clean -skipbindings -s
+          wails build -clean -s
         env:
           CGO_ENABLED: 1
 
       - name: Security scan
-        uses: securecodewarrior/github-action-add-sarif@v1
-        if: always()
-        with:
-          sarif-file: 'gosec-report.sarif'
+        run: |
+          go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+          gosec -fmt sarif -out gosec-report.sarif ./... || echo "Security scan completed with warnings"
         continue-on-error: true
 
   # Cross-platform build test
@@ -104,8 +101,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
@@ -123,7 +118,7 @@ jobs:
 
       - name: Build test
         run: |
-          wails build -clean -skipbindings
+          wails build -clean -s
         env:
           CGO_ENABLED: 1
 
@@ -220,9 +215,9 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Run Gosec Security Scanner
-        uses: securecodewarrior/github-action-gosec@master
-        with:
-          args: '-fmt sarif -out gosec-report.sarif ./...'
+        run: |
+          go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+          gosec -fmt sarif -out gosec-report.sarif ./...
         continue-on-error: true
 
       - name: Upload SARIF file
