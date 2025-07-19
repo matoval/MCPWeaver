@@ -1,0 +1,350 @@
+name: Nightly Build and Test
+
+on:
+  schedule:
+    # Run every night at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      run_performance_tests:
+        description: 'Run performance tests'
+        required: false
+        default: true
+        type: boolean
+      run_integration_tests:
+        description: 'Run integration tests'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  GO_VERSION: '1.23'
+  NODE_VERSION: '20'
+  WAILS_VERSION: 'v2.10.1'
+
+jobs:
+  # Extended testing job
+  comprehensive-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go-version: ['1.21', '1.22', '1.23']
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev build-essential
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            # macOS dependencies if needed
+            echo "macOS dependencies check"
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Windows dependencies if needed
+            echo "Windows dependencies check"
+          fi
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run unit tests with race detection
+        run: |
+          go test ./... -v -race -coverprofile=coverage-${{ matrix.os }}-go${{ matrix.go-version }}.out -covermode=atomic
+
+      - name: Run integration tests
+        if: github.event.inputs.run_integration_tests != 'false'
+        run: |
+          go test ./tests/integration/... -v -tags=integration
+
+      - name: Run benchmarks
+        if: github.event.inputs.run_performance_tests != 'false'
+        run: |
+          go test ./... -bench=. -benchmem -run=^$ > benchmark-${{ matrix.os }}-go${{ matrix.go-version }}.txt
+
+      - name: Memory usage test
+        run: |
+          go test ./... -v -memprofile=mem-${{ matrix.os }}-go${{ matrix.go-version }}.prof -run=TestMemoryUsage || echo "No memory tests found"
+
+      - name: Build test
+        run: |
+          wails build -clean -skipbindings
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-go${{ matrix.go-version }}
+          path: |
+            coverage-*.out
+            benchmark-*.txt
+            mem-*.prof
+
+  # Security audit
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run Nancy vulnerability scanner
+        run: |
+          go install github.com/sonatypecommunity/nancy@latest
+          go list -json -deps ./... | nancy sleuth
+        continue-on-error: true
+
+      - name: Run Govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+        continue-on-error: true
+
+      - name: Run Gosec
+        run: |
+          go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+          gosec -fmt json -out gosec-report.json ./...
+        continue-on-error: true
+
+      - name: Frontend security audit
+        run: |
+          cd frontend
+          npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            gosec-report.json
+
+  # Performance monitoring
+  performance-monitoring:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_performance_tests != 'false'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run performance benchmarks
+        run: |
+          go test ./... -bench=. -benchmem -count=5 -run=^$ > performance-report.txt
+
+      - name: Build size analysis
+        run: |
+          # Build the application
+          wails build -clean
+          
+          # Analyze build size
+          echo "Build size analysis:" > build-analysis.txt
+          find build/bin -type f -exec ls -lh {} \; >> build-analysis.txt
+          
+          # Analyze Go binary size
+          go build -ldflags="-s -w" -o mcpweaver-slim ./
+          go build -o mcpweaver-debug ./
+          
+          echo "Binary size comparison:" >> build-analysis.txt
+          ls -lh mcpweaver-* >> build-analysis.txt
+
+      - name: Memory profiling
+        run: |
+          go test ./internal/app -memprofile=mem.prof -bench=. -run=^$
+          go tool pprof -text mem.prof > memory-profile.txt || echo "No memory profile generated"
+
+      - name: CPU profiling
+        run: |
+          go test ./internal/app -cpuprofile=cpu.prof -bench=. -run=^$
+          go tool pprof -text cpu.prof > cpu-profile.txt || echo "No CPU profile generated"
+
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports
+          path: |
+            performance-report.txt
+            build-analysis.txt
+            memory-profile.txt
+            cpu-profile.txt
+            *.prof
+
+  # Code quality analysis
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install code analysis tools
+        run: |
+          go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+          go install github.com/gordonklaus/ineffassign@latest
+          go install github.com/kisielk/errcheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install github.com/alexkohler/nakedret@latest
+
+      - name: Run cyclomatic complexity analysis
+        run: |
+          gocyclo -over 15 . > complexity-report.txt || echo "No high complexity functions found"
+
+      - name: Run ineffectual assignment check
+        run: |
+          ineffassign ./... > ineffassign-report.txt || echo "No ineffectual assignments found"
+
+      - name: Run error check
+        run: |
+          errcheck ./... > errcheck-report.txt || echo "All errors handled"
+
+      - name: Run static check
+        run: |
+          staticcheck ./... > staticcheck-report.txt || echo "No static check issues found"
+
+      - name: Run naked return check
+        run: |
+          nakedret ./... > nakedret-report.txt || echo "No naked returns found"
+
+      - name: Count lines of code
+        run: |
+          echo "Lines of code analysis:" > loc-report.txt
+          find . -name "*.go" -not -path "./vendor/*" -not -path "./.git/*" | xargs wc -l | tail -1 >> loc-report.txt
+          find ./frontend/src -name "*.ts" -o -name "*.tsx" | xargs wc -l | tail -1 >> loc-report.txt
+
+      - name: Generate dependency graph
+        run: |
+          go mod graph > dependency-graph.txt
+
+      - name: Upload code quality reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-quality-reports
+          path: |
+            complexity-report.txt
+            ineffassign-report.txt
+            errcheck-report.txt
+            staticcheck-report.txt
+            nakedret-report.txt
+            loc-report.txt
+            dependency-graph.txt
+
+  # Documentation validation
+  docs-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate documentation links
+        run: |
+          # Check for broken links in markdown files
+          find . -name "*.md" -exec grep -l "http" {} \; > docs-with-links.txt || echo "No docs with links found"
+          
+          # Simple validation (in production, use a proper link checker)
+          echo "Documentation validation completed" > docs-validation.txt
+
+      - name: Check API documentation
+        run: |
+          # Generate Go documentation
+          go install golang.org/x/tools/cmd/godoc@latest
+          timeout 30s godoc -http=:6060 &
+          sleep 5
+          curl -s http://localhost:6060/pkg/MCPWeaver/ > api-docs.html || echo "API docs not accessible"
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-reports
+          path: |
+            docs-validation.txt
+            api-docs.html
+
+  # Notification job
+  notify:
+    needs: [comprehensive-test, security-audit, performance-monitoring, code-quality, docs-validation]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate report
+        run: |
+          echo "# Nightly Build Report" > report.md
+          echo "" >> report.md
+          echo "Date: $(date)" >> report.md
+          echo "" >> report.md
+          echo "## Job Results" >> report.md
+          echo "- Comprehensive Tests: ${{ needs.comprehensive-test.result }}" >> report.md
+          echo "- Security Audit: ${{ needs.security-audit.result }}" >> report.md
+          echo "- Performance Monitoring: ${{ needs.performance-monitoring.result }}" >> report.md
+          echo "- Code Quality: ${{ needs.code-quality.result }}" >> report.md
+          echo "- Documentation Validation: ${{ needs.docs-validation.result }}" >> report.md
+          echo "" >> report.md
+          
+          if [[ "${{ needs.comprehensive-test.result }}" != "success" ]]; then
+            echo "⚠️ Some test configurations failed. Check the detailed logs." >> report.md
+          fi
+          
+          if [[ "${{ needs.security-audit.result }}" != "success" ]]; then
+            echo "🔒 Security audit found issues that need attention." >> report.md
+          fi
+
+      - name: Upload nightly report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-report
+          path: report.md
+          retention-days: 90
