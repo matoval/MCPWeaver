@@ -402,7 +402,7 @@ func (a *App) PublishTemplateToMarketplace(ctx context.Context, templateID strin
 	}
 
 	// Get local template
-	template, err := a.GetTemplate(ctx, templateID)
+	template, err := a.GetTemplate(templateID)
 	if err != nil {
 		return createMarketplaceError("Failed to get local template", err.Error(), "publish")
 	}
