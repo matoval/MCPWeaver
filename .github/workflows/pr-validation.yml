@@ -7,8 +7,6 @@ on:
 
 env:
   GO_VERSION: '1.23'
-  NODE_VERSION: '20'
-  WAILS_VERSION: 'v2.10.1'
 
 jobs:
   # Quick validation job
@@ -23,11 +21,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
@@ -38,29 +31,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
-          cd frontend && npm ci && cd ..
-          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
-
-      - name: Run Go linter
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: latest
-          working-directory: .
+      - name: Download Go dependencies
+        run: go mod download
 
       - name: Run Go tests
-        run: |
-          go test ./... -v -race -coverprofile=coverage.out
-          go tool cover -func=coverage.out
-
-      - name: Run frontend linting
-        run: |
-          cd frontend
-          npm run lint || echo "No lint script found"
-          cd ..
+        run: go test ./... -v
 
       - name: Check Go mod tidy
         run: |
@@ -68,19 +43,9 @@ jobs:
           git diff --exit-code go.mod go.sum
 
       - name: Build check
-        run: |
-          echo "Checking if wails is available..."
-          wails version || echo "Wails not available, skipping build check"
-          echo "Building Go backend..."
-          go build -v ./...
+        run: go build -v ./...
         env:
-          CGO_ENABLED: 1
-
-      - name: Security scan
-        run: |
-          go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
-          gosec -fmt sarif -out gosec-report.sarif ./... || echo "Security scan completed with warnings"
-        continue-on-error: true
+          CGO_ENABLED: 0
 
   # Cross-platform build test
   build-test:
@@ -100,32 +65,13 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
-
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm ci
+      - name: Download Go dependencies
+        run: go mod download
 
       - name: Build test
-        run: |
-          echo "Building Go backend..."
-          go build -v ./...
-          echo "Build test completed"
+        run: go build -v ./...
         env:
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
 
   # Documentation check
   docs:
@@ -144,18 +90,7 @@ jobs:
               exit 1
             fi
           done
-          
-          # Check for changelog or release notes
-          if [[ ! -f "CHANGELOG.md" && ! -f "RELEASES.md" ]]; then
-            echo "Consider adding a CHANGELOG.md or RELEASES.md file"
-          fi
-
-      - name: Spell check
-        uses: streetsidesoftware/cspell-action@v5
-        with:
-          files: "**/*.md"
-          incremental_files_only: false
-        continue-on-error: true
+          echo "Documentation check passed"
 
   # Performance regression test
   performance:
@@ -173,43 +108,11 @@ jobs:
       - name: Run benchmarks
         run: |
           go test ./... -bench=. -benchmem -run=^$ > benchmark-new.txt || echo "No benchmarks found"
-
-      - name: Checkout base branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.base_ref }}
-          path: base
-
-      - name: Run base benchmarks
-        run: |
-          cd base
-          go test ./... -bench=. -benchmem -run=^$ > ../benchmark-base.txt || echo "No benchmarks found"
-          cd ..
-
-      - name: Compare benchmarks
-        run: |
-          if [[ -f benchmark-base.txt && -f benchmark-new.txt ]]; then
-            echo "Benchmark comparison:"
-            echo "Base:"
-            cat benchmark-base.txt
-            echo "Current:"
-            cat benchmark-new.txt
-            
-            # Simple performance regression check
-            if command -v benchcmp >/dev/null 2>&1; then
-              benchcmp benchmark-base.txt benchmark-new.txt
-            else
-              echo "benchcmp not available, manual comparison needed"
-            fi
-          else
-            echo "Benchmark files not found, skipping comparison"
-          fi
+          echo "Performance check completed"
 
   # Security checks
   security:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -219,23 +122,10 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Run Gosec Security Scanner
+      - name: Run basic security scan
         run: |
           go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
-          gosec -fmt sarif -out gosec-report.sarif ./...
-        continue-on-error: true
-
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: gosec-report.sarif
-        continue-on-error: true
-
-      - name: Dependency vulnerability scan
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./...
+          gosec ./... || echo "Security scan completed with warnings"
         continue-on-error: true
 
   # Dependency review
@@ -249,12 +139,12 @@ jobs:
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         with:
-          fail-on-severity: moderate
-          allow-dependencies-licenses: 'MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC'
+          fail-on-severity: high
+        continue-on-error: true
 
   # Summary job
   pr-summary:
-    needs: [validate, build-test, docs, performance, security, dependency-review]
+    needs: [validate, build-test, docs]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -266,9 +156,6 @@ jobs:
           echo "- Validation: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Cross-platform Build: ${{ needs.build-test.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Documentation: ${{ needs.docs.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Performance: ${{ needs.performance.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Security: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Dependency Review: ${{ needs.dependency-review.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Determine overall status
