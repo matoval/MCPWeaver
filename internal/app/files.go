@@ -122,6 +122,7 @@ func convertFilters(filters []FileFilter) []runtime.FileFilter {
 		}
 	}
 	return wailsFilters
+
 }
 
 // SelectDirectory opens a directory selection dialog
