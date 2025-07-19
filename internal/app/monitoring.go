@@ -2,10 +2,14 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"sync"
 	"time"
 )
+
+// Simple template cache for monitoring
+var templateCache = make(map[string]interface{})
 
 // TemplatePerformanceMetrics represents performance metrics for template operations
 type TemplatePerformanceMetrics struct {
@@ -591,8 +595,52 @@ func generateAlertID() string {
 }
 
 func createMonitoringError(message, details, operation string) error {
-	return createError("monitoring", "MONITORING_ERROR", message, map[string]string{
-		"details":   details,
-		"operation": operation,
-	})
+	return fmt.Errorf("monitoring error: %s - %s (operation: %s)", message, details, operation)
+}
+
+// NewPerformanceMonitor creates a new performance monitor for app compatibility
+func NewPerformanceMonitor() *PerformanceMonitor {
+	return &PerformanceMonitor{
+		operation:  "app",
+		startTime:  time.Now(),
+	}
+}
+
+// RecordStartupTime records application startup time
+func (pm *PerformanceMonitor) RecordStartupTime(duration time.Duration) {
+	// Stub implementation for compatibility
+}
+
+// PerformanceMetrics represents overall app performance metrics
+type PerformanceMetrics struct {
+	StartupTime time.Duration `json:"startup_time"`
+	MemoryUsage int64         `json:"memory_usage"`
+}
+
+// GetMetrics returns performance metrics (stub for compatibility)
+func (pm *PerformanceMonitor) GetMetrics() *PerformanceMetrics {
+	return &PerformanceMetrics{
+		StartupTime: time.Since(pm.startTime),
+		MemoryUsage: getMemoryUsage(),
+	}
+}
+
+// GetMemoryUsageMB returns memory usage in MB (stub for compatibility)
+func (pm *PerformanceMonitor) GetMemoryUsageMB() float64 {
+	return 0.0
+}
+
+// ForceGC forces garbage collection (stub for compatibility)
+func (pm *PerformanceMonitor) ForceGC() {
+	runtime.GC()
+}
+
+// StartTimer starts a timer for an operation (stub for compatibility)
+func (pm *PerformanceMonitor) StartTimer(operation, subOperation string) func() {
+	// Return a function that can be called to stop the timer
+	startTime := time.Now()
+	return func() {
+		// Timer stop logic would go here
+		_ = time.Since(startTime) // Calculate duration but don't use it
+	}
 }

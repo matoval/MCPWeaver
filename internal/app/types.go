@@ -368,47 +368,7 @@ type TemplateTestReport struct {
 	Recommendations []string      `json:"recommendations"`
 }
 
-// Template Marketplace Types
-type TemplateMarketplaceItem struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Version     string             `json:"version"`
-	Author      string             `json:"author"`
-	Type        TemplateType       `json:"type"`
-	Tags        []string           `json:"tags"`
-	Rating      float64            `json:"rating"`
-	Downloads   int                `json:"downloads"`
-	CreatedAt   time.Time          `json:"createdAt"`
-	UpdatedAt   time.Time          `json:"updatedAt"`
-	License     string             `json:"license"`
-	Repository  string             `json:"repository,omitempty"`
-	HomePage    string             `json:"homePage,omitempty"`
-	Screenshots []string           `json:"screenshots,omitempty"`
-	Variables   []TemplateVariable `json:"variables"`
-	Dependencies []TemplateDependency `json:"dependencies"`
-}
-
-type TemplateSearchRequest struct {
-	Query       string       `json:"query,omitempty"`
-	Type        TemplateType `json:"type,omitempty"`
-	Tags        []string     `json:"tags,omitempty"`
-	Author      string       `json:"author,omitempty"`
-	MinRating   float64      `json:"minRating,omitempty"`
-	SortBy      string       `json:"sortBy,omitempty"` // "name", "rating", "downloads", "created", "updated"
-	SortOrder   string       `json:"sortOrder,omitempty"` // "asc", "desc"
-	Limit       int          `json:"limit,omitempty"`
-	Offset      int          `json:"offset,omitempty"`
-}
-
-type TemplateSearchResult struct {
-	Items      []TemplateMarketplaceItem `json:"items"`
-	Total      int                       `json:"total"`
-	Limit      int                       `json:"limit"`
-	Offset     int                       `json:"offset"`
-	HasMore    bool                      `json:"hasMore"`
-	SearchTime time.Duration             `json:"searchTime"`
-}
+// Template Marketplace Types - See marketplace.go for actual definitions
 
 // Error Types
 type APIError struct {
