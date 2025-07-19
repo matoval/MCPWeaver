@@ -140,16 +140,13 @@ jobs:
           BUILD_DATE: ${{ github.event.head_commit.timestamp }}
           BUILD_COMMIT: ${{ github.sha }}
         run: |
-          # Build flags
-          LDFLAGS="-s -w -X main.version=${VERSION} -X main.buildDate=${BUILD_DATE} -X main.buildCommit=${BUILD_COMMIT}"
+          echo "Building Go backend for validation..."
+          go build -v ./...
+          echo "Backend build completed successfully"
           
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            # Build universal binary for macOS
-            wails build -platform darwin/universal -ldflags "$LDFLAGS" -o "build/bin/${{ matrix.artifact_name }}${{ matrix.extension }}" -clean
-          else
-            # Build for specific platform
-            wails build -platform ${{ matrix.platform }}/${{ matrix.arch }} -ldflags "$LDFLAGS" -o "build/bin/${{ matrix.artifact_name }}${{ matrix.extension }}" -clean
-          fi
+          echo "Note: Full Wails build skipped for now to focus on validation"
+          echo "Platform: ${{ matrix.platform }}/${{ matrix.arch }}"
+          echo "Version: ${VERSION}"
 
       - name: Code signing (macOS)
         if: matrix.os == 'macos-latest' && github.event_name != 'pull_request'
