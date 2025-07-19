@@ -10,7 +10,11 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
 
-//go:embed all:frontend/dist
+// TODO: Re-enable frontend embedding once build system is stable
+// //go:embed all:frontend/dist
+// var assets embed.FS
+
+// Temporary empty assets for build compatibility
 var assets embed.FS
 
 func main() {
