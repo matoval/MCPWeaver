@@ -9,6 +9,7 @@ type Repository struct {
 	Projects    *ProjectRepository
 	Generations *GenerationRepository
 	Settings    *SettingsRepository
+	Templates   *TemplateRepository
 	db          *DB
 }
 
@@ -18,6 +19,7 @@ func NewRepository(db *DB) *Repository {
 		Projects:    NewProjectRepository(db),
 		Generations: NewGenerationRepository(db),
 		Settings:    NewSettingsRepository(db),
+		Templates:   NewTemplateRepository(db),
 		db:          db,
 	}
 }
