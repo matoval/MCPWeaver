@@ -1,3 +1,8 @@
+/* Import styles */
+@import './styles/accessibility.scss';
+@import './styles/animations.scss';
+@import './styles/responsive.scss';
+
 /* Global styles */
 * {
   box-sizing: border-box;

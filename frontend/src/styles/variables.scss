@@ -74,3 +74,20 @@ $sidebar-collapsed-width: 60px;
 $toolbar-height: 60px;
 $menubar-height: 30px;
 $statusbar-height: 24px;
+
+// Accessibility
+$focus-ring-width: 2px;
+$focus-ring-offset: 2px;
+$focus-ring-color: #007acc;
+$focus-ring-color-alpha: rgba(0, 122, 204, 0.3);
+
+// High Contrast Colors
+$high-contrast-bg: #ffffff;
+$high-contrast-text: #000000;
+$high-contrast-border: #000000;
+$high-contrast-focus: #0066cc;
+
+// Animation Durations (for reduced motion)
+$animation-duration-short: 150ms;
+$animation-duration-medium: 300ms;
+$animation-duration-long: 500ms;
