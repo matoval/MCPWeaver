@@ -137,9 +137,10 @@ jobs:
       continue-on-error: true
 
     - name: Run custom vulnerability scan script
+      env:
+        SCAN_TYPE: ${{ github.event.inputs.scan_type || 'full' }}
       run: |
         chmod +x ./scripts/vulnerability-scan.sh
-        SCAN_TYPE="${{ github.event.inputs.scan_type || 'full' }}"
         case "$SCAN_TYPE" in
           "quick")
             ./scripts/vulnerability-scan.sh --quick
@@ -165,11 +166,13 @@ jobs:
 
     - name: Generate security summary
       if: always()
+      env:
+        SCAN_TYPE: ${{ github.event.inputs.scan_type || 'full' }}
       run: |
         echo "# Security Scan Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Scan Date:** $(date)" >> $GITHUB_STEP_SUMMARY
-        echo "**Scan Type:** ${{ github.event.inputs.scan_type || 'full' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Scan Type:** $SCAN_TYPE" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Check for high severity issues

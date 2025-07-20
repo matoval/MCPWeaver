@@ -1,8 +1,9 @@
 package app
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"runtime"
 	"time"
 )
@@ -258,7 +259,13 @@ func asAPIError(err error) (*APIError, bool) {
 
 // generateCorrelationID generates a unique correlation ID
 func generateCorrelationID() string {
-	return fmt.Sprintf("mcpw-%d-%d", time.Now().UnixNano(), rand.Intn(1000))
+	// Use crypto/rand for secure random number generation
+	n, err := rand.Int(rand.Reader, big.NewInt(1000))
+	if err != nil {
+		// Fallback to timestamp only if crypto/rand fails
+		return fmt.Sprintf("mcpw-%d", time.Now().UnixNano())
+	}
+	return fmt.Sprintf("mcpw-%d-%d", time.Now().UnixNano(), n.Int64())
 }
 
 // getStackTrace gets the current stack trace

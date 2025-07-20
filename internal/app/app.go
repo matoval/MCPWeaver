@@ -25,6 +25,7 @@ type App struct {
 	mappingService      *mapping.Service
 	generatorService    *generator.Service
 	validatorService    *validator.Service
+	updateService       *UpdateService
 	settings            *AppSettings
 	errorManager        *ErrorManager
 	performanceMonitor  *PerformanceMonitor
@@ -60,6 +61,9 @@ func (a *App) OnStartup(ctx context.Context) error {
 	a.projectRepo = database.NewProjectRepository(dbWrapper)
 	a.validationCacheRepo = database.NewValidationCacheRepository(dbWrapper)
 	
+	// Initialize update service
+	a.updateService = NewUpdateService(ctx)
+	
 	// Load settings
 	settings, err := a.loadSettings()
 	if err != nil {
@@ -68,6 +72,11 @@ func (a *App) OnStartup(ctx context.Context) error {
 		settings = getDefaultSettings()
 	}
 	a.settings = settings
+	
+	// Start update service
+	if err := a.updateService.Start(); err != nil {
+		runtime.LogWarning(a.ctx, "Failed to start update service: "+err.Error())
+	}
 	
 	// Record startup time
 	startupDuration := time.Since(startupStart)
@@ -89,6 +98,13 @@ func (a *App) OnShutdown(ctx context.Context) error {
 	runtime.EventsEmit(a.ctx, "system:shutdown", map[string]interface{}{
 		"timestamp": time.Now(),
 	})
+	
+	// Stop update service
+	if a.updateService != nil {
+		if err := a.updateService.Stop(); err != nil {
+			runtime.LogError(a.ctx, "Failed to stop update service: "+err.Error())
+		}
+	}
 	
 	// Save settings
 	if err := a.saveSettings(); err != nil {
@@ -215,5 +231,6 @@ func getDefaultSettings() *AppSettings {
 			BackupOnGenerate:    true,
 			CustomTemplates:     []string{},
 		},
+		UpdateSettings: DefaultUpdateSettings(),
 	}
 }

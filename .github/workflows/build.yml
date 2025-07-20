@@ -38,11 +38,16 @@ jobs:
 
       - name: Determine version
         id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.version }}" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
-          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
-            VERSION="${{ github.ref_name }}"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" && -n "$INPUT_VERSION" ]]; then
+            VERSION="$INPUT_VERSION"
+          elif [[ "$REF_TYPE" == "tag" ]]; then
+            VERSION="$REF_NAME"
             VERSION=${VERSION#v}  # Remove 'v' prefix
             echo "should_release=true" >> $GITHUB_OUTPUT
           else
@@ -53,8 +58,10 @@ jobs:
 
       - name: Determine build matrix
         id: matrix
+        env:
+          INPUT_PLATFORMS: ${{ github.event.inputs.platforms || 'all' }}
         run: |
-          PLATFORMS="${{ github.event.inputs.platforms || 'all' }}"
+          PLATFORMS="$INPUT_PLATFORMS"
           
           if [[ "$PLATFORMS" == "all" ]]; then
             MATRIX='["windows-latest", "macos-latest", "ubuntu-latest"]'

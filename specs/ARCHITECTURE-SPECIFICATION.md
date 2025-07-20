@@ -23,6 +23,7 @@ MCPWeaver follows a native desktop application architecture using Wails v2, with
 │  ├─ Parser Service (OpenAPI Processing)                   │
 │  ├─ Generator Service (MCP Server Generation)             │
 │  ├─ Validator Service (Spec & Code Validation)            │
+│  ├─ Update Service (Auto-Update Management)               │
 │  └─ Project Manager (Local Project Management)            │
 ├─────────────────────────────────────────────────────────────┤
 │  Data Layer                                                │
@@ -78,12 +79,13 @@ import (
 
 // App struct
 type App struct {
-    ctx         context.Context
-    parser      *parser.Service
-    generator   *generator.Service
-    validator   *validator.Service
-    project     *project.Service
-    database    *database.DB
+    ctx           context.Context
+    parser        *parser.Service
+    generator     *generator.Service
+    validator     *validator.Service
+    updateService *UpdateService
+    project       *project.Service
+    database      *database.DB
 }
 
 // NewApp creates a new App application struct
@@ -463,6 +465,158 @@ func (s *Service) processGeneration(ctx context.Context, job *GenerationJob) {
     job.Status = StatusCompleted
     now := time.Now()
     job.EndTime = &now
+}
+```
+
+#### Update Service with Auto-Update Management
+```go
+// internal/app/update_service.go
+package app
+
+import (
+    "context"
+    "time"
+    "net/http"
+    "sync"
+)
+
+type UpdateService struct {
+    ctx             context.Context
+    config          *UpdateConfiguration
+    settings        *UpdateSettings
+    currentStatus   UpdateStatus
+    progress        *UpdateProgress
+    rollbackManager *RollbackManager
+    scheduler       *UpdateScheduler
+    mutex           sync.RWMutex
+    httpClient      *http.Client
+    analytics       []UpdateAnalytics
+    subscribers     []UpdateSubscriber
+}
+
+type UpdateInfo struct {
+    Version      string            `json:"version"`
+    ReleaseNotes string            `json:"releaseNotes"`
+    DownloadURL  string            `json:"downloadUrl"`
+    Size         int64             `json:"size"`
+    PublishedAt  time.Time         `json:"publishedAt"`
+    Critical     bool              `json:"critical"`
+}
+
+type UpdateProgress struct {
+    Status         UpdateStatus `json:"status"`
+    Progress       float64      `json:"progress"`
+    CurrentStep    string       `json:"currentStep"`
+    BytesTotal     int64        `json:"bytesTotal"`
+    BytesReceived  int64        `json:"bytesReceived"`
+    Speed          int64        `json:"speed"`
+    EstimatedTime  *time.Duration `json:"estimatedTime,omitempty"`
+    Error          *APIError    `json:"error,omitempty"`
+    LastUpdate     time.Time    `json:"lastUpdate"`
+}
+
+func (u *UpdateService) CheckForUpdates() (*UpdateInfo, error) {
+    u.setStatus(UpdateStatusChecking)
+    
+    // Check GitHub releases API for new versions
+    updateInfo, err := u.performUpdateCheck()
+    if err != nil {
+        u.setStatus(UpdateStatusFailed)
+        return nil, err
+    }
+    
+    if updateInfo != nil {
+        u.setStatus(UpdateStatusAvailable)
+        u.emitUpdateNotification(NotificationTypeUpdateAvailable, updateInfo)
+    } else {
+        u.setStatus(UpdateStatusIdle)
+    }
+    
+    return updateInfo, nil
+}
+
+func (u *UpdateService) DownloadUpdate(updateInfo *UpdateInfo) error {
+    u.setStatus(UpdateStatusDownloading)
+    
+    // Download with progress tracking
+    err := u.downloadFile(updateInfo.DownloadURL, updateInfo.Size)
+    if err != nil {
+        u.setStatus(UpdateStatusFailed)
+        return err
+    }
+    
+    // Verify checksum and signatures
+    u.setStatus(UpdateStatusVerifying)
+    if err := u.verifyUpdate(updateInfo); err != nil {
+        u.setStatus(UpdateStatusFailed)
+        return err
+    }
+    
+    u.setStatus(UpdateStatusReady)
+    return nil
+}
+
+func (u *UpdateService) InstallUpdate() error {
+    u.setStatus(UpdateStatusInstalling)
+    
+    // Create backup before update
+    backupInfo, err := u.rollbackManager.CreateBackup()
+    if err != nil {
+        return err
+    }
+    
+    // Install update
+    if err := u.performInstallation(); err != nil {
+        // Rollback on failure
+        u.setStatus(UpdateStatusRollingBack)
+        if rollbackErr := u.rollbackManager.PerformRollback(backupInfo); rollbackErr != nil {
+            return fmt.Errorf("installation failed and rollback failed: %v", rollbackErr)
+        }
+        return err
+    }
+    
+    u.setStatus(UpdateStatusCompleted)
+    return nil
+}
+```
+
+#### Update Service API Methods for Wails
+```go
+// Auto-update API methods exposed to frontend
+func (a *App) CheckForUpdates() (*UpdateInfo, error) {
+    return a.updateService.CheckForUpdates()
+}
+
+func (a *App) GetUpdateStatus() *UpdateProgress {
+    return a.updateService.GetUpdateProgress()
+}
+
+func (a *App) GetUpdateSettings() *UpdateSettings {
+    return a.updateService.GetUpdateSettings()
+}
+
+func (a *App) UpdateUpdateSettings(settings *UpdateSettings) error {
+    return a.updateService.UpdateSettings(settings)
+}
+
+func (a *App) DownloadUpdate(updateInfo *UpdateInfo) error {
+    return a.updateService.DownloadUpdate(updateInfo)
+}
+
+func (a *App) InstallUpdate() error {
+    return a.updateService.InstallUpdate()
+}
+
+func (a *App) ScheduleUpdate(updateInfo *UpdateInfo, schedule *UpdateSchedule) error {
+    return a.updateService.scheduler.ScheduleJob(ScheduledJobTypeInstall, schedule, updateInfo)
+}
+
+func (a *App) RollbackUpdate() error {
+    return a.updateService.rollbackManager.PerformRollback()
+}
+
+func (a *App) GetAvailableBackups() ([]BackupInfo, error) {
+    return a.updateService.rollbackManager.ListAvailableBackups()
 }
 ```
 
