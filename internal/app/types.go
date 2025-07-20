@@ -188,6 +188,7 @@ type AppSettings struct {
 	WindowSettings     WindowSettings     `json:"windowSettings"`
 	EditorSettings     EditorSettings     `json:"editorSettings"`
 	GenerationSettings GenerationSettings `json:"generationSettings"`
+	UpdateSettings     UpdateSettings     `json:"updateSettings"`
 }
 
 type WindowSettings struct {
