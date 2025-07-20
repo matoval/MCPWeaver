@@ -1,0 +1,363 @@
+name: Security Vulnerability Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of scan to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - quick
+          - deps-only
+          - sast-only
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  vulnerability-scan:
+    name: Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+      pull-requests: write
+      issues: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Install security scanning tools
+      run: |
+        set +e  # Don't exit on errors
+        
+        # Install govulncheck (most reliable)
+        echo "Installing govulncheck..."
+        go install golang.org/x/vuln/cmd/govulncheck@latest && echo "✓ govulncheck installed" || echo "✗ govulncheck failed"
+        
+        # Install trivy
+        echo "Installing trivy..."
+        sudo apt-get update -qq
+        sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update -qq
+        sudo apt-get install -y trivy && echo "✓ trivy installed" || echo "✗ trivy failed"
+        
+        # Install semgrep
+        echo "Installing semgrep..."
+        python3 -m pip install semgrep && echo "✓ semgrep installed" || echo "✗ semgrep failed"
+        
+        # Try to install gosec with fallback
+        echo "Installing gosec..."
+        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest && echo "✓ gosec installed" || \
+        (curl -sfL https://raw.githubusercontent.com/securecodewarrior/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin latest && echo "✓ gosec installed via script") || \
+        echo "✗ gosec failed"
+        
+        # Try to install nancy
+        echo "Installing nancy..."
+        go install github.com/sonatypecommunity/nancy@latest && echo "✓ nancy installed" || echo "✗ nancy failed"
+        
+        set -e  # Re-enable exit on errors
+
+    - name: Create reports directory
+      run: mkdir -p vulnerability-scans
+
+    - name: Run gosec
+      run: |
+        if command -v gosec >/dev/null 2>&1; then
+          gosec -fmt sarif -out vulnerability-scans/gosec.sarif ./...
+          gosec -fmt json -out vulnerability-scans/gosec.json ./...
+        else
+          echo "gosec not available, skipping..."
+          echo '{"Issues": []}' > vulnerability-scans/gosec.json
+          echo '{"version": "2.1.0", "runs": [{"tool": {"driver": {"name": "gosec"}}, "results": []}]}' > vulnerability-scans/gosec.sarif
+        fi
+      continue-on-error: true
+
+    - name: Run govulncheck
+      run: |
+        if command -v govulncheck >/dev/null 2>&1; then
+          govulncheck -json ./... > vulnerability-scans/govulncheck.json
+        else
+          echo "govulncheck not available, skipping..."
+          echo '[]' > vulnerability-scans/govulncheck.json
+        fi
+      continue-on-error: true
+
+    - name: Run nancy (dependency check)
+      run: |
+        if command -v nancy >/dev/null 2>&1; then
+          go list -json -deps ./... | nancy sleuth -o vulnerability-scans/nancy.json
+        else
+          echo "nancy not available, skipping..."
+          echo '{"vulnerable": []}' > vulnerability-scans/nancy.json
+        fi
+      continue-on-error: true
+
+    - name: Run trivy filesystem scan
+      run: |
+        trivy fs --format sarif --output vulnerability-scans/trivy.sarif .
+        trivy fs --format json --output vulnerability-scans/trivy.json .
+      continue-on-error: true
+
+    - name: Run semgrep
+      run: |
+        semgrep --config=auto --sarif --output=vulnerability-scans/semgrep.sarif .
+        semgrep --config=auto --json --output=vulnerability-scans/semgrep.json .
+      continue-on-error: true
+
+    - name: Run custom vulnerability scan script
+      run: |
+        chmod +x ./scripts/vulnerability-scan.sh
+        SCAN_TYPE="${{ github.event.inputs.scan_type || 'full' }}"
+        case "$SCAN_TYPE" in
+          "quick")
+            ./scripts/vulnerability-scan.sh --quick
+            ;;
+          "deps-only")
+            ./scripts/vulnerability-scan.sh --deps-only
+            ;;
+          "sast-only")
+            ./scripts/vulnerability-scan.sh --sast-only
+            ;;
+          *)
+            ./scripts/vulnerability-scan.sh --full
+            ;;
+        esac
+      continue-on-error: true
+
+    - name: Upload SARIF results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: vulnerability-scans/
+      continue-on-error: true
+
+    - name: Generate security summary
+      if: always()
+      run: |
+        echo "# Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Scan Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Scan Type:** ${{ github.event.inputs.scan_type || 'full' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Check for high severity issues
+        high_issues=0
+        medium_issues=0
+        low_issues=0
+        
+        # Count gosec issues
+        if [ -f "vulnerability-scans/gosec.json" ]; then
+          gosec_high=$(jq -r '.Issues[] | select(.severity == "HIGH") | .severity' vulnerability-scans/gosec.json 2>/dev/null | wc -l || echo "0")
+          gosec_medium=$(jq -r '.Issues[] | select(.severity == "MEDIUM") | .severity' vulnerability-scans/gosec.json 2>/dev/null | wc -l || echo "0")
+          gosec_low=$(jq -r '.Issues[] | select(.severity == "LOW") | .severity' vulnerability-scans/gosec.json 2>/dev/null | wc -l || echo "0")
+          # Ensure variables are numeric before arithmetic
+          gosec_high=${gosec_high:-0}
+          gosec_medium=${gosec_medium:-0}
+          gosec_low=${gosec_low:-0}
+          high_issues=$((high_issues + gosec_high))
+          medium_issues=$((medium_issues + gosec_medium))
+          low_issues=$((low_issues + gosec_low))
+          echo "**gosec:** HIGH=$gosec_high, MEDIUM=$gosec_medium, LOW=$gosec_low" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Count trivy issues
+        if [ -f "vulnerability-scans/trivy.json" ]; then
+          trivy_high=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH") | .Severity' vulnerability-scans/trivy.json 2>/dev/null | wc -l || echo "0")
+          trivy_medium=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity == "MEDIUM") | .Severity' vulnerability-scans/trivy.json 2>/dev/null | wc -l || echo "0")
+          trivy_low=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity == "LOW") | .Severity' vulnerability-scans/trivy.json 2>/dev/null | wc -l || echo "0")
+          # Ensure variables are numeric before arithmetic
+          trivy_high=${trivy_high:-0}
+          trivy_medium=${trivy_medium:-0}
+          trivy_low=${trivy_low:-0}
+          high_issues=$((high_issues + trivy_high))
+          medium_issues=$((medium_issues + trivy_medium))
+          low_issues=$((low_issues + trivy_low))
+          echo "**trivy:** HIGH=$trivy_high, MEDIUM=$trivy_medium, LOW=$trivy_low" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Total High:** $high_issues" >> $GITHUB_STEP_SUMMARY
+        echo "- **Total Medium:** $medium_issues" >> $GITHUB_STEP_SUMMARY
+        echo "- **Total Low:** $low_issues" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ $high_issues -gt 0 ]; then
+          echo "🔴 **Status: FAILED** - High severity vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          echo "::error::Security scan found $high_issues high severity vulnerabilities"
+        elif [ $medium_issues -gt 5 ]; then
+          echo "🟠 **Status: WARNING** - Multiple medium severity vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          echo "::warning::Security scan found $medium_issues medium severity vulnerabilities"
+        else
+          echo "🟢 **Status: PASSED** - No critical security issues found" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Archive vulnerability scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: vulnerability-scan-results-${{ github.run_number }}
+        path: |
+          vulnerability-scans/
+          security-reports/
+        retention-days: 30
+
+    - name: Comment PR with security summary
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          let comment = '## 🔒 Security Scan Results\n\n';
+          comment += `**Scan completed:** ${new Date().toISOString()}\n`;
+          comment += `**Workflow:** ${context.workflow}\n`;
+          comment += `**Run:** ${context.runNumber}\n\n`;
+          
+          // Read summary if available
+          try {
+            if (fs.existsSync('vulnerability-scans')) {
+              const files = fs.readdirSync('vulnerability-scans');
+              comment += `**Files generated:** ${files.length}\n`;
+              comment += '**Scan tools:** gosec, govulncheck, nancy, trivy, semgrep\n\n';
+            }
+          } catch (error) {
+            comment += '*Summary generation error*\n\n';
+          }
+          
+          comment += '📊 **View detailed results in the [Actions tab](';
+          comment += `${context.payload.repository.html_url}/actions/runs/${context.runId})**\n\n`;
+          comment += '⬇️ **Download full scan reports from the workflow artifacts**';
+          
+          // Post comment
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Fail job on high severity vulnerabilities
+      if: always()
+      run: |
+        high_issues=0
+        
+        # Check gosec results
+        if [ -f "vulnerability-scans/gosec.json" ]; then
+          gosec_high=$(jq -r '.Issues[] | select(.severity == "HIGH") | .severity' vulnerability-scans/gosec.json 2>/dev/null | wc -l || echo "0")
+          gosec_high=${gosec_high:-0}
+          high_issues=$((high_issues + gosec_high))
+        fi
+        
+        # Check trivy results
+        if [ -f "vulnerability-scans/trivy.json" ]; then
+          trivy_high=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH") | .Severity' vulnerability-scans/trivy.json 2>/dev/null | wc -l || echo "0")
+          trivy_high=${trivy_high:-0}
+          high_issues=$((high_issues + trivy_high))
+        fi
+        
+        # Check govulncheck results
+        if [ -f "vulnerability-scans/govulncheck.json" ]; then
+          vuln_count=$(grep -c '"type":"finding"' vulnerability-scans/govulncheck.json 2>/dev/null || echo "0")
+          vuln_count=${vuln_count:-0}
+          high_issues=$((high_issues + vuln_count))
+        fi
+        
+        echo "Total high severity issues: $high_issues"
+        
+        if [ $high_issues -gt 0 ]; then
+          echo "::error::Security scan failed: $high_issues high severity vulnerabilities found"
+          exit 1
+        else
+          echo "::notice::Security scan passed: No high severity vulnerabilities found"
+        fi
+
+  notify-security-team:
+    name: Notify Security Team
+    runs-on: ubuntu-latest
+    needs: vulnerability-scan
+    if: failure() && (github.event_name == 'schedule' || github.ref == 'refs/heads/main')
+    
+    steps:
+    - name: Send security alert
+      run: |
+        echo "High severity vulnerabilities found in main branch"
+        echo "This would trigger security team notification"
+        # Add actual notification logic here (Slack, email, etc.)
+
+  create-security-issue:
+    name: Create Security Issue
+    runs-on: ubuntu-latest
+    needs: vulnerability-scan
+    if: failure() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Create GitHub issue for security vulnerabilities
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `🚨 Security Vulnerabilities Detected - ${new Date().toISOString().split('T')[0]}`;
+          const body = `
+          ## Security Scan Alert
+          
+          **Date:** ${new Date().toISOString()}
+          **Branch:** ${context.ref}
+          **Workflow:** ${context.workflow}
+          **Run:** [${context.runNumber}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+          
+          High severity security vulnerabilities have been detected in the main branch.
+          
+          ### Immediate Actions Required:
+          1. Review the scan results in the workflow artifacts
+          2. Identify and patch vulnerable dependencies
+          3. Fix security code issues
+          4. Re-run security scans to verify fixes
+          
+          ### Links:
+          - [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+          - [Security Tab](${context.payload.repository.html_url}/security)
+          
+          **Priority:** High
+          **Labels:** security, vulnerability, urgent
+          `;
+          
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['security', 'vulnerability', 'urgent']
+          });

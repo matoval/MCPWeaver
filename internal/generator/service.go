@@ -2,10 +2,10 @@ package generator
 
 import (
 	"fmt"
+	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 	"unicode"
 
 	"MCPWeaver/internal/mapping"
@@ -21,9 +21,17 @@ type TemplateData struct {
 	Tools       []mapping.MCPTool
 }
 
+// SecurityValidator interface for template security validation
+type SecurityValidator interface {
+	ValidateTemplateName(name string) error
+	SanitizeTemplateVariable(variable string) string
+	ValidateFilePath(path string) error
+}
+
 // Service handles MCP server code generation
 type Service struct {
-	outputDir string
+	outputDir         string
+	securityValidator SecurityValidator
 }
 
 // ValidationResult represents the result of code validation
@@ -41,6 +49,14 @@ func NewService(outputDir string) *Service {
 	}
 }
 
+// NewServiceWithValidator creates a new code generator service with security validator
+func NewServiceWithValidator(outputDir string, validator SecurityValidator) *Service {
+	return &Service{
+		outputDir:         outputDir,
+		securityValidator: validator,
+	}
+}
+
 // Generate creates a complete MCP server from parsed API and tools
 func (s *Service) Generate(api *parser.ParsedAPI, tools []mapping.MCPTool, serverName string) error {
 	// Create output directory structure
@@ -48,13 +64,13 @@ func (s *Service) Generate(api *parser.ParsedAPI, tools []mapping.MCPTool, serve
 		return fmt.Errorf("failed to create output structure: %w", err)
 	}
 
-	// Prepare template data
+	// Prepare template data with security sanitization
 	data := TemplateData{
 		PackageName: s.sanitizePackageName(serverName),
-		APITitle:    api.Title,
-		APIVersion:  api.Version,
-		BaseURL:     api.BaseURL,
-		Tools:       tools,
+		APITitle:    s.sanitizeTemplateData(api.Title),
+		APIVersion:  s.sanitizeTemplateData(api.Version),
+		BaseURL:     s.sanitizeTemplateData(api.BaseURL),
+		Tools:       s.sanitizeTools(tools),
 	}
 
 	// Generate main server file
@@ -90,9 +106,16 @@ func (s *Service) Generate(api *parser.ParsedAPI, tools []mapping.MCPTool, serve
 
 // generateFromTemplate processes a template and writes the output to a file
 func (s *Service) generateFromTemplate(templateName, outputFile string, data TemplateData) error {
-	// Validate template name to prevent path traversal
-	if !isValidTemplateName(templateName) {
-		return fmt.Errorf("invalid template name: %s", templateName)
+	// Use security validator if available
+	if s.securityValidator != nil {
+		if err := s.securityValidator.ValidateTemplateName(templateName); err != nil {
+			return fmt.Errorf("template name validation failed: %w", err)
+		}
+	} else {
+		// Fallback to basic validation
+		if !isValidTemplateName(templateName) {
+			return fmt.Errorf("invalid template name: %s", templateName)
+		}
 	}
 
 	// Read template from file system
@@ -231,6 +254,28 @@ func (s *Service) sanitizePackageName(name string) string {
 		return "generated-mcp-server"
 	}
 
+	return sanitized
+}
+
+// sanitizeTemplateData sanitizes template variables for security
+func (s *Service) sanitizeTemplateData(data string) string {
+	if s.securityValidator != nil {
+		return s.securityValidator.SanitizeTemplateVariable(data)
+	}
+	// Fallback sanitization
+	return strings.ReplaceAll(strings.ReplaceAll(data, "{{", ""), "}}", "")
+}
+
+// sanitizeTools sanitizes tool data for template usage
+func (s *Service) sanitizeTools(tools []mapping.MCPTool) []mapping.MCPTool {
+	sanitized := make([]mapping.MCPTool, len(tools))
+	for i, tool := range tools {
+		sanitized[i] = mapping.MCPTool{
+			Name:        s.sanitizeTemplateData(tool.Name),
+			Description: s.sanitizeTemplateData(tool.Description),
+			InputSchema: tool.InputSchema, // Schema should be already validated
+		}
+	}
 	return sanitized
 }
 
