@@ -400,7 +400,7 @@ export const handleFeatureError = (feature: string, error: APIError | Error) => 
   const degraded = gracefulDegradation.reportFailure(feature, error);
   
   if (degraded) {
-    console.warn(`Feature "${feature}" has been degraded due to error:`, error);
+    console.warn('Feature has been degraded due to error:', { feature, error });
   }
   
   return degraded;

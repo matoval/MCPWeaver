@@ -2,8 +2,9 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"strings"
 	"time"
 )
@@ -220,7 +221,19 @@ func (rm *RetryManager) calculateDelay(baseDelay time.Duration, policy RetryPoli
 	}
 
 	// Add jitter to prevent thundering herd
-	jitter := time.Duration(rand.Float64() * float64(baseDelay) * 0.1) // 10% jitter
+	// Use crypto/rand for secure jitter calculation
+	maxJitter := int64(float64(baseDelay) * 0.1) // 10% jitter
+	if maxJitter <= 0 {
+		return baseDelay
+	}
+	
+	jitterInt, err := rand.Int(rand.Reader, big.NewInt(maxJitter))
+	if err != nil {
+		// Fallback to no jitter if crypto/rand fails
+		return baseDelay
+	}
+	
+	jitter := time.Duration(jitterInt.Int64())
 	return baseDelay + jitter
 }
 
