@@ -182,6 +182,10 @@ jobs:
           gosec_high=$(jq -r '.Issues[] | select(.severity == "HIGH") | .severity' vulnerability-scans/gosec.json 2>/dev/null | wc -l || echo "0")
           gosec_medium=$(jq -r '.Issues[] | select(.severity == "MEDIUM") | .severity' vulnerability-scans/gosec.json 2>/dev/null | wc -l || echo "0")
           gosec_low=$(jq -r '.Issues[] | select(.severity == "LOW") | .severity' vulnerability-scans/gosec.json 2>/dev/null | wc -l || echo "0")
+          # Ensure variables are numeric before arithmetic
+          gosec_high=${gosec_high:-0}
+          gosec_medium=${gosec_medium:-0}
+          gosec_low=${gosec_low:-0}
           high_issues=$((high_issues + gosec_high))
           medium_issues=$((medium_issues + gosec_medium))
           low_issues=$((low_issues + gosec_low))
@@ -193,6 +197,10 @@ jobs:
           trivy_high=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH") | .Severity' vulnerability-scans/trivy.json 2>/dev/null | wc -l || echo "0")
           trivy_medium=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity == "MEDIUM") | .Severity' vulnerability-scans/trivy.json 2>/dev/null | wc -l || echo "0")
           trivy_low=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity == "LOW") | .Severity' vulnerability-scans/trivy.json 2>/dev/null | wc -l || echo "0")
+          # Ensure variables are numeric before arithmetic
+          trivy_high=${trivy_high:-0}
+          trivy_medium=${trivy_medium:-0}
+          trivy_low=${trivy_low:-0}
           high_issues=$((high_issues + trivy_high))
           medium_issues=$((medium_issues + trivy_medium))
           low_issues=$((low_issues + trivy_low))
@@ -270,18 +278,21 @@ jobs:
         # Check gosec results
         if [ -f "vulnerability-scans/gosec.json" ]; then
           gosec_high=$(jq -r '.Issues[] | select(.severity == "HIGH") | .severity' vulnerability-scans/gosec.json 2>/dev/null | wc -l || echo "0")
+          gosec_high=${gosec_high:-0}
           high_issues=$((high_issues + gosec_high))
         fi
         
         # Check trivy results
         if [ -f "vulnerability-scans/trivy.json" ]; then
           trivy_high=$(jq -r '.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH") | .Severity' vulnerability-scans/trivy.json 2>/dev/null | wc -l || echo "0")
+          trivy_high=${trivy_high:-0}
           high_issues=$((high_issues + trivy_high))
         fi
         
         # Check govulncheck results
         if [ -f "vulnerability-scans/govulncheck.json" ]; then
           vuln_count=$(grep -c '"type":"finding"' vulnerability-scans/govulncheck.json 2>/dev/null || echo "0")
+          vuln_count=${vuln_count:-0}
           high_issues=$((high_issues + vuln_count))
         fi
         
