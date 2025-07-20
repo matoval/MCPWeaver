@@ -145,6 +145,95 @@ Create the simplest, most efficient desktop application for generating MCP serve
 - **Process Isolation**: Sandboxed generation processes
 - **Update Security**: Signed application updates
 
+## Auto-Update System
+
+### Overview
+MCPWeaver includes a comprehensive auto-update system that enables seamless application updates with minimal user intervention while maintaining security and reliability.
+
+### Core Features
+- **Automatic Update Detection**: Periodic checks for new releases via GitHub API
+- **Secure Download**: HTTPS-only downloads with checksum verification
+- **Digital Signature Verification**: Cryptographic validation of update authenticity
+- **Rollback Capability**: Automatic backup and rollback for failed updates
+- **User Control**: Configurable update preferences and scheduling
+- **Progress Tracking**: Real-time download and installation progress
+- **Bandwidth Management**: Configurable download speed limits
+
+### Update Flow
+1. **Detection**: Background check for newer versions on GitHub releases
+2. **Notification**: User notification with release notes and options
+3. **Download**: Secure download of new version with progress tracking
+4. **Verification**: Checksum and signature validation
+5. **Backup**: Create backup of current version before update
+6. **Installation**: Replace current executable with new version
+7. **Restart**: Application restart to complete update
+8. **Rollback**: Automatic rollback if update fails
+
+### Security Model
+- **HTTPS Only**: All update communications over encrypted channels
+- **Checksum Verification**: SHA256 verification of downloaded files
+- **Digital Signatures**: RSA signature verification for authenticity
+- **Backup Protection**: Secure backup storage with integrity checks
+- **Sandboxed Operations**: Isolated update processes
+- **User Consent**: No automatic installation without user approval
+
+### Update Scheduling
+- **Immediate**: Install updates as soon as available
+- **Daily**: Check and install at specified time daily
+- **Weekly**: Check and install on specified day/time weekly
+- **Monthly**: Check and install on specified date monthly
+- **Manual**: User-initiated updates only
+
+### Configuration Options
+- **Auto-Check**: Enable/disable automatic update checking
+- **Auto-Download**: Enable/disable automatic update downloading
+- **Auto-Install**: Enable/disable automatic installation
+- **Update Channel**: Stable, beta, alpha release channels
+- **Pre-Release**: Include pre-release versions
+- **Bandwidth Limit**: Maximum download speed in bytes/second
+- **Retry Policy**: Configurable retry attempts and delays
+
+### Rollback System
+- **Automatic Backup**: Current version backed up before each update
+- **Multiple Versions**: Keep last 5 versions for rollback options
+- **Validation**: Backup integrity verification before rollback
+- **User Interface**: Easy rollback through application settings
+- **Emergency Recovery**: Command-line rollback for critical failures
+
+### Analytics and Monitoring
+- **Update Metrics**: Track update success/failure rates
+- **Performance Data**: Download speeds and installation times
+- **Error Reporting**: Detailed error logs for troubleshooting
+- **User Behavior**: Anonymous update preference analytics
+- **System Information**: Platform and version compatibility data
+
+### Offline Support
+- **Local Updates**: Support for manual update file installation
+- **Update Packages**: Downloadable update packages for offline installation
+- **Network Detection**: Automatic handling of network availability
+- **Deferred Updates**: Queue updates when offline, install when online
+
+### Technical Implementation
+- **GitHub Integration**: GitHub Releases API for version checking
+- **HTTP Client**: Configurable HTTP client with timeout and retry
+- **File Operations**: Secure file handling with proper permissions
+- **Process Management**: Safe process restart and cleanup
+- **Event System**: Real-time update events for UI integration
+
+### Error Handling
+- **Network Errors**: Graceful handling of connectivity issues
+- **Download Failures**: Automatic retry with exponential backoff
+- **Verification Failures**: Secure handling of invalid updates
+- **Installation Errors**: Automatic rollback and error reporting
+- **Rollback Failures**: Emergency recovery procedures
+
+### User Experience
+- **Non-Intrusive**: Updates don't interrupt active work
+- **Progress Visibility**: Clear progress indication throughout process
+- **User Control**: Full control over update timing and preferences
+- **Notifications**: Informative but not overwhelming notifications
+- **Settings Integration**: Update preferences in main application settings
+
 ## Distribution Strategy
 
 ### Release Channels
