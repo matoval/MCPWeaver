@@ -18,6 +18,7 @@ import (
 const (
 	maxFileSize = 10 * 1024 * 1024 // 10MB max file size
 	bufferSize  = 64 * 1024        // 64KB buffer for file operations
+	maxResponseSize = 10 * 1024 * 1024 // 10MB max response size for URL downloads
 )
 
 // SelectFile opens a file selection dialog
@@ -83,8 +84,8 @@ func (a *App) dirExists(path string) error {
 		})
 	}
 
-	// Test if directory is writable
-	testFile := filepath.Join(path, ".mcpweaver_test")
+	// Test if directory is writable with unique filename to avoid race conditions
+	testFile := filepath.Join(path, fmt.Sprintf(".mcpweaver_test_%d", time.Now().UnixNano()))
 	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Directory is not writable", map[string]string{
 			"path": path,
@@ -225,6 +226,14 @@ func (a *App) WriteFile(path string, content string) error {
 		return a.createAPIError("validation", ErrCodeValidation, "File path is required", nil)
 	}
 
+	// Create security validator
+	securityValidator := NewSecurityValidator(a)
+	
+	// Validate file path for security
+	if err := securityValidator.ValidateFilePath(path); err != nil {
+		return err
+	}
+
 	// Validate content size
 	if len(content) > maxFileSize {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Content too large", map[string]string{
@@ -232,6 +241,13 @@ func (a *App) WriteFile(path string, content string) error {
 			"size": fmt.Sprintf("%d", len(content)),
 			"max_size": fmt.Sprintf("%d", maxFileSize),
 		})
+	}
+	
+	// Check if file exists and require confirmation for overwrite
+	if _, err := os.Stat(path); err == nil {
+		// File exists - in a real implementation, this would trigger a user confirmation dialog
+		// For now, we log a warning
+		runtime.LogWarning(a.ctx, "Overwriting existing file: "+path)
 	}
 
 	// Ensure directory exists
@@ -435,25 +451,25 @@ func (a *App) ImportOpenAPISpecFromURL(url string) (*ImportResult, error) {
 		return nil, a.createAPIError("validation", ErrCodeValidation, "URL is required", nil)
 	}
 
-	// Validate URL format
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		return nil, a.createAPIError("validation", ErrCodeValidation, "Invalid URL format. URL must start with http:// or https://", map[string]string{
-			"url": url,
-		})
+	// Create security validator
+	securityValidator := NewSecurityValidator(a)
+	
+	// Validate URL for SSRF protection
+	if err := securityValidator.ValidateURL(url); err != nil {
+		return nil, err
 	}
 
 	// Create progress tracking
 	progressID := a.generateProgressID()
 	a.emitFileProgress(progressID, "import", 0, "Starting URL import...", 1, 0)
 
-	// Create HTTP client with timeout
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
+	// Create secure HTTP client
+	secureClient := NewSecureHTTPClient(a, GetDefaultHTTPClientConfig())
+	defer secureClient.Close()
 
 	// Make HTTP request
 	a.emitFileProgress(progressID, "import", 25, "Connecting to URL...", 1, 0)
-	resp, err := client.Get(url)
+	resp, err := secureClient.Get(a.ctx, url)
 	if err != nil {
 		a.emitFileProgress(progressID, "import", 0, "Failed to connect", 1, 0)
 		return nil, a.createAPIError("network", ErrCodeNetworkError, "Failed to fetch URL", map[string]string{
@@ -472,14 +488,24 @@ func (a *App) ImportOpenAPISpecFromURL(url string) (*ImportResult, error) {
 		})
 	}
 
-	// Read response body with progress tracking
+	// Read response body with size limit and progress tracking
 	a.emitFileProgress(progressID, "import", 50, "Downloading content...", 1, 0)
-	content, err := io.ReadAll(resp.Body)
+	limitedReader := io.LimitReader(resp.Body, maxResponseSize)
+	content, err := io.ReadAll(limitedReader)
 	if err != nil {
 		a.emitFileProgress(progressID, "import", 0, "Failed to read response", 1, 0)
 		return nil, a.createAPIError("network", ErrCodeNetworkError, "Failed to read response", map[string]string{
 			"url": url,
 			"error": err.Error(),
+		})
+	}
+	
+	// Check if we hit the size limit
+	if len(content) >= maxResponseSize {
+		a.emitFileProgress(progressID, "import", 0, "Response too large", 1, 0)
+		return nil, a.createAPIError("validation", "RESPONSE_TOO_LARGE", "Downloaded content exceeds maximum size limit", map[string]string{
+			"url": url,
+			"maxSize": fmt.Sprintf("%d", maxResponseSize),
 		})
 	}
 
@@ -644,18 +670,33 @@ func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error)
 		return result, nil
 	}
 
+	// Create security validator for content validation
+	securityValidator := NewSecurityValidator(a)
+	
 	// Basic validation - check if content is valid JSON or YAML
 	var specData map[string]interface{}
 	var parseError error
 	
 	// Try parsing as JSON first
 	if err := json.Unmarshal([]byte(content), &specData); err != nil {
+		// Validate YAML security before parsing
+		if err := securityValidator.ValidateYAMLContent(content); err != nil {
+			result.Errors = append(result.Errors, "YAML security validation failed: "+err.Error())
+			return result, nil
+		}
+		
 		// Try parsing as YAML
 		if err := yaml.Unmarshal([]byte(content), &specData); err != nil {
 			result.Errors = append(result.Errors, "Invalid JSON or YAML format: "+err.Error())
 			return result, nil
 		}
 		parseError = err
+	} else {
+		// Validate JSON security
+		if err := securityValidator.ValidateJSONContent(content); err != nil {
+			result.Errors = append(result.Errors, "JSON security validation failed: "+err.Error())
+			return result, nil
+		}
 	}
 
 	// Check if it's an OpenAPI spec
