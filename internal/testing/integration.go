@@ -526,17 +526,22 @@ func (it *IntegrationTester) testClientCompatibility(ctx context.Context, server
 
 // startTestServer starts a server for testing
 func (it *IntegrationTester) startTestServer(ctx context.Context, serverPath string) (*exec.Cmd, *os.File, *os.File, *os.File, error) {
-	// Compile server first
-	compileCmd := exec.CommandContext(ctx, "go", "build", "-o", "integration-test-server", "main.go")
-	compileCmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	
+	// Compile server first using secure command execution
+	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "integration-test-server", "main.go")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to create secure compile command: %w", err)
+	}
 	if err := compileCmd.Run(); err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to compile server: %w", err)
 	}
 
-	// Start server
-	serverBinary := filepath.Join(serverPath, "integration-test-server")
-	cmd := exec.CommandContext(ctx, serverBinary)
-	cmd.Dir = serverPath
+	// Start server using secure executable execution
+	cmd, err := sch.SecureRunExecutable(ctx, serverPath, "integration-test-server")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to create secure run command: %w", err)
+	}
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
