@@ -165,6 +165,39 @@ func (a *App) validateSettings(settings *AppSettings) error {
 		settings.RecentProjects = settings.RecentProjects[:20]
 	}
 
+	// Validate notification settings
+	if settings.NotificationSettings.NotificationPosition == "" {
+		settings.NotificationSettings.NotificationPosition = "top-right"
+	}
+	if settings.NotificationSettings.NotificationDuration < 1000 {
+		settings.NotificationSettings.NotificationDuration = 5000
+	}
+	if settings.NotificationSettings.SoundVolume < 0 || settings.NotificationSettings.SoundVolume > 1 {
+		settings.NotificationSettings.SoundVolume = 0.5
+	}
+
+	// Validate appearance settings
+	if settings.AppearanceSettings.UITheme == "" {
+		settings.AppearanceSettings.UITheme = "system"
+	}
+	if settings.AppearanceSettings.AccentColor == "" {
+		settings.AppearanceSettings.AccentColor = "#007acc"
+	}
+	if settings.AppearanceSettings.WindowOpacity < 0.1 || settings.AppearanceSettings.WindowOpacity > 1.0 {
+		settings.AppearanceSettings.WindowOpacity = 1.0
+	}
+	if settings.AppearanceSettings.FontScale < 0.5 || settings.AppearanceSettings.FontScale > 2.0 {
+		settings.AppearanceSettings.FontScale = 1.0
+	}
+	if settings.AppearanceSettings.SidebarPosition == "" {
+		settings.AppearanceSettings.SidebarPosition = "left"
+	}
+
+	// Validate generation settings performance options
+	if settings.GenerationSettings.MaxWorkers < 1 || settings.GenerationSettings.MaxWorkers > 16 {
+		settings.GenerationSettings.MaxWorkers = 4
+	}
+
 	return nil
 }
 
@@ -369,4 +402,145 @@ func (a *App) ImportSettings() error {
 	a.emitNotification("success", "Settings Imported", "Settings have been imported successfully")
 
 	return nil
+}
+
+// UpdateNotificationSettings updates notification settings
+func (a *App) UpdateNotificationSettings(notificationSettings NotificationSettings) error {
+	// Validate notification settings
+	if notificationSettings.NotificationPosition == "" {
+		notificationSettings.NotificationPosition = "top-right"
+	}
+	if notificationSettings.NotificationDuration < 1000 {
+		notificationSettings.NotificationDuration = 5000
+	}
+	if notificationSettings.SoundVolume < 0 || notificationSettings.SoundVolume > 1 {
+		notificationSettings.SoundVolume = 0.5
+	}
+
+	a.settings.NotificationSettings = notificationSettings
+
+	// Save settings
+	if err := a.saveSettingsToFile(); err != nil {
+		return a.createAPIError("internal", ErrCodeInternalError, "Failed to save notification settings", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	// Emit notification settings change event
+	runtime.EventsEmit(a.ctx, "notification:settings:changed", notificationSettings)
+
+	return nil
+}
+
+// UpdateAppearanceSettings updates appearance settings
+func (a *App) UpdateAppearanceSettings(appearanceSettings AppearanceSettings) error {
+	// Validate appearance settings
+	if appearanceSettings.UITheme == "" {
+		appearanceSettings.UITheme = "system"
+	}
+	if appearanceSettings.AccentColor == "" {
+		appearanceSettings.AccentColor = "#007acc"
+	}
+	if appearanceSettings.WindowOpacity < 0.1 || appearanceSettings.WindowOpacity > 1.0 {
+		appearanceSettings.WindowOpacity = 1.0
+	}
+	if appearanceSettings.FontScale < 0.5 || appearanceSettings.FontScale > 2.0 {
+		appearanceSettings.FontScale = 1.0
+	}
+	if appearanceSettings.SidebarPosition == "" {
+		appearanceSettings.SidebarPosition = "left"
+	}
+
+	a.settings.AppearanceSettings = appearanceSettings
+
+	// Save settings
+	if err := a.saveSettingsToFile(); err != nil {
+		return a.createAPIError("internal", ErrCodeInternalError, "Failed to save appearance settings", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	// Emit appearance settings change event
+	runtime.EventsEmit(a.ctx, "appearance:settings:changed", appearanceSettings)
+
+	return nil
+}
+
+// UpdateEditorSettings updates editor settings
+func (a *App) UpdateEditorSettings(editorSettings EditorSettings) error {
+	// Validate editor settings
+	if editorSettings.FontSize < 8 || editorSettings.FontSize > 24 {
+		editorSettings.FontSize = 14
+	}
+	if editorSettings.TabSize < 2 || editorSettings.TabSize > 8 {
+		editorSettings.TabSize = 4
+	}
+	if editorSettings.FontFamily == "" {
+		editorSettings.FontFamily = "Monaco"
+	}
+
+	a.settings.EditorSettings = editorSettings
+
+	// Save settings
+	if err := a.saveSettingsToFile(); err != nil {
+		return a.createAPIError("internal", ErrCodeInternalError, "Failed to save editor settings", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	// Emit editor settings change event
+	runtime.EventsEmit(a.ctx, "editor:settings:changed", editorSettings)
+
+	return nil
+}
+
+// UpdateGenerationSettings updates generation settings
+func (a *App) UpdateGenerationSettings(generationSettings GenerationSettings) error {
+	// Validate generation settings
+	if generationSettings.DefaultTemplate == "" {
+		generationSettings.DefaultTemplate = "default"
+	}
+	if generationSettings.MaxWorkers < 1 || generationSettings.MaxWorkers > 16 {
+		generationSettings.MaxWorkers = 4
+	}
+
+	a.settings.GenerationSettings = generationSettings
+
+	// Save settings
+	if err := a.saveSettingsToFile(); err != nil {
+		return a.createAPIError("internal", ErrCodeInternalError, "Failed to save generation settings", map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	// Emit generation settings change event
+	runtime.EventsEmit(a.ctx, "generation:settings:changed", generationSettings)
+
+	return nil
+}
+
+// BackupSettingsAPI creates a backup of current settings (API method)
+func (a *App) BackupSettingsAPI() error {
+	if a.settings == nil {
+		return nil // Nothing to backup
+	}
+
+	// Create backup using the migration file function
+	return a.BackupSettings()
+}
+
+// RestoreSettingsFromBackupAPI restores settings from backup (API method)
+func (a *App) RestoreSettingsFromBackupAPI() error {
+	return a.RestoreSettingsFromBackup()
+}
+
+// GetSettingsBackupPath returns the path to the settings backup file
+func (a *App) GetSettingsBackupPath() string {
+	return a.GetSettingsFilePath() + ".backup"
+}
+
+// HasSettingsBackup checks if a settings backup exists
+func (a *App) HasSettingsBackup() bool {
+	backupPath := a.GetSettingsBackupPath()
+	return a.fileExists(backupPath) == nil
 }

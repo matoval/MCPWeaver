@@ -179,16 +179,18 @@ type FileFilter struct {
 
 // Settings Types
 type AppSettings struct {
-	Theme              string             `json:"theme"`
-	Language           string             `json:"language"`
-	AutoSave           bool               `json:"autoSave"`
-	DefaultOutputPath  string             `json:"defaultOutputPath"`
-	RecentProjects     []string           `json:"recentProjects"`
-	RecentFiles        []string           `json:"recentFiles"`
-	WindowSettings     WindowSettings     `json:"windowSettings"`
-	EditorSettings     EditorSettings     `json:"editorSettings"`
-	GenerationSettings GenerationSettings `json:"generationSettings"`
-	UpdateSettings     UpdateSettings     `json:"updateSettings"`
+	Theme                string                `json:"theme"`
+	Language             string                `json:"language"`
+	AutoSave             bool                  `json:"autoSave"`
+	DefaultOutputPath    string                `json:"defaultOutputPath"`
+	RecentProjects       []string              `json:"recentProjects"`
+	RecentFiles          []string              `json:"recentFiles"`
+	WindowSettings       WindowSettings        `json:"windowSettings"`
+	EditorSettings       EditorSettings        `json:"editorSettings"`
+	GenerationSettings   GenerationSettings    `json:"generationSettings"`
+	NotificationSettings NotificationSettings  `json:"notificationSettings"`
+	AppearanceSettings   AppearanceSettings    `json:"appearanceSettings"`
+	UpdateSettings       UpdateSettings        `json:"updateSettings"`
 }
 
 type WindowSettings struct {
@@ -215,6 +217,33 @@ type GenerationSettings struct {
 	ShowAdvancedOptions bool     `json:"showAdvancedOptions"`
 	BackupOnGenerate    bool     `json:"backupOnGenerate"`
 	CustomTemplates     []string `json:"customTemplates"`
+	PerformanceMode     bool     `json:"performanceMode"`
+	MaxWorkers          int      `json:"maxWorkers"`
+}
+
+type NotificationSettings struct {
+	EnableDesktopNotifications bool   `json:"enableDesktopNotifications"`
+	EnableSoundNotifications   bool   `json:"enableSoundNotifications"`
+	NotificationPosition       string `json:"notificationPosition"`
+	NotificationDuration       int    `json:"notificationDuration"`
+	SoundVolume                float64 `json:"soundVolume"`
+	ShowGenerationProgress     bool   `json:"showGenerationProgress"`
+	ShowErrorNotifications     bool   `json:"showErrorNotifications"`
+	ShowSuccessNotifications   bool   `json:"showSuccessNotifications"`
+}
+
+type AppearanceSettings struct {
+	UITheme            string  `json:"uiTheme"`
+	AccentColor        string  `json:"accentColor"`
+	WindowOpacity      float64 `json:"windowOpacity"`
+	ShowAnimation      bool    `json:"showAnimation"`
+	ReducedMotion      bool    `json:"reducedMotion"`
+	FontScale          float64 `json:"fontScale"`
+	CompactMode        bool    `json:"compactMode"`
+	ShowSidebar        bool    `json:"showSidebar"`
+	SidebarPosition    string  `json:"sidebarPosition"`
+	ShowStatusBar      bool    `json:"showStatusBar"`
+	ShowToolbar        bool    `json:"showToolbar"`
 }
 
 // Template Types
