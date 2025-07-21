@@ -86,17 +86,23 @@ func (pt *ProtocolTester) TestCompliance(ctx context.Context, serverPath string)
 
 // startServer starts the MCP server process
 func (pt *ProtocolTester) startServer(ctx context.Context, serverPath string) (*exec.Cmd, io.WriteCloser, io.ReadCloser, io.ReadCloser, error) {
-	// First compile the server
-	compileCmd := exec.CommandContext(ctx, "go", "build", "-o", "test-mcp-server", "main.go")
-	compileCmd.Dir = serverPath
+	// Create security helper
+	sch := NewSecureCommandHelper()
+	
+	// First compile the server using secure command execution
+	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "test-mcp-server", "main.go")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to create secure compile command: %w", err)
+	}
 	if err := compileCmd.Run(); err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to compile server: %w", err)
 	}
 
-	// Start the server
-	serverBinary := fmt.Sprintf("%s/test-mcp-server", serverPath)
-	cmd := exec.CommandContext(ctx, serverBinary)
-	cmd.Dir = serverPath
+	// Start the server using secure executable execution
+	cmd, err := sch.SecureRunExecutable(ctx, serverPath, "test-mcp-server")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to create secure run command: %w", err)
+	}
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

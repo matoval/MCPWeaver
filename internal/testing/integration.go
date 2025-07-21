@@ -130,8 +130,15 @@ func (it *IntegrationTester) testServerStartup(ctx context.Context, serverPath s
 		Success: true,
 	}
 	
-	compileCmd := exec.CommandContext(ctx, "go", "build", "-o", "integration-test-server", "main.go")
-	compileCmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "integration-test-server", "main.go")
+	if err != nil {
+		step1.Success = false
+		step1.ErrorMessage = fmt.Sprintf("Failed to create secure compile command: %v", err)
+		step1.Duration = time.Since(stepStart)
+		scenario.Steps = append(scenario.Steps, step1)
+		return err
+	}
 	if err := compileCmd.Run(); err != nil {
 		step1.Success = false
 		step1.ErrorMessage = fmt.Sprintf("Compilation failed: %v", err)
@@ -149,9 +156,14 @@ func (it *IntegrationTester) testServerStartup(ctx context.Context, serverPath s
 		Success: true,
 	}
 	
-	serverBinary := filepath.Join(serverPath, "integration-test-server")
-	cmd := exec.CommandContext(ctx, serverBinary)
-	cmd.Dir = serverPath
+	cmd, err := sch.SecureRunExecutable(ctx, serverPath, "integration-test-server")
+	if err != nil {
+		step2.Success = false
+		step2.ErrorMessage = fmt.Sprintf("Failed to create secure run command: %v", err)
+		step2.Duration = time.Since(stepStart)
+		scenario.Steps = append(scenario.Steps, step2)
+		return err
+	}
 	
 	if err := cmd.Start(); err != nil {
 		step2.Success = false
@@ -172,7 +184,7 @@ func (it *IntegrationTester) testServerStartup(ctx context.Context, serverPath s
 		// Clean up
 		cmd.Process.Kill()
 		cmd.Wait()
-		os.Remove(serverBinary)
+		os.Remove(filepath.Join(serverPath, "integration-test-server"))
 	}
 	
 	step2.Duration = time.Since(stepStart)
