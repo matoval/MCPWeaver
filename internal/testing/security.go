@@ -121,8 +121,8 @@ func (sch *SecureCommandHelper) SecureExecCommand(ctx context.Context, workDir, 
 	}
 
 	// Create the command - safe because both executable and args have been validated
-	// nosemgrep: generic.secrets.gitleaks.generic-api-key
-	cmd := exec.CommandContext(ctx, executable, args...) // nosec G204 - inputs have been validated
+	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+	cmd := exec.CommandContext(ctx, executable, args...)
 	cmd.Dir = validWorkDir
 
 	return cmd, nil
@@ -209,8 +209,8 @@ func (sch *SecureCommandHelper) SecureRunExecutable(ctx context.Context, workDir
 	}
 
 	// Create the command using the validated path - safe because execPath has been validated
-	// nosemgrep: generic.secrets.gitleaks.generic-api-key  
-	cmd := exec.CommandContext(ctx, execPath) // nosec G204 - path has been validated and sanitized
+	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+	cmd := exec.CommandContext(ctx, execPath)
 	cmd.Dir = workDir
 
 	return cmd, nil
