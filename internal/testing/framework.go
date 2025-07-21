@@ -504,10 +504,13 @@ func (ts *TestSuite) commandExists(command string) bool {
 	return err == nil
 }
 
-// runCommand executes a command in the specified directory
+// runCommand executes a command in the specified directory using secure execution
 func (ts *TestSuite) runCommand(ctx context.Context, dir string, name string, args ...string) error {
-	cmd := exec.CommandContext(ctx, name, args...)
-	cmd.Dir = dir
+	sch := NewSecureCommandHelper()
+	cmd, err := sch.SecureExecCommand(ctx, dir, name, args...)
+	if err != nil {
+		return fmt.Errorf("failed to create secure command: %w", err)
+	}
 	return cmd.Run()
 }
 
