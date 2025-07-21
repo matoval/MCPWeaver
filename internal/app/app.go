@@ -123,7 +123,7 @@ func (a *App) OnShutdown(ctx context.Context) error {
 	}
 	
 	// Save settings
-	if err := a.saveSettings(); err != nil {
+	if err := a.saveSettingsToFile(); err != nil {
 		runtime.LogError(a.ctx, "Failed to save settings: "+err.Error())
 	}
 	
@@ -227,14 +227,8 @@ func (a *App) emitNotification(notificationType, title, message string) {
 
 // loadSettings loads application settings from storage
 func (a *App) loadSettings() (*AppSettings, error) {
-	// TODO: Implement settings loading from file/database
-	return getDefaultSettings(), nil
-}
-
-// saveSettings saves application settings to storage
-func (a *App) saveSettings() error {
-	// TODO: Implement settings saving to file/database
-	return nil
+	// Use the new migration-aware settings loader
+	return a.MigrateAndLoadSettings()
 }
 
 // getDefaultSettings returns default application settings
@@ -267,6 +261,31 @@ func getDefaultSettings() *AppSettings {
 			ShowAdvancedOptions: false,
 			BackupOnGenerate:    true,
 			CustomTemplates:     []string{},
+			PerformanceMode:     false,
+			MaxWorkers:          4,
+		},
+		NotificationSettings: NotificationSettings{
+			EnableDesktopNotifications: true,
+			EnableSoundNotifications:   false,
+			NotificationPosition:       "top-right",
+			NotificationDuration:       5000,
+			SoundVolume:                0.5,
+			ShowGenerationProgress:     true,
+			ShowErrorNotifications:     true,
+			ShowSuccessNotifications:   true,
+		},
+		AppearanceSettings: AppearanceSettings{
+			UITheme:         "system",
+			AccentColor:     "#007acc",
+			WindowOpacity:   1.0,
+			ShowAnimation:   true,
+			ReducedMotion:   false,
+			FontScale:       1.0,
+			CompactMode:     false,
+			ShowSidebar:     true,
+			SidebarPosition: "left",
+			ShowStatusBar:   true,
+			ShowToolbar:     true,
 		},
 		UpdateSettings: DefaultUpdateSettings(),
 	}

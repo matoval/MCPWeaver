@@ -174,9 +174,13 @@ export interface AppSettings {
   autoSave: boolean;
   defaultOutputPath: string;
   recentProjects: string[];
+  recentFiles: string[];
   windowSettings: WindowSettings;
   editorSettings: EditorSettings;
   generationSettings: GenerationSettings;
+  notificationSettings: NotificationSettings;
+  appearanceSettings: AppearanceSettings;
+  updateSettings: UpdateSettings;
 }
 
 export interface WindowSettings {
@@ -203,6 +207,44 @@ export interface GenerationSettings {
   showAdvancedOptions: boolean;
   backupOnGenerate: boolean;
   customTemplates: string[];
+  performanceMode: boolean;
+  maxWorkers: number;
+}
+
+export interface NotificationSettings {
+  enableDesktopNotifications: boolean;
+  enableSoundNotifications: boolean;
+  notificationPosition: string;
+  notificationDuration: number;
+  soundVolume: number;
+  showGenerationProgress: boolean;
+  showErrorNotifications: boolean;
+  showSuccessNotifications: boolean;
+}
+
+export interface AppearanceSettings {
+  uiTheme: string;
+  accentColor: string;
+  windowOpacity: number;
+  showAnimation: boolean;
+  reducedMotion: boolean;
+  fontScale: number;
+  compactMode: boolean;
+  showSidebar: boolean;
+  sidebarPosition: string;
+  showStatusBar: boolean;
+  showToolbar: boolean;
+}
+
+export interface UpdateSettings {
+  enableAutoUpdate: boolean;
+  updateChannel: string;
+  checkInterval: number;
+  downloadInBackground: boolean;
+  notifyOnAvailable: boolean;
+  autoInstallSecurity: boolean;
+  lastChecked?: string;
+  lastUpdateInstalled?: string;
 }
 
 export interface ValidationResult {
