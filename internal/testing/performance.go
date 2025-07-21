@@ -123,18 +123,23 @@ func (pt *PerformanceTester) testResponseTime(ctx context.Context, serverPath st
 
 // testMemoryUsage measures memory usage during operation
 func (pt *PerformanceTester) testMemoryUsage(ctx context.Context, serverPath string, result *PerformanceTestResult) error {
-	// Compile server
-	compileCmd := exec.CommandContext(ctx, "go", "build", "-o", "memory-test-server", "main.go")
-	compileCmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	
+	// Compile server using secure command execution
+	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "memory-test-server", "main.go")
+	if err != nil {
+		return fmt.Errorf("failed to create secure compile command: %w", err)
+	}
 	if err := compileCmd.Run(); err != nil {
 		return fmt.Errorf("failed to compile server: %w", err)
 	}
 	defer os.Remove(filepath.Join(serverPath, "memory-test-server"))
 
-	// Start server
-	serverBinary := filepath.Join(serverPath, "memory-test-server")
-	cmd := exec.CommandContext(ctx, serverBinary)
-	cmd.Dir = serverPath
+	// Start server using secure executable execution
+	cmd, err := sch.SecureRunExecutable(ctx, serverPath, "memory-test-server")
+	if err != nil {
+		return fmt.Errorf("failed to create secure run command: %w", err)
+	}
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -503,17 +508,22 @@ func (pt *PerformanceTester) getProcessMemoryUsage(pid int) int64 {
 
 // startPerformanceTestServer starts a server for performance testing
 func (pt *PerformanceTester) startPerformanceTestServer(ctx context.Context, serverPath string) (*exec.Cmd, *os.File, *os.File, *os.File, error) {
-	// Compile server
-	compileCmd := exec.CommandContext(ctx, "go", "build", "-o", "perf-test-server", "main.go")
-	compileCmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	
+	// Compile server using secure command execution
+	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "perf-test-server", "main.go")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to create secure compile command: %w", err)
+	}
 	if err := compileCmd.Run(); err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to compile server: %w", err)
 	}
 
-	// Start server
-	serverBinary := filepath.Join(serverPath, "perf-test-server")
-	cmd := exec.CommandContext(ctx, serverBinary)
-	cmd.Dir = serverPath
+	// Start server using secure executable execution
+	cmd, err := sch.SecureRunExecutable(ctx, serverPath, "perf-test-server")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to create secure run command: %w", err)
+	}
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

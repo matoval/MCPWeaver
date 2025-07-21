@@ -68,8 +68,15 @@ func (v *CompilationValidator) Validate(ctx context.Context, serverPath string) 
 	ctx, cancel := context.WithTimeout(ctx, v.config.Timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "go", "build", "-o", "test-server", "main.go")
-	cmd.Dir = serverPath
+	// Use secure command execution
+	sch := NewSecureCommandHelper()
+	cmd, err := sch.SecureCompileCommand(ctx, serverPath, "test-server", "main.go")
+	if err != nil {
+		result.Success = false
+		result.Errors = append(result.Errors, fmt.Sprintf("Failed to create secure compile command: %v", err))
+		result.Duration = time.Since(startTime)
+		return result, nil
+	}
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 
 	output, err := cmd.CombinedOutput()
@@ -324,8 +331,11 @@ func (v *LintValidator) runGoFmt(ctx context.Context, serverPath string, result 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "go", "fmt", "./...")
-	cmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	cmd, err := sch.SecureExecCommand(ctx, serverPath, "go", "fmt", "./...")
+	if err != nil {
+		return fmt.Errorf("failed to create secure go fmt command: %w", err)
+	}
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -345,8 +355,11 @@ func (v *LintValidator) runGoVet(ctx context.Context, serverPath string, result 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "go", "vet", "./...")
-	cmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	cmd, err := sch.SecureExecCommand(ctx, serverPath, "go", "vet", "./...")
+	if err != nil {
+		return fmt.Errorf("failed to create secure go vet command: %w", err)
+	}
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -372,8 +385,11 @@ func (v *LintValidator) runGolangciLint(ctx context.Context, serverPath string, 
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "golangci-lint", "run", "--fast")
-	cmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	cmd, err := sch.SecureExecCommand(ctx, serverPath, "golangci-lint", "run", "--fast")
+	if err != nil {
+		return fmt.Errorf("failed to create secure golangci-lint command: %w", err)
+	}
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -480,8 +496,11 @@ func (v *SecurityValidator) runGosec(ctx context.Context, serverPath string, res
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "gosec", "-fmt", "text", "./...")
-	cmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	cmd, err := sch.SecureExecCommand(ctx, serverPath, "gosec", "-fmt", "text", "./...")
+	if err != nil {
+		return fmt.Errorf("failed to create secure gosec command: %w", err)
+	}
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -546,8 +565,11 @@ func (v *DependencyValidator) runGoModVerify(ctx context.Context, serverPath str
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "go", "mod", "verify")
-	cmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	cmd, err := sch.SecureExecCommand(ctx, serverPath, "go", "mod", "verify")
+	if err != nil {
+		return fmt.Errorf("failed to create secure go mod verify command: %w", err)
+	}
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -569,8 +591,11 @@ func (v *DependencyValidator) runGovulncheck(ctx context.Context, serverPath str
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "govulncheck", "./...")
-	cmd.Dir = serverPath
+	sch := NewSecureCommandHelper()
+	cmd, err := sch.SecureExecCommand(ctx, serverPath, "govulncheck", "./...")
+	if err != nil {
+		return fmt.Errorf("failed to create secure govulncheck command: %w", err)
+	}
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
