@@ -75,7 +75,16 @@ export class WailsRuntime {
           RemoveRecentFile: (filePath: string) => Promise.resolve(),
           ClearRecentFiles: () => Promise.resolve(),
           GetSupportedFileFormats: () => Promise.resolve(['application/json', 'application/yaml']),
-          DetectFileFormat: (content: string, filename: string) => Promise.resolve('json')
+          DetectFileFormat: (content: string, filename: string) => Promise.resolve('json'),
+          // Activity Log API
+          GetActivityLogs: (filter: any) => Promise.resolve([]),
+          SearchActivityLogs: (request: any) => Promise.resolve({ entries: [], total: 0, hasMore: false, searchTime: '0ms' }),
+          ExportActivityLogs: (request: any) => Promise.resolve({ filePath: '/mock/export.json', entriesCount: 0, fileSize: 0, exportTime: '0ms', format: 'json' }),
+          GetApplicationStatus: () => Promise.resolve({ status: 'idle', message: 'System idle', activeOperations: 0, lastUpdate: new Date().toISOString(), systemHealth: { memoryUsage: 64.5, cpuUsage: 15.2, diskSpace: 250.0, databaseSize: 10.5, temporaryFiles: 0, activeConnections: 1 } }),
+          UpdateLogConfig: (config: any) => Promise.resolve(),
+          ClearActivityLogs: (olderThanHours: number) => Promise.resolve(0),
+          CreateErrorReport: (errorType: string, severity: string, component: string, operation: string, message: string, err: any) => Promise.resolve({ id: 'mock-error', timestamp: new Date().toISOString() }),
+          GetErrorReports: (includeResolved: boolean) => Promise.resolve([])
         }
       }
     };
@@ -276,6 +285,47 @@ export class WailsRuntime {
   public async detectFileFormat(content: string, filename: string) {
     if (!this.isReady) throw new Error('Wails runtime not ready');
     return await window.go.main.App.DetectFileFormat(content, filename);
+  }
+
+  // Activity Log API methods
+  public async getActivityLogs(filter: any = {}) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.GetActivityLogs(filter);
+  }
+
+  public async searchActivityLogs(request: any) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.SearchActivityLogs(request);
+  }
+
+  public async exportActivityLogs(request: any) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.ExportActivityLogs(request);
+  }
+
+  public async getApplicationStatus() {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.GetApplicationStatus();
+  }
+
+  public async updateLogConfig(config: any) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.UpdateLogConfig(config);
+  }
+
+  public async clearActivityLogs(olderThanHours: number = 0) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.ClearActivityLogs(olderThanHours);
+  }
+
+  public async createErrorReport(errorType: string, severity: string, component: string, operation: string, message: string, err: any = null) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.CreateErrorReport(errorType, severity, component, operation, message, err);
+  }
+
+  public async getErrorReports(includeResolved: boolean = false) {
+    if (!this.isReady) throw new Error('Wails runtime not ready');
+    return await window.go.main.App.GetErrorReports(includeResolved);
   }
 }
 

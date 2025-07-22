@@ -614,3 +614,154 @@ type RecentFile struct {
 	LastAccessed string `json:"lastAccessed"`
 	Type         string `json:"type"` // "spec" or "export"
 }
+
+// Activity Log and Monitoring Types
+type ActivityLogEntry struct {
+	ID          string                 `json:"id"`
+	Timestamp   time.Time              `json:"timestamp"`
+	Level       LogLevel               `json:"level"`
+	Component   string                 `json:"component"`
+	Operation   string                 `json:"operation"`
+	Message     string                 `json:"message"`
+	Details     string                 `json:"details,omitempty"`
+	Duration    *time.Duration         `json:"duration,omitempty"`
+	ProjectID   string                 `json:"projectId,omitempty"`
+	UserAction  bool                   `json:"userAction"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+}
+
+type LogFilter struct {
+	Level      *LogLevel `json:"level,omitempty"`
+	Component  *string   `json:"component,omitempty"`
+	Operation  *string   `json:"operation,omitempty"`
+	ProjectID  *string   `json:"projectId,omitempty"`
+	UserAction *bool     `json:"userAction,omitempty"`
+	StartTime  *time.Time `json:"startTime,omitempty"`
+	EndTime    *time.Time `json:"endTime,omitempty"`
+	Search     *string   `json:"search,omitempty"`
+	Limit      *int      `json:"limit,omitempty"`
+}
+
+type ApplicationStatus struct {
+	Status           StatusLevel  `json:"status"`
+	Message          string       `json:"message"`
+	ActiveOperations int          `json:"activeOperations"`
+	LastUpdate       time.Time    `json:"lastUpdate"`
+	SystemHealth     SystemHealth `json:"systemHealth"`
+}
+
+type StatusLevel string
+
+const (
+	StatusIdle    StatusLevel = "idle"
+	StatusWorking StatusLevel = "working"  
+	StatusError   StatusLevel = "error"
+	StatusWarning StatusLevel = "warning"
+)
+
+type SystemHealth struct {
+	MemoryUsage       float64 `json:"memoryUsage"`     // MB
+	CPUUsage          float64 `json:"cpuUsage"`        // Percentage
+	DiskSpace         float64 `json:"diskSpace"`       // GB available
+	DatabaseSize      float64 `json:"databaseSize"`    // MB
+	TemporaryFiles    int     `json:"temporaryFiles"`  // Count
+	ActiveConnections int     `json:"activeConnections"`
+}
+
+type ErrorReport struct {
+	ID           string        `json:"id"`
+	Timestamp    time.Time     `json:"timestamp"`
+	Type         ErrorType     `json:"type"`
+	Severity     ErrorSeverity `json:"severity"`
+	Component    string        `json:"component"`
+	Operation    string        `json:"operation"`
+	Message      string        `json:"message"`
+	Details      string        `json:"details,omitempty"`
+	StackTrace   string        `json:"stackTrace,omitempty"`
+	UserContext  UserContext   `json:"userContext"`
+	SystemInfo   SystemInfo    `json:"systemInfo"`
+	Recovery     RecoveryInfo  `json:"recovery"`
+	Frequency    int           `json:"frequency"`
+	FirstSeen    time.Time     `json:"firstSeen"`
+	LastSeen     time.Time     `json:"lastSeen"`
+}
+
+type ErrorType string
+
+const (
+	ErrorTypeValidationErr   ErrorType = "validation"
+	ErrorTypeSystemErr       ErrorType = "system"
+	ErrorTypeNetworkErr      ErrorType = "network"
+	ErrorTypeFileSystemErr   ErrorType = "filesystem"
+	ErrorTypeDatabaseErr     ErrorType = "database"
+	ErrorTypeGenerationErr   ErrorType = "generation"
+	ErrorTypePermissionErr   ErrorType = "permission"
+	ErrorTypeConfigurationErr ErrorType = "configuration"
+	ErrorTypeAuthenticationErr ErrorType = "authentication"
+)
+
+type UserContext struct {
+	ProjectID     string            `json:"projectId,omitempty"`
+	ProjectName   string            `json:"projectName,omitempty"`
+	UserAction    string            `json:"userAction,omitempty"`
+	UIState       string            `json:"uiState,omitempty"`
+	RecentActions []string          `json:"recentActions,omitempty"`
+	Settings      map[string]string `json:"settings,omitempty"`
+}
+
+type SystemInfo struct {
+	OS             string  `json:"os"`
+	Architecture   string  `json:"architecture"`
+	GoVersion      string  `json:"goVersion"`
+	AppVersion     string  `json:"appVersion"`
+	MemoryMB       float64 `json:"memoryMB"`
+	CPUUsage       float64 `json:"cpuUsage"`
+	DiskSpaceGB    float64 `json:"diskSpaceGB"`
+	DatabaseSizeMB float64 `json:"databaseSizeMB"`
+}
+
+type RecoveryInfo struct {
+	Attempted       bool          `json:"attempted"`
+	Successful      bool          `json:"successful"`
+	Method          string        `json:"method,omitempty"`
+	Duration        time.Duration `json:"duration,omitempty"`
+	UserInteraction bool          `json:"userInteraction"`
+	DataLoss        bool          `json:"dataLoss"`
+}
+
+type LogConfig struct {
+	Level         LogLevel      `json:"level"`
+	BufferSize    int           `json:"bufferSize"`
+	RetentionDays int           `json:"retentionDays"`
+	EnableConsole bool          `json:"enableConsole"`
+	EnableBuffer  bool          `json:"enableBuffer"`
+	FlushInterval time.Duration `json:"flushInterval"`
+}
+
+type LogSearchRequest struct {
+	Query     string     `json:"query"`
+	Filter    LogFilter  `json:"filter"`
+	Limit     int        `json:"limit"`
+	Offset    int        `json:"offset"`
+}
+
+type LogSearchResult struct {
+	Entries    []ActivityLogEntry `json:"entries"`
+	Total      int                `json:"total"`
+	HasMore    bool               `json:"hasMore"`
+	SearchTime time.Duration      `json:"searchTime"`
+}
+
+type LogExportRequest struct {
+	Filter   LogFilter `json:"filter"`
+	Format   string    `json:"format"` // "json", "csv", "txt"
+	FilePath string    `json:"filePath"`
+}
+
+type LogExportResult struct {
+	FilePath     string        `json:"filePath"`
+	EntriesCount int           `json:"entriesCount"`
+	FileSize     int64         `json:"fileSize"`
+	ExportTime   time.Duration `json:"exportTime"`
+	Format       string        `json:"format"`
+}
