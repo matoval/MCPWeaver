@@ -362,6 +362,7 @@ export interface RetryResult {
   totalDelay: number;
   startTime: string;
   endTime: string;
+}
 
 // File Import/Export Types
 export interface ImportResult {
@@ -604,4 +605,140 @@ export interface TemplateSearchResult {
   offset: number;
   hasMore: boolean;
   searchTime: string;
+}
+
+// Activity Log and Monitoring Types
+export interface ActivityLogEntry {
+  id: string;
+  timestamp: string;
+  level: LogLevel;
+  component: string;
+  operation: string;
+  message: string;
+  details?: string;
+  duration?: string; // Duration as string
+  projectId?: string;
+  userAction: boolean;
+  metadata?: Record<string, any>;
+}
+
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+export interface LogFilter {
+  level?: LogLevel;
+  component?: string;
+  operation?: string;
+  projectId?: string;
+  userAction?: boolean;
+  startTime?: string;
+  endTime?: string;
+  search?: string;
+  limit?: number;
+}
+
+export interface LogSearchRequest {
+  query: string;
+  filter: LogFilter;
+  limit: number;
+  offset: number;
+}
+
+export interface LogSearchResult {
+  entries: ActivityLogEntry[];
+  total: number;
+  hasMore: boolean;
+  searchTime: string; // Duration as string
+}
+
+export interface LogExportRequest {
+  filter: LogFilter;
+  format: 'json' | 'csv' | 'txt';
+  filePath: string;
+}
+
+export interface LogExportResult {
+  filePath: string;
+  entriesCount: number;
+  fileSize: number;
+  exportTime: string; // Duration as string
+  format: string;
+}
+
+export interface ApplicationStatus {
+  status: StatusLevel;
+  message: string;
+  activeOperations: number;
+  lastUpdate: string;
+  systemHealth: SystemHealth;
+}
+
+export type StatusLevel = 'idle' | 'working' | 'error' | 'warning';
+
+export interface SystemHealth {
+  memoryUsage: number; // MB
+  cpuUsage: number; // Percentage
+  diskSpace: number; // GB available
+  databaseSize: number; // MB
+  temporaryFiles: number; // Count
+  activeConnections: number;
+}
+
+export interface ErrorReport {
+  id: string;
+  timestamp: string;
+  type: ErrorType;
+  severity: ErrorSeverity;
+  component: string;
+  operation: string;
+  message: string;
+  details?: string;
+  stackTrace?: string;
+  userContext: UserContext;
+  systemInfo: SystemInfoReport;
+  recovery: RecoveryInfo;
+  frequency: number;
+  firstSeen: string;
+  lastSeen: string;
+}
+
+export type ErrorType = 'validation' | 'system' | 'network' | 'filesystem' | 'database' | 'generation' | 'permission' | 'configuration' | 'authentication';
+
+export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface UserContext {
+  projectId?: string;
+  projectName?: string;
+  userAction?: string;
+  uiState?: string;
+  recentActions?: string[];
+  settings?: Record<string, string>;
+}
+
+export interface SystemInfoReport {
+  os: string;
+  architecture: string;
+  goVersion: string;
+  appVersion: string;
+  memoryMB: number;
+  cpuUsage: number;
+  diskSpaceGB: number;
+  databaseSizeMB: number;
+}
+
+export interface RecoveryInfo {
+  attempted: boolean;
+  successful: boolean;
+  method?: string;
+  duration?: string; // Duration as string
+  userInteraction: boolean;
+  dataLoss: boolean;
+}
+
+export interface LogConfig {
+  level: LogLevel;
+  bufferSize: number;
+  retentionDays: number;
+  enableConsole: boolean;
+  enableBuffer: boolean;
+  flushInterval: string; // Duration as string
 }
