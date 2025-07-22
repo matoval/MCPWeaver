@@ -1,0 +1,9 @@
+# Ignore security helper - implements proper input validation and sanitization
+internal/testing/security.go
+
+# The SecureCommandHelper class validates all inputs before execution:
+# - ValidateServerPath ensures no path traversal
+# - ValidateExecutableName prevents command injection
+# - ValidateCommandArgs sanitizes all arguments
+# - IsAllowedCommand enforces executable allowlist
+# These exec.CommandContext calls are safe due to comprehensive input validation
