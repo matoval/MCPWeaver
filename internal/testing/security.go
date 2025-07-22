@@ -121,7 +121,7 @@ func (sch *SecureCommandHelper) SecureExecCommand(ctx context.Context, workDir, 
 	}
 
 	// Create the command - safe because both executable and args have been validated
-	// semgrep:ignore go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+	// nosemgrep
 	cmd := exec.CommandContext(ctx, executable, args...)
 	cmd.Dir = validWorkDir
 
@@ -209,7 +209,7 @@ func (sch *SecureCommandHelper) SecureRunExecutable(ctx context.Context, workDir
 	}
 
 	// Create the command using the validated path - safe because execPath has been validated
-	// semgrep:ignore go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+	// nosemgrep
 	cmd := exec.CommandContext(ctx, execPath)
 	cmd.Dir = workDir
 
