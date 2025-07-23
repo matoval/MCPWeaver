@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monaco Editor Test</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #1e1e1e;
+        color: white;
+      }
+      
+      #root {
+        height: 100vh;
+        width: 100vw;
+      }
+      
+      .test-container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      
+      .test-header {
+        margin-bottom: 20px;
+      }
+      
+      .test-content {
+        flex: 1;
+        border: 1px solid #3c3c3c;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="test-container">
+        <div class="test-header">
+          <h1>Monaco Editor Component Test</h1>
+          <p>Testing the Monaco Editor integration with Go syntax highlighting</p>
+        </div>
+        <div class="test-content" id="monaco-container"></div>
+      </div>
+    </div>
+    
+    <script type="module">
+      import * as monaco from '/node_modules/monaco-editor/esm/vs/editor/editor.api.js';
+      
+      // Configure Monaco Editor
+      monaco.languages.register({ id: 'go' });
+      
+      // Set Go language configuration
+      monaco.languages.setLanguageConfiguration('go', {
+        comments: {
+          lineComment: '//',
+          blockComment: ['/*', '*/']
+        },
+        brackets: [
+          ['{', '}'],
+          ['[', ']'],
+          ['(', ')']
+        ],
+        autoClosingPairs: [
+          { open: '{', close: '}' },
+          { open: '[', close: ']' },
+          { open: '(', close: ')' },
+          { open: '"', close: '"' },
+          { open: "'", close: "'" },
+          { open: '`', close: '`' }
+        ]
+      });
+
+      // Set Go syntax highlighting
+      monaco.languages.setMonarchTokensProvider('go', {
+        keywords: [
+          'break', 'case', 'chan', 'const', 'continue', 'default', 'defer',
+          'else', 'fallthrough', 'for', 'func', 'go', 'goto', 'if', 'import',
+          'interface', 'map', 'package', 'range', 'return', 'select', 'struct',
+          'switch', 'type', 'var'
+        ],
+        builtins: [
+          'bool', 'byte', 'complex64', 'complex128', 'error', 'float32',
+          'float64', 'int', 'int8', 'int16', 'int32', 'int64', 'rune',
+          'string', 'uint', 'uint8', 'uint16', 'uint32', 'uint64', 'uintptr',
+          'append', 'cap', 'close', 'complex', 'copy', 'delete', 'imag',
+          'len', 'make', 'new', 'panic', 'print', 'println', 'real',
+          'recover'
+        ],
+        tokenizer: {
+          root: [
+            [/[a-zA-Z_]\w*/, {
+              cases: {
+                '@keywords': 'keyword',
+                '@builtins': 'type.identifier',
+                '@default': 'identifier'
+              }
+            }],
+            [/[{}()\[\]]/, '@brackets'],
+            [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+            [/0[xX][0-9a-fA-F]+/, 'number.hex'],
+            [/\d+/, 'number'],
+            [/[;,.]/, 'delimiter'],
+            [/"([^"\\]|\\.)*$/, 'string.invalid'],
+            [/"/, { token: 'string.quote', bracket: '@open', next: '@string' }],
+            [/`/, { token: 'string.quote', bracket: '@open', next: '@rawstring' }],
+            [/'[^\\']'/, 'string'],
+            [/'/, 'string.invalid']
+          ],
+          string: [
+            [/[^\\"]+/, 'string'],
+            [/\\./, 'string.escape'],
+            [/"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
+          ],
+          rawstring: [
+            [/[^`]*/, 'string'],
+            [/`/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
+          ]
+        }
+      });
+      
+      // Sample Go code
+      const goCode = `package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+
+	"github.com/sourcegraph/jsonrpc2"
+)
+
+// MCPServer represents an MCP server instance
+type MCPServer struct {
+	name    string
+	version string
+	tools   []Tool
+}
+
+// Tool represents an MCP tool
+type Tool struct {
+	Name        string \`json:"name"\`
+	Description string \`json:"description"\`
+	InputSchema Schema \`json:"input_schema"\`
+}
+
+func main() {
+	server := &MCPServer{
+		name:    "generated-mcp-server",
+		version: "1.0.0",
+		tools:   []Tool{},
+	}
+
+	fmt.Printf("Starting MCP Server: %s v%s\\n", server.name, server.version)
+	
+	// Start the server
+	if err := server.Start(); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
+}`;
+      
+      // Create Monaco Editor
+      const editor = monaco.editor.create(document.getElementById('monaco-container'), {
+        value: goCode,
+        language: 'go',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        minimap: { enabled: true },
+        fontSize: 14,
+        lineNumbers: 'on',
+        wordWrap: 'on',
+        scrollBeyondLastLine: false,
+        renderWhitespace: 'boundary',
+        renderControlCharacters: true,
+        folding: true,
+        matchBrackets: 'always'
+      });
+      
+      console.log('Monaco Editor initialized successfully!');
+    </script>
+  </body>
+</html>
