@@ -15,8 +15,8 @@ import {
   FileText,
   Folder
 } from 'lucide-react';
-import { GetProjects, SearchProjects, DeleteProject, ExportProject, ImportProject, GetRecentProjects } from '../../wailsjs/go/app/App';
-import { app } from '../../wailsjs/go/models';
+import { GetProjects, SearchProjects, DeleteProject, ExportProject, ImportProject, GetRecentProjects } from '../../../wailsjs/go/app/App';
+import { app } from '../../../wailsjs/go/models';
 import './ProjectList.scss';
 
 interface ProjectListProps {

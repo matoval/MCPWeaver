@@ -19,8 +19,8 @@ import {
   ValidateSpec,
   ValidateURL,
   GetDefaultOpenAPIFilters
-} from '../../wailsjs/go/app/App';
-import { app } from '../../wailsjs/go/models';
+} from '../../../wailsjs/go/app/App';
+import { app } from '../../../wailsjs/go/models';
 import './ProjectForm.scss';
 
 interface ProjectFormProps {

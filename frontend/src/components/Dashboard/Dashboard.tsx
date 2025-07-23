@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, FolderOpen, Download } from 'lucide-react';
 import ProjectList from '../Project/ProjectList';
 import ProjectForm from '../Project/ProjectForm';
-import { app } from '../../wailsjs/go/models';
+import { app } from '../../../wailsjs/go/models';
 import './Dashboard.scss';
 
 const Dashboard: React.FC = () => {
