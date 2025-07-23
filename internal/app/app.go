@@ -10,6 +10,7 @@ import (
 	"MCPWeaver/internal/generator"
 	"MCPWeaver/internal/mapping"
 	"MCPWeaver/internal/parser"
+	"MCPWeaver/internal/plugin"
 	"MCPWeaver/internal/validator"
 	
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -27,6 +28,7 @@ type App struct {
 	validatorService    *validator.Service
 	updateService       *UpdateService
 	notificationService *NotificationService
+	pluginService       *plugin.Service
 	settings            *AppSettings
 	errorManager        *ErrorManager
 	performanceMonitor  *PerformanceMonitor
@@ -38,6 +40,7 @@ func NewApp() *App {
 	app := &App{
 		parserService:      parser.NewService(),
 		validatorService:   validator.New(),
+		pluginService:      plugin.NewService(nil), // Use default config
 		settings:           getDefaultSettings(),
 		errorManager:       NewErrorManager(),
 		performanceMonitor: NewPerformanceMonitor(),
@@ -105,6 +108,11 @@ func (a *App) OnStartup(ctx context.Context) error {
 		runtime.LogWarning(a.ctx, "Failed to start notification service: "+err.Error())
 	}
 	
+	// Initialize plugin service
+	if err := a.pluginService.Initialize(); err != nil {
+		runtime.LogWarning(a.ctx, "Failed to initialize plugin service: "+err.Error())
+	}
+	
 	// Record startup time
 	startupDuration := time.Since(startupStart)
 	a.performanceMonitor.RecordStartupTime(startupDuration)
@@ -149,6 +157,13 @@ func (a *App) OnShutdown(ctx context.Context) error {
 	if a.notificationService != nil {
 		if err := a.notificationService.Stop(); err != nil {
 			runtime.LogError(a.ctx, "Failed to stop notification service: "+err.Error())
+		}
+	}
+	
+	// Shutdown plugin service
+	if a.pluginService != nil {
+		if err := a.pluginService.Shutdown(); err != nil {
+			runtime.LogError(a.ctx, "Failed to shutdown plugin service: "+err.Error())
 		}
 	}
 	
@@ -415,4 +430,105 @@ func getDefaultSettings() *AppSettings {
 		},
 		UpdateSettings: DefaultUpdateSettings(),
 	}
+}
+
+// Plugin Management API Methods
+
+// GetPlugins returns all loaded plugins
+func (a *App) GetPlugins(ctx context.Context) (map[string]*plugin.PluginInstanceAPI, error) {
+	if a.pluginService == nil {
+		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.GetPlugins()
+}
+
+// GetPlugin returns a specific plugin
+func (a *App) GetPlugin(ctx context.Context, pluginID string) (*plugin.PluginInstanceAPI, error) {
+	if a.pluginService == nil {
+		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.GetPlugin(pluginID)
+}
+
+// LoadPlugin loads a plugin from file path
+func (a *App) LoadPlugin(ctx context.Context, pluginPath string) error {
+	if a.pluginService == nil {
+		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.LoadPlugin(pluginPath)
+}
+
+// UnloadPlugin unloads a plugin
+func (a *App) UnloadPlugin(ctx context.Context, pluginID string) error {
+	if a.pluginService == nil {
+		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.UnloadPlugin(pluginID)
+}
+
+// EnablePlugin enables a disabled plugin
+func (a *App) EnablePlugin(ctx context.Context, pluginID string) error {
+	if a.pluginService == nil {
+		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.EnablePlugin(pluginID)
+}
+
+// DisablePlugin disables an active plugin
+func (a *App) DisablePlugin(ctx context.Context, pluginID string) error {
+	if a.pluginService == nil {
+		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.DisablePlugin(pluginID)
+}
+
+// GetPluginsByCapability returns plugins with specific capability
+func (a *App) GetPluginsByCapability(ctx context.Context, capability string) ([]*plugin.PluginInstanceAPI, error) {
+	if a.pluginService == nil {
+		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.GetPluginsByCapability(capability)
+}
+
+// SearchPlugins searches for plugins in marketplace
+func (a *App) SearchPlugins(ctx context.Context, query string, category string, tags []string, limit int) (*plugin.SearchResponse, error) {
+	if a.pluginService == nil {
+		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.SearchPlugins(ctx, query, category, tags, limit)
+}
+
+// InstallPlugin installs a plugin from marketplace
+func (a *App) InstallPlugin(ctx context.Context, pluginID string) error {
+	if a.pluginService == nil {
+		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
+	}
+	
+	return a.pluginService.InstallPlugin(ctx, pluginID)
+}
+
+// GetPluginCapabilities returns available plugin capabilities
+func (a *App) GetPluginCapabilities(ctx context.Context) []string {
+	if a.pluginService == nil {
+		return []string{}
+	}
+	
+	return a.pluginService.GetPluginCapabilities()
+}
+
+// GetPluginPermissions returns available plugin permissions
+func (a *App) GetPluginPermissions(ctx context.Context) []string {
+	if a.pluginService == nil {
+		return []string{}
+	}
+	
+	return a.pluginService.GetPluginPermissions()
 }
