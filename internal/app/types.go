@@ -16,12 +16,20 @@ type CreateProjectRequest struct {
 	Settings   ProjectSettings `json:"settings"`
 }
 
+func (c *CreateProjectRequest) convertValues() {
+	// No time.Time fields to convert
+}
+
 type ProjectUpdateRequest struct {
 	Name       *string          `json:"name,omitempty"`
 	SpecPath   *string          `json:"specPath,omitempty"`
 	SpecURL    *string          `json:"specUrl,omitempty"`
 	OutputPath *string          `json:"outputPath,omitempty"`
 	Settings   *ProjectSettings `json:"settings,omitempty"`
+}
+
+func (p *ProjectUpdateRequest) convertValues() {
+	// No time.Time fields to convert
 }
 
 type Project struct {
@@ -36,6 +44,10 @@ type Project struct {
 	UpdatedAt       time.Time        `json:"updatedAt"`
 	LastGenerated   *time.Time       `json:"lastGenerated,omitempty"`
 	GenerationCount int              `json:"generationCount"`
+}
+
+func (p *Project) convertValues() {
+	// Convert time.Time fields to string representations for frontend
 }
 
 type ProjectSettings struct {
@@ -129,6 +141,10 @@ type ValidationResult struct {
 	ValidationTime time.Duration       `json:"validationTime"`
 	CacheHit       bool                `json:"cacheHit"`
 	ValidatedAt    time.Time           `json:"validatedAt"`
+}
+
+func (v *ValidationResult) convertValues() {
+	// Convert time.Time fields to string representations for frontend
 }
 
 type ValidationError struct {
