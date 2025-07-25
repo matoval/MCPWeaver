@@ -10,23 +10,23 @@ import (
 // ShowToastNotification displays a toast notification
 func (a *App) ShowToastNotification(toast *ToastNotification) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if toast == nil {
-		return a.createAPIError(ErrorTypeValidation, "INVALID_TOAST", 
+		return a.createAPIError(ErrorTypeValidation, "INVALID_TOAST",
 			"Toast notification is required", nil)
 	}
 
 	// Validate required fields
 	if toast.Title == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_TITLE", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_TITLE",
 			"Toast title is required", nil)
 	}
 
 	if toast.Message == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_MESSAGE", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_MESSAGE",
 			"Toast message is required", nil)
 	}
 
@@ -59,23 +59,23 @@ func (a *App) ShowToastNotification(toast *ToastNotification) error {
 // ShowSystemNotification displays a system-level desktop notification
 func (a *App) ShowSystemNotification(notification *SystemNotification) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if notification == nil {
-		return a.createAPIError(ErrorTypeValidation, "INVALID_NOTIFICATION", 
+		return a.createAPIError(ErrorTypeValidation, "INVALID_NOTIFICATION",
 			"System notification is required", nil)
 	}
 
 	// Validate required fields
 	if notification.Title == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_TITLE", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_TITLE",
 			"Notification title is required", nil)
 	}
 
 	if notification.Body == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_BODY", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_BODY",
 			"Notification body is required", nil)
 	}
 
@@ -104,12 +104,12 @@ func (a *App) ShowSystemNotification(notification *SystemNotification) error {
 // DismissToast dismisses a specific toast notification
 func (a *App) DismissToast(id string) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if id == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_ID", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_ID",
 			"Notification ID is required", nil)
 	}
 
@@ -125,7 +125,7 @@ func (a *App) DismissToast(id string) error {
 // DismissAllToasts dismisses all active toast notifications
 func (a *App) DismissAllToasts() error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
@@ -150,12 +150,12 @@ func (a *App) GetActiveToasts() []*ToastNotification {
 // MarkNotificationAsRead marks a notification as read
 func (a *App) MarkNotificationAsRead(id string) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if id == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_ID", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_ID",
 			"Notification ID is required", nil)
 	}
 
@@ -171,17 +171,17 @@ func (a *App) MarkNotificationAsRead(id string) error {
 // ExecuteNotificationAction executes a notification action
 func (a *App) ExecuteNotificationAction(notificationID, actionID string, data map[string]interface{}) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if notificationID == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_NOTIFICATION_ID", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_NOTIFICATION_ID",
 			"Notification ID is required", nil)
 	}
 
 	if actionID == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_ACTION_ID", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_ACTION_ID",
 			"Action ID is required", nil)
 	}
 
@@ -239,24 +239,24 @@ func (a *App) GetNotificationConfig() *NotificationSystem {
 // UpdateNotificationConfig updates the notification system configuration
 func (a *App) UpdateNotificationConfig(config *NotificationSystem) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if config == nil {
-		return a.createAPIError(ErrorTypeValidation, "INVALID_CONFIG", 
+		return a.createAPIError(ErrorTypeValidation, "INVALID_CONFIG",
 			"Configuration is required", nil)
 	}
 
 	err := a.notificationService.UpdateConfig(config)
 	if err != nil {
-		apiErr := a.createAPIError(ErrorTypeSystem, "CONFIG_UPDATE_FAILED", 
+		apiErr := a.createAPIError(ErrorTypeSystem, "CONFIG_UPDATE_FAILED",
 			fmt.Sprintf("Failed to update configuration: %v", err), nil)
 		a.emitError(apiErr)
 		return apiErr
 	}
 
-	a.emitNotification("info", "Configuration Updated", 
+	a.emitNotification("info", "Configuration Updated",
 		"Notification settings have been successfully updated")
 
 	return nil
@@ -265,7 +265,7 @@ func (a *App) UpdateNotificationConfig(config *NotificationSystem) error {
 // EnableDoNotDisturbMode enables do not disturb mode
 func (a *App) EnableDoNotDisturbMode(schedule *DoNotDisturbSchedule) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
@@ -277,13 +277,13 @@ func (a *App) EnableDoNotDisturbMode(schedule *DoNotDisturbSchedule) error {
 
 	err := a.notificationService.UpdateConfig(config)
 	if err != nil {
-		apiErr := a.createAPIError(ErrorTypeSystem, "DND_ENABLE_FAILED", 
+		apiErr := a.createAPIError(ErrorTypeSystem, "DND_ENABLE_FAILED",
 			fmt.Sprintf("Failed to enable do not disturb mode: %v", err), nil)
 		a.emitError(apiErr)
 		return apiErr
 	}
 
-	a.emitNotification("info", "Do Not Disturb Enabled", 
+	a.emitNotification("info", "Do Not Disturb Enabled",
 		"Do not disturb mode has been enabled")
 
 	return nil
@@ -292,7 +292,7 @@ func (a *App) EnableDoNotDisturbMode(schedule *DoNotDisturbSchedule) error {
 // DisableDoNotDisturbMode disables do not disturb mode
 func (a *App) DisableDoNotDisturbMode() error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
@@ -301,13 +301,13 @@ func (a *App) DisableDoNotDisturbMode() error {
 
 	err := a.notificationService.UpdateConfig(config)
 	if err != nil {
-		apiErr := a.createAPIError(ErrorTypeSystem, "DND_DISABLE_FAILED", 
+		apiErr := a.createAPIError(ErrorTypeSystem, "DND_DISABLE_FAILED",
 			fmt.Sprintf("Failed to disable do not disturb mode: %v", err), nil)
 		a.emitError(apiErr)
 		return apiErr
 	}
 
-	a.emitNotification("info", "Do Not Disturb Disabled", 
+	a.emitNotification("info", "Do Not Disturb Disabled",
 		"Do not disturb mode has been disabled")
 
 	return nil
@@ -316,28 +316,28 @@ func (a *App) DisableDoNotDisturbMode() error {
 // AddNotificationFilter adds a new notification filter
 func (a *App) AddNotificationFilter(filter *NotificationFilter) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if filter == nil {
-		return a.createAPIError(ErrorTypeValidation, "INVALID_FILTER", 
+		return a.createAPIError(ErrorTypeValidation, "INVALID_FILTER",
 			"Filter is required", nil)
 	}
 
 	// Validate filter
 	if filter.Name == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_FILTER_NAME", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_FILTER_NAME",
 			"Filter name is required", nil)
 	}
 
 	if filter.Condition == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_CONDITION", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_CONDITION",
 			"Filter condition is required", nil)
 	}
 
 	if filter.Action == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_ACTION", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_ACTION",
 			"Filter action is required", nil)
 	}
 
@@ -352,13 +352,13 @@ func (a *App) AddNotificationFilter(filter *NotificationFilter) error {
 
 	err := a.notificationService.UpdateConfig(config)
 	if err != nil {
-		apiErr := a.createAPIError(ErrorTypeSystem, "FILTER_ADD_FAILED", 
+		apiErr := a.createAPIError(ErrorTypeSystem, "FILTER_ADD_FAILED",
 			fmt.Sprintf("Failed to add filter: %v", err), nil)
 		a.emitError(apiErr)
 		return apiErr
 	}
 
-	a.emitNotification("info", "Filter Added", 
+	a.emitNotification("info", "Filter Added",
 		fmt.Sprintf("Notification filter '%s' has been added", filter.Name))
 
 	return nil
@@ -367,19 +367,19 @@ func (a *App) AddNotificationFilter(filter *NotificationFilter) error {
 // RemoveNotificationFilter removes a notification filter
 func (a *App) RemoveNotificationFilter(filterID string) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if filterID == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_FILTER_ID", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_FILTER_ID",
 			"Filter ID is required", nil)
 	}
 
 	// Get current config and remove filter
 	config := a.notificationService.GetConfig()
 	originalCount := len(config.Preferences.Filters)
-	
+
 	filtered := make([]NotificationFilter, 0)
 	for _, filter := range config.Preferences.Filters {
 		if filter.ID != filterID {
@@ -388,7 +388,7 @@ func (a *App) RemoveNotificationFilter(filterID string) error {
 	}
 
 	if len(filtered) == originalCount {
-		return a.createAPIError(ErrorTypeValidation, "FILTER_NOT_FOUND", 
+		return a.createAPIError(ErrorTypeValidation, "FILTER_NOT_FOUND",
 			fmt.Sprintf("Filter with ID %s not found", filterID), nil)
 	}
 
@@ -396,7 +396,7 @@ func (a *App) RemoveNotificationFilter(filterID string) error {
 
 	err := a.notificationService.UpdateConfig(config)
 	if err != nil {
-		apiErr := a.createAPIError(ErrorTypeSystem, "FILTER_REMOVE_FAILED", 
+		apiErr := a.createAPIError(ErrorTypeSystem, "FILTER_REMOVE_FAILED",
 			fmt.Sprintf("Failed to remove filter: %v", err), nil)
 		a.emitError(apiErr)
 		return apiErr
@@ -410,19 +410,19 @@ func (a *App) RemoveNotificationFilter(filterID string) error {
 // UpdateNotificationFilter updates an existing notification filter
 func (a *App) UpdateNotificationFilter(filter *NotificationFilter) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if filter == nil || filter.ID == "" {
-		return a.createAPIError(ErrorTypeValidation, "INVALID_FILTER", 
+		return a.createAPIError(ErrorTypeValidation, "INVALID_FILTER",
 			"Filter with valid ID is required", nil)
 	}
 
 	// Get current config and update filter
 	config := a.notificationService.GetConfig()
 	found := false
-	
+
 	for i, existingFilter := range config.Preferences.Filters {
 		if existingFilter.ID == filter.ID {
 			config.Preferences.Filters[i] = *filter
@@ -432,19 +432,19 @@ func (a *App) UpdateNotificationFilter(filter *NotificationFilter) error {
 	}
 
 	if !found {
-		return a.createAPIError(ErrorTypeValidation, "FILTER_NOT_FOUND", 
+		return a.createAPIError(ErrorTypeValidation, "FILTER_NOT_FOUND",
 			fmt.Sprintf("Filter with ID %s not found", filter.ID), nil)
 	}
 
 	err := a.notificationService.UpdateConfig(config)
 	if err != nil {
-		apiErr := a.createAPIError(ErrorTypeSystem, "FILTER_UPDATE_FAILED", 
+		apiErr := a.createAPIError(ErrorTypeSystem, "FILTER_UPDATE_FAILED",
 			fmt.Sprintf("Failed to update filter: %v", err), nil)
 		a.emitError(apiErr)
 		return apiErr
 	}
 
-	a.emitNotification("info", "Filter Updated", 
+	a.emitNotification("info", "Filter Updated",
 		fmt.Sprintf("Notification filter '%s' has been updated", filter.Name))
 
 	return nil
@@ -453,12 +453,12 @@ func (a *App) UpdateNotificationFilter(filter *NotificationFilter) error {
 // TestNotificationFilter tests a notification filter against sample data
 func (a *App) TestNotificationFilter(filter *NotificationFilter, sampleNotification *ToastNotification) (*NotificationFilterTestResult, error) {
 	if filter == nil {
-		return nil, a.createAPIError(ErrorTypeValidation, "INVALID_FILTER", 
+		return nil, a.createAPIError(ErrorTypeValidation, "INVALID_FILTER",
 			"Filter is required", nil)
 	}
 
 	if sampleNotification == nil {
-		return nil, a.createAPIError(ErrorTypeValidation, "INVALID_SAMPLE", 
+		return nil, a.createAPIError(ErrorTypeValidation, "INVALID_SAMPLE",
 			"Sample notification is required", nil)
 	}
 
@@ -472,12 +472,12 @@ func (a *App) TestNotificationFilter(filter *NotificationFilter, sampleNotificat
 	passes := tempService.passesFilters(sampleNotification)
 
 	result := &NotificationFilterTestResult{
-		FilterID:     filter.ID,
-		FilterName:   filter.Name,
-		Passes:       passes,
-		Action:       filter.Action,
-		TestResult:   "Filter applied successfully",
-		TestedAt:     time.Now(),
+		FilterID:   filter.ID,
+		FilterName: filter.Name,
+		Passes:     passes,
+		Action:     filter.Action,
+		TestResult: "Filter applied successfully",
+		TestedAt:   time.Now(),
 	}
 
 	if !passes && filter.Action == FilterActionBlock {
@@ -492,7 +492,7 @@ func (a *App) TestNotificationFilter(filter *NotificationFilter, sampleNotificat
 // ClearNotificationHistory clears all notification history
 func (a *App) ClearNotificationHistory() error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
@@ -516,12 +516,12 @@ func (a *App) ClearNotificationHistory() error {
 // ExportNotificationHistory exports notification history to a file
 func (a *App) ExportNotificationHistory(filePath string, format string) error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
 	if filePath == "" {
-		return a.createAPIError(ErrorTypeValidation, "MISSING_FILE_PATH", 
+		return a.createAPIError(ErrorTypeValidation, "MISSING_FILE_PATH",
 			"File path is required", nil)
 	}
 
@@ -531,7 +531,7 @@ func (a *App) ExportNotificationHistory(filePath string, format string) error {
 
 	// TODO: Implement actual export functionality
 	// For now, just emit an event
-	a.emitNotification("info", "Export Started", 
+	a.emitNotification("info", "Export Started",
 		fmt.Sprintf("Exporting notification history to %s", filePath))
 
 	return nil
@@ -540,7 +540,7 @@ func (a *App) ExportNotificationHistory(filePath string, format string) error {
 // PauseNotifications pauses all notifications temporarily
 func (a *App) PauseNotifications() error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
@@ -548,7 +548,7 @@ func (a *App) PauseNotifications() error {
 	a.notificationService.queue.Paused = true
 	a.notificationService.queueMutex.Unlock()
 
-	a.emitNotification("info", "Notifications Paused", 
+	a.emitNotification("info", "Notifications Paused",
 		"All notifications have been paused")
 
 	return nil
@@ -557,7 +557,7 @@ func (a *App) PauseNotifications() error {
 // ResumeNotifications resumes paused notifications
 func (a *App) ResumeNotifications() error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
@@ -565,7 +565,7 @@ func (a *App) ResumeNotifications() error {
 	a.notificationService.queue.Paused = false
 	a.notificationService.queueMutex.Unlock()
 
-	a.emitNotification("info", "Notifications Resumed", 
+	a.emitNotification("info", "Notifications Resumed",
 		"Notifications have been resumed")
 
 	return nil
@@ -595,7 +595,7 @@ func (a *App) GetNotificationQueue() *NotificationQueueStatus {
 // ClearNotificationQueue clears all queued notifications
 func (a *App) ClearNotificationQueue() error {
 	if a.notificationService == nil {
-		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE", 
+		return a.createAPIError(ErrorTypeSystem, "NOTIFICATION_SERVICE_NOT_AVAILABLE",
 			"Notification service is not available", nil)
 	}
 
@@ -657,12 +657,12 @@ func (a *App) ShowErrorToast(title, message string) error {
 
 // NotificationFilterTestResult represents the result of testing a filter
 type NotificationFilterTestResult struct {
-	FilterID   string    `json:"filterId"`
-	FilterName string    `json:"filterName"`
-	Passes     bool      `json:"passes"`
+	FilterID   string       `json:"filterId"`
+	FilterName string       `json:"filterName"`
+	Passes     bool         `json:"passes"`
 	Action     FilterAction `json:"action"`
-	TestResult string    `json:"testResult"`
-	TestedAt   time.Time `json:"testedAt"`
+	TestResult string       `json:"testResult"`
+	TestedAt   time.Time    `json:"testedAt"`
 }
 
 // NotificationQueueStatus represents the status of the notification queue

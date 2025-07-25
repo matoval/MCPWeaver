@@ -32,7 +32,7 @@ func (s *ParserIntegrationTestSuite) TestParseFromFile_ValidSpec() {
 
 	// Test parsing
 	result, err := s.service.ParseFromFile(filePath)
-	
+
 	s.helper.AssertNoError(err)
 	s.helper.AssertNotNil(result)
 	s.helper.AssertEqual("Test API", result.Title)
@@ -48,7 +48,7 @@ func (s *ParserIntegrationTestSuite) TestParseFromFile_InvalidSpec() {
 
 	// Test parsing
 	result, err := s.service.ParseFromFile(filePath)
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertNil(result)
 }
@@ -56,7 +56,7 @@ func (s *ParserIntegrationTestSuite) TestParseFromFile_InvalidSpec() {
 func (s *ParserIntegrationTestSuite) TestParseFromFile_NonExistentFile() {
 	// Test with non-existent file
 	result, err := s.service.ParseFromFile("/non/existent/file.yaml")
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertNil(result)
 }
@@ -97,13 +97,13 @@ func (s *ParserIntegrationTestSuite) TestParseFromFile_JSONFormat() {
 			}
 		}
 	}`
-	
+
 	filePath, cleanup := s.helper.CreateTempFile(specContent, ".json")
 	defer cleanup()
 
 	// Test parsing JSON format
 	result, err := s.service.ParseFromFile(filePath)
-	
+
 	if err == nil {
 		s.helper.AssertNotNil(result)
 		s.helper.AssertEqual("JSON Test API", result.Title)
@@ -120,7 +120,7 @@ func (s *ParserIntegrationTestSuite) TestParseFromFile_EmptyFile() {
 
 	// Test parsing empty file
 	result, err := s.service.ParseFromFile(filePath)
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertNil(result)
 }
@@ -142,13 +142,13 @@ paths:
       responses:
         '200':
           description: List of users`
-	
+
 	filePath, cleanup := s.helper.CreateTempFile(specContent, ".yaml")
 	defer cleanup()
 
 	// Test parsing spec with comments
 	result, err := s.service.ParseFromFile(filePath)
-	
+
 	s.helper.AssertNoError(err)
 	s.helper.AssertNotNil(result)
 	s.helper.AssertEqual("Test API with Comments", result.Title)
@@ -188,7 +188,7 @@ func (s *ParserIntegrationTestSuite) TestParseFromFile_MultipleFormats() {
 
 func (s *ParserIntegrationTestSuite) TestParseFromFile_ErrorRecovery() {
 	// Test that parser recovers from errors and can parse valid files after invalid ones
-	
+
 	// First try to parse an invalid file
 	invalidContent := helpers.InvalidOpenAPISpec()
 	invalidPath, cleanup1 := s.helper.CreateTempFile(invalidContent, ".yaml")
@@ -213,14 +213,14 @@ func (s *ParserIntegrationTestSuite) TestParseFromFile_ErrorRecovery() {
 func (s *ParserIntegrationTestSuite) TestParseFromFile_MemoryUsage() {
 	// Test parsing multiple files doesn't leak memory
 	specContent := helpers.ValidateOpenAPISpec()
-	
+
 	for i := 0; i < 10; i++ {
 		filePath, cleanup := s.helper.CreateTempFile(specContent, ".yaml")
-		
+
 		result, err := s.service.ParseFromFile(filePath)
 		s.helper.AssertNoError(err)
 		s.helper.AssertNotNil(result)
-		
+
 		cleanup() // Clean up immediately to test memory management
 	}
 }

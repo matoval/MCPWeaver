@@ -29,25 +29,25 @@ func (l *Loader) Load(pluginPath string) (Plugin, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open plugin: %w", err)
 	}
-	
+
 	// Look for the NewPlugin function
 	newPluginFunc, err := p.Lookup("NewPlugin")
 	if err != nil {
 		return nil, fmt.Errorf("plugin missing NewPlugin function: %w", err)
 	}
-	
+
 	// Cast to proper function type
 	createPlugin, ok := newPluginFunc.(func() Plugin)
 	if !ok {
 		return nil, fmt.Errorf("NewPlugin function has wrong signature")
 	}
-	
+
 	// Create plugin instance
 	pluginInstance := createPlugin()
 	if pluginInstance == nil {
 		return nil, fmt.Errorf("plugin creation returned nil")
 	}
-	
+
 	return pluginInstance, nil
 }
 
@@ -56,13 +56,13 @@ func (l *Loader) LoadWithWrapper(pluginPath string, sandbox bool) (Plugin, error
 	if !sandbox {
 		return l.Load(pluginPath)
 	}
-	
+
 	// Load the raw plugin
 	rawPlugin, err := l.Load(pluginPath)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Wrap in sandbox
 	return NewSandboxWrapper(rawPlugin, l.config), nil
 }
@@ -109,6 +109,6 @@ func (w *SandboxWrapper) createSandboxContext(ctx context.Context) context.Conte
 	sandboxCtx := context.WithValue(ctx, "sandbox", true)
 	sandboxCtx = context.WithValue(sandboxCtx, "allowedHosts", w.config.AllowedHosts)
 	sandboxCtx = context.WithValue(sandboxCtx, "tempDir", w.config.TempDir)
-	
+
 	return sandboxCtx
 }

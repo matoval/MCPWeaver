@@ -87,7 +87,7 @@ func TestGetDefaultSettings(t *testing.T) {
 
 func TestSettingsValidation(t *testing.T) {
 	testApp := &app.App{}
-	
+
 	// Test valid theme values
 	validThemes := []string{"light", "dark", "auto"}
 	for _, theme := range validThemes {
@@ -127,8 +127,8 @@ func TestSettingsValidation(t *testing.T) {
 
 	// Test invalid window settings (too small)
 	invalidWindow := app.WindowSettings{
-		Width:  500,  // Too small
-		Height: 300,  // Too small
+		Width:  500, // Too small
+		Height: 300, // Too small
 	}
 	err = testApp.UpdateWindowSettings(invalidWindow)
 	if err != nil {
@@ -138,7 +138,7 @@ func TestSettingsValidation(t *testing.T) {
 
 func TestSettingsSerialization(t *testing.T) {
 	testApp := &app.App{}
-	
+
 	// Get default settings
 	settings, err := testApp.GetSettings()
 	if err != nil {
@@ -182,7 +182,7 @@ func TestSettingsFileOperations(t *testing.T) {
 
 	// Create test app with custom settings path
 	testApp := &app.App{}
-	
+
 	// Test settings file path generation
 	settingsPath := testApp.GetSettingsFilePath()
 	if settingsPath == "" {
@@ -205,7 +205,7 @@ func TestSettingsFileOperations(t *testing.T) {
 func TestSettingsMigration(t *testing.T) {
 	// Test that migration system doesn't crash
 	testApp := &app.App{}
-	
+
 	// Test loading settings with migration
 	settings, err := testApp.MigrateAndLoadSettings()
 	if err != nil {
@@ -228,14 +228,14 @@ func TestSettingsMigration(t *testing.T) {
 
 func TestSettingsValidationEdgeCases(t *testing.T) {
 	testApp := &app.App{}
-	
+
 	// Test editor settings validation
 	editorSettings := app.EditorSettings{
 		FontSize:   5,  // Too small
 		TabSize:    1,  // Too small
 		FontFamily: "", // Empty
 	}
-	
+
 	err := testApp.UpdateEditorSettings(editorSettings)
 	if err != nil {
 		t.Errorf("Editor settings validation should auto-correct, not error: %v", err)
@@ -245,7 +245,7 @@ func TestSettingsValidationEdgeCases(t *testing.T) {
 	generationSettings := app.GenerationSettings{
 		MaxWorkers: 0, // Too small
 	}
-	
+
 	err = testApp.UpdateGenerationSettings(generationSettings)
 	if err != nil {
 		t.Errorf("Generation settings validation should auto-correct, not error: %v", err)
@@ -254,9 +254,9 @@ func TestSettingsValidationEdgeCases(t *testing.T) {
 	// Test notification settings validation
 	notificationSettings := app.NotificationSettings{
 		NotificationDuration: 500,  // Too small
-		SoundVolume:         -0.5,  // Invalid
+		SoundVolume:          -0.5, // Invalid
 	}
-	
+
 	err = testApp.UpdateNotificationSettings(notificationSettings)
 	if err != nil {
 		t.Errorf("Notification settings validation should auto-correct, not error: %v", err)
@@ -264,10 +264,10 @@ func TestSettingsValidationEdgeCases(t *testing.T) {
 
 	// Test appearance settings validation
 	appearanceSettings := app.AppearanceSettings{
-		WindowOpacity: 2.0,  // Too large
-		FontScale:     0.1,  // Too small
+		WindowOpacity: 2.0, // Too large
+		FontScale:     0.1, // Too small
 	}
-	
+
 	err = testApp.UpdateAppearanceSettings(appearanceSettings)
 	if err != nil {
 		t.Errorf("Appearance settings validation should auto-correct, not error: %v", err)
@@ -276,11 +276,11 @@ func TestSettingsValidationEdgeCases(t *testing.T) {
 
 func TestSettingsUpdateEvents(t *testing.T) {
 	testApp := &app.App{}
-	
+
 	// Note: In a real test environment, you would need to set up the Wails context
 	// and event listener to properly test events. For now, we just test that
 	// the methods don't crash when called.
-	
+
 	// Test theme update
 	err := testApp.UpdateTheme("dark")
 	if err != nil {
@@ -306,7 +306,7 @@ func TestSettingsUpdateEvents(t *testing.T) {
 
 func TestRecentProjectsManagement(t *testing.T) {
 	testApp := &app.App{}
-	
+
 	// Test adding recent project
 	err := testApp.AddRecentProject("test-project-1")
 	if err != nil {
@@ -329,7 +329,7 @@ func TestRecentProjectsManagement(t *testing.T) {
 // Benchmark tests
 func BenchmarkGetSettings(b *testing.B) {
 	testApp := &app.App{}
-	
+
 	for i := 0; i < b.N; i++ {
 		_, err := testApp.GetSettings()
 		if err != nil {
@@ -341,7 +341,7 @@ func BenchmarkGetSettings(b *testing.B) {
 func BenchmarkSettingsValidation(b *testing.B) {
 	testApp := &app.App{}
 	settings, _ := testApp.GetSettings()
-	
+
 	for i := 0; i < b.N; i++ {
 		err := testApp.UpdateSettings(*settings)
 		if err != nil {
@@ -353,7 +353,7 @@ func BenchmarkSettingsValidation(b *testing.B) {
 func BenchmarkSettingsSerialization(b *testing.B) {
 	testApp := &app.App{}
 	settings, _ := testApp.GetSettings()
-	
+
 	for i := 0; i < b.N; i++ {
 		_, err := json.Marshal(settings)
 		if err != nil {

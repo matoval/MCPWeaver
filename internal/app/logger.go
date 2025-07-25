@@ -184,7 +184,7 @@ func (l *Logger) LogError(err *APIError) {
 		entry.SessionID = err.Context.SessionID
 		entry.RequestID = err.Context.RequestID
 		entry.StackTrace = err.Context.StackTrace
-		
+
 		// Add metadata to context
 		for k, v := range err.Context.Metadata {
 			entry.Context[k] = v
@@ -207,19 +207,19 @@ func (l *Logger) LogError(err *APIError) {
 // LogOperation logs the start and end of an operation
 func (l *Logger) LogOperation(operation string, fn func() error) error {
 	startTime := time.Now()
-	
+
 	l.WithOperation(operation).Info("Operation started")
-	
+
 	err := fn()
-	
+
 	duration := time.Since(startTime)
-	
+
 	if err != nil {
 		l.WithOperation(operation).WithContext("duration", duration.String()).Error("Operation failed: %v", err)
 	} else {
 		l.WithOperation(operation).WithContext("duration", duration.String()).Info("Operation completed")
 	}
-	
+
 	return err
 }
 
@@ -260,7 +260,7 @@ func (l *Logger) log(level LogLevel, message string, args ...interface{}) {
 // writeEntry writes a log entry to all outputs
 func (l *Logger) writeEntry(entry LogEntry) {
 	var output string
-	
+
 	if l.jsonFormat {
 		jsonData, err := json.Marshal(entry)
 		if err != nil {
@@ -280,7 +280,7 @@ func (l *Logger) writeEntry(entry LogEntry) {
 			entry.Level.String(),
 			entry.Component,
 			entry.Message)
-		
+
 		if len(entry.Context) > 0 {
 			output += " {"
 			first := true
@@ -346,9 +346,9 @@ func (er *ErrorReporter) ReportError(err *APIError) {
 	// - Custom monitoring endpoints
 	// - Email notifications
 	// - Slack webhooks
-	
+
 	// For now, we'll just log that we would report it
-	er.logger.Info("Error reported to monitoring services", 
+	er.logger.Info("Error reported to monitoring services",
 		"correlationId", err.CorrelationID,
 		"errorType", err.Type,
 		"errorCode", err.Code)

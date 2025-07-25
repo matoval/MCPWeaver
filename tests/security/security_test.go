@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -104,13 +103,13 @@ func TestInputValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.validate(tt.input)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected error for input %q, but got none", tt.input)
 					return
 				}
-				
+
 				// Check error type if specified
 				if tt.errorCode != "" {
 					if apiErr, ok := err.(*app.APIError); ok {
@@ -180,7 +179,7 @@ func TestTemplateSanitization(t *testing.T) {
 // TestFileSystemSecurity tests secure file system operations
 func TestFileSystemSecurity(t *testing.T) {
 	suite := NewSecurityTestSuite()
-	
+
 	// Create temporary directory for testing
 	tempDir, err := os.MkdirTemp("", "mcpweaver-security-test")
 	if err != nil {
@@ -189,7 +188,7 @@ func TestFileSystemSecurity(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	secureFS := app.NewSecureFileSystem(suite.app)
-	
+
 	// Test allowed paths
 	err = secureFS.SetAllowedPaths([]string{tempDir})
 	if err != nil {
@@ -240,13 +239,13 @@ func TestFileSystemSecurity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.operation()
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected error for operation %q, but got none", tt.name)
 					return
 				}
-				
+
 				if tt.errorCode != "" {
 					if apiErr, ok := err.(*app.APIError); ok {
 						if apiErr.Code != tt.errorCode {
@@ -423,8 +422,8 @@ value: 123
 			expectError: false,
 		},
 		{
-			name: "YAML with excessive references",
-			yaml: strings.Repeat("&ref ", 150) + "value",
+			name:        "YAML with excessive references",
+			yaml:        strings.Repeat("&ref ", 150) + "value",
 			expectError: true,
 			errorCode:   "YAML_EXCESSIVE_REFERENCES",
 		},
@@ -684,7 +683,7 @@ func TestSecurityIntegration(t *testing.T) {
 		// This would test a complete import workflow with all security controls active
 		validator := app.NewSecurityValidator(suite.app)
 		secureFS := app.NewSecureFileSystem(suite.app)
-		
+
 		// Set allowed paths
 		err := secureFS.SetAllowedPaths([]string{tempDir})
 		if err != nil {
@@ -780,9 +779,9 @@ func TestSecurityHeaders(t *testing.T) {
 		{
 			name: "Safe headers",
 			headers: map[string]string{
-				"Content-Type":   "application/json",
-				"Accept":         "application/json",
-				"User-Agent":     "MCPWeaver/1.0",
+				"Content-Type": "application/json",
+				"Accept":       "application/json",
+				"User-Agent":   "MCPWeaver/1.0",
 			},
 			expectError: false,
 		},

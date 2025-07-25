@@ -41,7 +41,7 @@ func NewTestFramework(manager *Manager, config *TestConfig) *TestFramework {
 	if config == nil {
 		config = DefaultTestConfig()
 	}
-	
+
 	return &TestFramework{
 		manager: manager,
 		config:  config,
@@ -51,7 +51,7 @@ func NewTestFramework(manager *Manager, config *TestConfig) *TestFramework {
 // TestPlugin runs comprehensive tests on a plugin
 func (tf *TestFramework) TestPlugin(ctx context.Context, pluginPath string) (*TestResult, error) {
 	startTime := time.Now()
-	
+
 	// Load plugin for testing
 	plugin, err := tf.manager.loader.Load(pluginPath)
 	if err != nil {
@@ -67,28 +67,28 @@ func (tf *TestFramework) TestPlugin(ctx context.Context, pluginPath string) (*Te
 			}},
 		}, nil
 	}
-	
+
 	// Run test suite
 	testResult := &TestResult{
 		Tests:   []TestCase{},
 		Passed:  true,
 		Summary: "Plugin tests completed",
 	}
-	
+
 	// Test 1: Plugin Info Validation
 	infoTest := tf.testPluginInfo(plugin)
 	testResult.Tests = append(testResult.Tests, infoTest)
 	if infoTest.Status != "passed" {
 		testResult.Passed = false
 	}
-	
+
 	// Test 2: Initialization Test
 	initTest := tf.testPluginInitialization(ctx, plugin)
 	testResult.Tests = append(testResult.Tests, initTest)
 	if initTest.Status != "passed" {
 		testResult.Passed = false
 	}
-	
+
 	// Test 3: Capability Tests
 	capabilityTests := tf.testPluginCapabilities(ctx, plugin)
 	testResult.Tests = append(testResult.Tests, capabilityTests...)
@@ -97,14 +97,14 @@ func (tf *TestFramework) TestPlugin(ctx context.Context, pluginPath string) (*Te
 			testResult.Passed = false
 		}
 	}
-	
+
 	// Test 4: Security Tests
 	securityTest := tf.testPluginSecurity(ctx, plugin)
 	testResult.Tests = append(testResult.Tests, securityTest)
 	if securityTest.Status != "passed" {
 		testResult.Passed = false
 	}
-	
+
 	// Test 5: Performance Tests
 	if tf.config.EnableBenchmark {
 		perfTest := tf.testPluginPerformance(ctx, plugin)
@@ -113,16 +113,16 @@ func (tf *TestFramework) TestPlugin(ctx context.Context, pluginPath string) (*Te
 			testResult.Passed = false
 		}
 	}
-	
+
 	// Calculate total duration
 	testResult.Duration = time.Since(startTime)
-	
+
 	// Generate coverage report if enabled
 	if tf.config.EnableCoverage {
 		coverage := tf.generateCoverageReport(plugin)
 		testResult.Coverage = coverage
 	}
-	
+
 	// Clean up
 	if err := plugin.Shutdown(ctx); err != nil {
 		testResult.Tests = append(testResult.Tests, TestCase{
@@ -133,14 +133,14 @@ func (tf *TestFramework) TestPlugin(ctx context.Context, pluginPath string) (*Te
 		})
 		testResult.Passed = false
 	}
-	
+
 	return testResult, nil
 }
 
 // testPluginInfo validates plugin metadata
 func (tf *TestFramework) testPluginInfo(plugin Plugin) TestCase {
 	startTime := time.Now()
-	
+
 	info := plugin.GetInfo()
 	if info == nil {
 		return TestCase{
@@ -150,7 +150,7 @@ func (tf *TestFramework) testPluginInfo(plugin Plugin) TestCase {
 			Error:    "Plugin info is nil",
 		}
 	}
-	
+
 	// Validate required fields
 	if info.ID == "" {
 		return TestCase{
@@ -160,7 +160,7 @@ func (tf *TestFramework) testPluginInfo(plugin Plugin) TestCase {
 			Error:    "Plugin ID is empty",
 		}
 	}
-	
+
 	if info.Name == "" {
 		return TestCase{
 			Name:     "Plugin Info Validation",
@@ -169,7 +169,7 @@ func (tf *TestFramework) testPluginInfo(plugin Plugin) TestCase {
 			Error:    "Plugin name is empty",
 		}
 	}
-	
+
 	if info.Version == "" {
 		return TestCase{
 			Name:     "Plugin Info Validation",
@@ -178,7 +178,7 @@ func (tf *TestFramework) testPluginInfo(plugin Plugin) TestCase {
 			Error:    "Plugin version is empty",
 		}
 	}
-	
+
 	return TestCase{
 		Name:     "Plugin Info Validation",
 		Status:   "passed",
@@ -190,7 +190,7 @@ func (tf *TestFramework) testPluginInfo(plugin Plugin) TestCase {
 // testPluginInitialization tests plugin initialization
 func (tf *TestFramework) testPluginInitialization(ctx context.Context, plugin Plugin) TestCase {
 	startTime := time.Now()
-	
+
 	// Test initialization with empty config
 	err := plugin.Initialize(ctx, nil)
 	if err != nil {
@@ -201,7 +201,7 @@ func (tf *TestFramework) testPluginInitialization(ctx context.Context, plugin Pl
 			Error:    fmt.Sprintf("Initialization failed: %v", err),
 		}
 	}
-	
+
 	return TestCase{
 		Name:     "Plugin Initialization",
 		Status:   "passed",
@@ -214,7 +214,7 @@ func (tf *TestFramework) testPluginInitialization(ctx context.Context, plugin Pl
 func (tf *TestFramework) testPluginCapabilities(ctx context.Context, plugin Plugin) []TestCase {
 	startTime := time.Now()
 	var tests []TestCase
-	
+
 	capabilities := plugin.GetCapabilities()
 	if len(capabilities) == 0 {
 		tests = append(tests, TestCase{
@@ -225,13 +225,13 @@ func (tf *TestFramework) testPluginCapabilities(ctx context.Context, plugin Plug
 		})
 		return tests
 	}
-	
+
 	// Test each capability
 	for _, capability := range capabilities {
 		capTest := tf.testSpecificCapability(ctx, plugin, capability)
 		tests = append(tests, capTest)
 	}
-	
+
 	return tests
 }
 
@@ -239,14 +239,14 @@ func (tf *TestFramework) testPluginCapabilities(ctx context.Context, plugin Plug
 func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plugin, capability Capability) TestCase {
 	startTime := time.Now()
 	testName := fmt.Sprintf("Capability: %s", capability)
-	
+
 	switch capability {
 	case CapabilityTemplateProcessor:
 		if processor, ok := plugin.(TemplateProcessor); ok {
 			// Test template processing with sample data
 			template := "Hello {{.name}}!"
 			data := map[string]interface{}{"name": "World"}
-			
+
 			result, err := processor.ProcessTemplate(ctx, template, data)
 			if err != nil {
 				return TestCase{
@@ -256,7 +256,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 					Error:    fmt.Sprintf("Template processing failed: %v", err),
 				}
 			}
-			
+
 			expected := "Hello World!"
 			if result != expected {
 				return TestCase{
@@ -266,7 +266,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 					Error:    fmt.Sprintf("Expected '%s', got '%s'", expected, result),
 				}
 			}
-			
+
 			return TestCase{
 				Name:     testName,
 				Status:   "passed",
@@ -274,7 +274,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 				Message:  "Template processing successful",
 			}
 		}
-		
+
 	case CapabilityValidator:
 		if validator, ok := plugin.(Validator); ok {
 			// Test validation with empty spec
@@ -287,7 +287,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 					Error:    fmt.Sprintf("Validation failed: %v", err),
 				}
 			}
-			
+
 			if result == nil {
 				return TestCase{
 					Name:     testName,
@@ -296,7 +296,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 					Error:    "Validation result is nil",
 				}
 			}
-			
+
 			return TestCase{
 				Name:     testName,
 				Status:   "passed",
@@ -304,7 +304,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 				Message:  "Validation successful",
 			}
 		}
-		
+
 	case CapabilityOutputConverter:
 		if converter, ok := plugin.(OutputConverter); ok {
 			// Test output conversion
@@ -318,7 +318,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 					Error:    fmt.Sprintf("Output conversion failed: %v", err),
 				}
 			}
-			
+
 			if len(output) == 0 {
 				return TestCase{
 					Name:     testName,
@@ -327,7 +327,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 					Error:    "Output conversion returned empty result",
 				}
 			}
-			
+
 			return TestCase{
 				Name:     testName,
 				Status:   "passed",
@@ -336,7 +336,7 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 			}
 		}
 	}
-	
+
 	return TestCase{
 		Name:     testName,
 		Status:   "skipped",
@@ -348,11 +348,11 @@ func (tf *TestFramework) testSpecificCapability(ctx context.Context, plugin Plug
 // testPluginSecurity tests plugin security features
 func (tf *TestFramework) testPluginSecurity(ctx context.Context, plugin Plugin) TestCase {
 	startTime := time.Now()
-	
+
 	// Test if plugin respects sandboxing
 	// This would involve testing file access, network access, etc.
 	// For now, we'll just verify the plugin doesn't panic
-	
+
 	// Try to get plugin info (should always work)
 	info := plugin.GetInfo()
 	if info == nil {
@@ -363,7 +363,7 @@ func (tf *TestFramework) testPluginSecurity(ctx context.Context, plugin Plugin) 
 			Error:    "Plugin info access failed in security test",
 		}
 	}
-	
+
 	return TestCase{
 		Name:     "Security Test",
 		Status:   "passed",
@@ -375,18 +375,18 @@ func (tf *TestFramework) testPluginSecurity(ctx context.Context, plugin Plugin) 
 // testPluginPerformance runs performance benchmarks
 func (tf *TestFramework) testPluginPerformance(ctx context.Context, plugin Plugin) TestCase {
 	startTime := time.Now()
-	
+
 	// Run multiple iterations to measure performance
 	iterations := 100
 	var totalDuration time.Duration
-	
+
 	for i := 0; i < iterations; i++ {
 		iterStart := time.Now()
-		
+
 		// Test basic operations
 		_ = plugin.GetInfo()
 		capabilities := plugin.GetCapabilities()
-		
+
 		// Test capability-specific performance
 		for _, capability := range capabilities {
 			switch capability {
@@ -396,12 +396,12 @@ func (tf *TestFramework) testPluginPerformance(ctx context.Context, plugin Plugi
 				}
 			}
 		}
-		
+
 		totalDuration += time.Since(iterStart)
 	}
-	
+
 	avgDuration := totalDuration / time.Duration(iterations)
-	
+
 	// Performance threshold (configurable)
 	threshold := 10 * time.Millisecond
 	if avgDuration > threshold {
@@ -412,7 +412,7 @@ func (tf *TestFramework) testPluginPerformance(ctx context.Context, plugin Plugi
 			Message:  fmt.Sprintf("Average operation time: %v (threshold: %v)", avgDuration, threshold),
 		}
 	}
-	
+
 	return TestCase{
 		Name:     "Performance Test",
 		Status:   "passed",
@@ -425,13 +425,13 @@ func (tf *TestFramework) testPluginPerformance(ctx context.Context, plugin Plugi
 func (tf *TestFramework) generateCoverageReport(plugin Plugin) *Coverage {
 	// This is a simplified coverage report
 	// In a real implementation, you would instrument the plugin code
-	
+
 	capabilities := plugin.GetCapabilities()
-	
+
 	// Calculate coverage based on capabilities tested
 	totalCapabilities := 9 // Total number of possible capabilities
 	testedCapabilities := len(capabilities)
-	
+
 	coverage := &Coverage{
 		Lines:     100, // Simplified
 		Covered:   testedCapabilities * 10,
@@ -439,7 +439,7 @@ func (tf *TestFramework) generateCoverageReport(plugin Plugin) *Coverage {
 		Files:     1,
 		Functions: len(capabilities) + 3, // GetInfo, Initialize, Shutdown + capabilities
 	}
-	
+
 	return coverage
 }
 
@@ -459,10 +459,10 @@ func (tf *TestFramework) ValidatePluginManifest(manifestPath string) (*Validatio
 			}},
 		}, nil
 	}
-	
+
 	// Parse and validate manifest
 	// This would involve JSON schema validation, required field checks, etc.
-	
+
 	result := &ValidationResult{
 		Valid:    true,
 		Errors:   []ValidationError{},
@@ -474,7 +474,7 @@ func (tf *TestFramework) ValidatePluginManifest(manifestPath string) (*Validatio
 			LinesChecked: len(data),
 		},
 	}
-	
+
 	return result, nil
 }
 
@@ -484,7 +484,7 @@ func (tf *TestFramework) CreateTestPlugin(pluginDir, pluginName string) error {
 	if err := os.MkdirAll(pluginDir, 0755); err != nil {
 		return fmt.Errorf("failed to create plugin directory: %w", err)
 	}
-	
+
 	// Create manifest file
 	manifestPath := filepath.Join(pluginDir, "manifest.json")
 	manifest := fmt.Sprintf(`{
@@ -497,11 +497,11 @@ func (tf *TestFramework) CreateTestPlugin(pluginDir, pluginName string) error {
 	"capabilities": ["template_processor"],
 	"permissions": ["file_system"]
 }`, pluginName, pluginName)
-	
+
 	if err := os.WriteFile(manifestPath, []byte(manifest), 0644); err != nil {
 		return fmt.Errorf("failed to create manifest: %w", err)
 	}
-	
+
 	// Create basic plugin implementation
 	pluginPath := filepath.Join(pluginDir, "plugin.go")
 	pluginCode := fmt.Sprintf(`package main
@@ -544,10 +544,10 @@ func NewPlugin() Plugin {
 	return &%sPlugin{}
 }
 `, pluginName, pluginName, pluginName, pluginName, pluginName, pluginName, pluginName, pluginName, pluginName)
-	
+
 	if err := os.WriteFile(pluginPath, []byte(pluginCode), 0644); err != nil {
 		return fmt.Errorf("failed to create plugin code: %w", err)
 	}
-	
+
 	return nil
 }

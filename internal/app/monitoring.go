@@ -13,22 +13,22 @@ var templateCache = make(map[string]interface{})
 
 // TemplatePerformanceMetrics represents performance metrics for template operations
 type TemplatePerformanceMetrics struct {
-	TemplateID      string        `json:"templateId"`
-	Operation       string        `json:"operation"`
-	StartTime       time.Time     `json:"startTime"`
-	EndTime         time.Time     `json:"endTime"`
-	Duration        time.Duration `json:"duration"`
-	MemoryUsage     int64         `json:"memoryUsage"`
-	CPUUsage        float64       `json:"cpuUsage"`
-	Success         bool          `json:"success"`
-	ErrorMessage    string        `json:"errorMessage,omitempty"`
-	InputSize       int64         `json:"inputSize,omitempty"`
-	OutputSize      int64         `json:"outputSize,omitempty"`
-	CacheHit        bool          `json:"cacheHit"`
-	Complexity      string        `json:"complexity"`
-	VariableCount   int           `json:"variableCount"`
-	FunctionCount   int           `json:"functionCount"`
-	Timestamp       time.Time     `json:"timestamp"`
+	TemplateID    string        `json:"templateId"`
+	Operation     string        `json:"operation"`
+	StartTime     time.Time     `json:"startTime"`
+	EndTime       time.Time     `json:"endTime"`
+	Duration      time.Duration `json:"duration"`
+	MemoryUsage   int64         `json:"memoryUsage"`
+	CPUUsage      float64       `json:"cpuUsage"`
+	Success       bool          `json:"success"`
+	ErrorMessage  string        `json:"errorMessage,omitempty"`
+	InputSize     int64         `json:"inputSize,omitempty"`
+	OutputSize    int64         `json:"outputSize,omitempty"`
+	CacheHit      bool          `json:"cacheHit"`
+	Complexity    string        `json:"complexity"`
+	VariableCount int           `json:"variableCount"`
+	FunctionCount int           `json:"functionCount"`
+	Timestamp     time.Time     `json:"timestamp"`
 }
 
 // SystemMetrics represents overall system performance metrics
@@ -49,21 +49,21 @@ type SystemMetrics struct {
 
 // AggregatedMetrics represents aggregated performance data
 type AggregatedMetrics struct {
-	Operation        string        `json:"operation"`
-	TotalExecutions  int           `json:"totalExecutions"`
-	SuccessCount     int           `json:"successCount"`
-	FailureCount     int           `json:"failureCount"`
-	SuccessRate      float64       `json:"successRate"`
-	AverageDuration  time.Duration `json:"averageDuration"`
-	MinDuration      time.Duration `json:"minDuration"`
-	MaxDuration      time.Duration `json:"maxDuration"`
-	P50Duration      time.Duration `json:"p50Duration"`
-	P95Duration      time.Duration `json:"p95Duration"`
-	P99Duration      time.Duration `json:"p99Duration"`
-	AverageMemory    int64         `json:"averageMemory"`
-	AverageCPU       float64       `json:"averageCpu"`
-	CacheHitRate     float64       `json:"cacheHitRate"`
-	LastUpdated      time.Time     `json:"lastUpdated"`
+	Operation       string        `json:"operation"`
+	TotalExecutions int           `json:"totalExecutions"`
+	SuccessCount    int           `json:"successCount"`
+	FailureCount    int           `json:"failureCount"`
+	SuccessRate     float64       `json:"successRate"`
+	AverageDuration time.Duration `json:"averageDuration"`
+	MinDuration     time.Duration `json:"minDuration"`
+	MaxDuration     time.Duration `json:"maxDuration"`
+	P50Duration     time.Duration `json:"p50Duration"`
+	P95Duration     time.Duration `json:"p95Duration"`
+	P99Duration     time.Duration `json:"p99Duration"`
+	AverageMemory   int64         `json:"averageMemory"`
+	AverageCPU      float64       `json:"averageCpu"`
+	CacheHitRate    float64       `json:"cacheHitRate"`
+	LastUpdated     time.Time     `json:"lastUpdated"`
 }
 
 // PerformanceAlert represents a performance alert
@@ -92,12 +92,12 @@ var metricsCollector = &MetricsCollector{
 	metrics: make([]TemplatePerformanceMetrics, 0),
 	alerts:  make([]PerformanceAlert, 0),
 	thresholds: map[string]interface{}{
-		"maxDuration":         10 * time.Second,
-		"maxMemoryUsage":      100 * 1024 * 1024, // 100MB
-		"maxCPUUsage":         80.0,               // 80%
-		"minSuccessRate":      95.0,               // 95%
-		"maxErrorRate":        5.0,                // 5%
-		"alertRetentionDays":  7,
+		"maxDuration":          10 * time.Second,
+		"maxMemoryUsage":       100 * 1024 * 1024, // 100MB
+		"maxCPUUsage":          80.0,              // 80%
+		"minSuccessRate":       95.0,              // 95%
+		"maxErrorRate":         5.0,               // 5%
+		"alertRetentionDays":   7,
 		"metricsRetentionDays": 30,
 	},
 }
@@ -329,12 +329,12 @@ func (a *App) SetPerformanceThresholds(ctx context.Context, thresholds map[strin
 
 	// Validate thresholds
 	validKeys := map[string]bool{
-		"maxDuration":         true,
-		"maxMemoryUsage":      true,
-		"maxCPUUsage":         true,
-		"minSuccessRate":      true,
-		"maxErrorRate":        true,
-		"alertRetentionDays":  true,
+		"maxDuration":          true,
+		"maxMemoryUsage":       true,
+		"maxCPUUsage":          true,
+		"minSuccessRate":       true,
+		"maxErrorRate":         true,
+		"alertRetentionDays":   true,
 		"metricsRetentionDays": true,
 	}
 
@@ -549,21 +549,21 @@ func calculateAggregatedMetrics(metrics []TemplatePerformanceMetrics, operation 
 	failureCount := totalExecutions - successCount
 
 	return &AggregatedMetrics{
-		Operation:        operation,
-		TotalExecutions:  totalExecutions,
-		SuccessCount:     successCount,
-		FailureCount:     failureCount,
-		SuccessRate:      float64(successCount) / float64(totalExecutions) * 100,
-		AverageDuration:  totalDuration / time.Duration(totalExecutions),
-		MinDuration:      durations[0],
-		MaxDuration:      durations[totalExecutions-1],
-		P50Duration:      durations[totalExecutions/2],
-		P95Duration:      durations[int(float64(totalExecutions)*0.95)],
-		P99Duration:      durations[int(float64(totalExecutions)*0.99)],
-		AverageMemory:    totalMemory / int64(totalExecutions),
-		AverageCPU:       totalCPU / float64(totalExecutions),
-		CacheHitRate:     float64(cacheHits) / float64(totalExecutions) * 100,
-		LastUpdated:      time.Now(),
+		Operation:       operation,
+		TotalExecutions: totalExecutions,
+		SuccessCount:    successCount,
+		FailureCount:    failureCount,
+		SuccessRate:     float64(successCount) / float64(totalExecutions) * 100,
+		AverageDuration: totalDuration / time.Duration(totalExecutions),
+		MinDuration:     durations[0],
+		MaxDuration:     durations[totalExecutions-1],
+		P50Duration:     durations[totalExecutions/2],
+		P95Duration:     durations[int(float64(totalExecutions)*0.95)],
+		P99Duration:     durations[int(float64(totalExecutions)*0.99)],
+		AverageMemory:   totalMemory / int64(totalExecutions),
+		AverageCPU:      totalCPU / float64(totalExecutions),
+		CacheHitRate:    float64(cacheHits) / float64(totalExecutions) * 100,
+		LastUpdated:     time.Now(),
 	}
 }
 
@@ -601,8 +601,8 @@ func createMonitoringError(message, details, operation string) error {
 // NewPerformanceMonitor creates a new performance monitor for app compatibility
 func NewPerformanceMonitor() *PerformanceMonitor {
 	return &PerformanceMonitor{
-		operation:  "app",
-		startTime:  time.Now(),
+		operation: "app",
+		startTime: time.Now(),
 	}
 }
 

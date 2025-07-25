@@ -223,7 +223,7 @@ func (s *Service) mapParameterToProperty(param parser.Parameter) (Property, erro
 		schemaType := (*schema.Type)[0]
 		// Validate type is supported
 		supportedTypes := map[string]bool{
-			"string": true, "number": true, "integer": true, 
+			"string": true, "number": true, "integer": true,
 			"boolean": true, "array": true, "object": true,
 		}
 		if !supportedTypes[schemaType] {

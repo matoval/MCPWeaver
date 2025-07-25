@@ -51,7 +51,7 @@ func NewUpdateService(ctx context.Context) *UpdateService {
 
 	// Detect test mode (when nil context provided)
 	isTestMode := ctx == nil
-	
+
 	// Use background context if none provided (for testing)
 	if ctx == nil {
 		ctx = context.Background()
@@ -150,10 +150,10 @@ func (u *UpdateService) CheckForUpdates() (*UpdateInfo, error) {
 	u.trackAnalytics(AnalyticsEventCheckStarted, "", "", true, "")
 
 	check := &UpdateCheck{
-		ID:        generateID(),
-		CheckedAt: time.Now(),
-		Source:    UpdateSourceGitHub,
-		UserAgent: u.config.UserAgent,
+		ID:         generateID(),
+		CheckedAt:  time.Now(),
+		Source:     UpdateSourceGitHub,
+		UserAgent:  u.config.UserAgent,
 		ClientInfo: u.getClientInfo(),
 	}
 
@@ -248,7 +248,7 @@ func (u *UpdateService) DownloadUpdate(updateInfo *UpdateInfo) error {
 
 	u.setStatus(UpdateStatusReady)
 	u.trackAnalytics(AnalyticsEventDownloadCompleted, updateInfo.Version, "", true, "")
-	
+
 	// Store download path for installation
 	u.progress.CurrentStep = "Ready for installation"
 	u.progress.Progress = 100.0
@@ -296,8 +296,8 @@ func (u *UpdateService) InstallUpdate() error {
 				Code:    "INSTALLATION_AND_ROLLBACK_FAILED",
 				Message: fmt.Sprintf("Installation failed and rollback failed: %v", rollbackErr),
 				Details: map[string]string{
-					"install_error":   err.Error(),
-					"rollback_error":  rollbackErr.Error(),
+					"install_error":  err.Error(),
+					"rollback_error": rollbackErr.Error(),
 				},
 				Severity: ErrorSeverityCritical,
 			}
@@ -311,8 +311,8 @@ func (u *UpdateService) InstallUpdate() error {
 	u.trackAnalytics(AnalyticsEventInstallCompleted, "", "", true, "")
 
 	result := &UpdateResult{
-		Success:     true,
-		UpdatedAt:   time.Now(),
+		Success:      true,
+		UpdatedAt:    time.Now(),
 		RollbackInfo: backupInfo,
 	}
 
@@ -574,13 +574,13 @@ func (u *UpdateService) downloadFile(url, filepath string, expectedSize int64) e
 			if now.Sub(lastUpdate) >= time.Second {
 				progress := float64(bytesReceived) / float64(expectedSize) * 100
 				speed := bytesReceived / int64(now.Sub(startTime).Seconds())
-				
+
 				u.progress.Progress = progress
 				u.progress.BytesReceived = bytesReceived
 				u.progress.BytesTotal = expectedSize
 				u.progress.Speed = speed
 				u.progress.LastUpdate = now
-				
+
 				if speed > 0 {
 					remaining := (expectedSize - bytesReceived) / speed
 					estimatedTime := time.Duration(remaining) * time.Second
@@ -785,7 +785,7 @@ func (u *UpdateService) emitEvent(eventName string, data interface{}) {
 	if u.isTestMode {
 		return
 	}
-	
+
 	// Only emit events if we have a valid Wails context
 	if u.ctx != nil {
 		defer func() {
@@ -802,7 +802,7 @@ func (u *UpdateService) emitUpdateNotification(notificationType NotificationType
 	if u.isTestMode {
 		return
 	}
-	
+
 	var title, message string
 	var actions []NotificationAction
 	var priority NotificationPriority

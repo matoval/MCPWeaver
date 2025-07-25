@@ -16,21 +16,21 @@ import (
 
 // ActivityLogService manages the activity log system with circular buffer and real-time events
 type ActivityLogService struct {
-	buffer    []ActivityLogEntry
-	config    LogConfig
-	mutex     sync.RWMutex
-	writeIdx  int
-	full      bool
-	app       *App
-	ticker    *time.Ticker
-	ctx       context.Context
-	cancel    context.CancelFunc
+	buffer   []ActivityLogEntry
+	config   LogConfig
+	mutex    sync.RWMutex
+	writeIdx int
+	full     bool
+	app      *App
+	ticker   *time.Ticker
+	ctx      context.Context
+	cancel   context.CancelFunc
 }
 
 // NewActivityLogService creates a new activity log service
 func NewActivityLogService(app *App, config LogConfig) *ActivityLogService {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	service := &ActivityLogService{
 		buffer: make([]ActivityLogEntry, config.BufferSize),
 		config: config,
@@ -53,16 +53,16 @@ func NewActivityLogService(app *App, config LogConfig) *ActivityLogService {
 // ReportError creates an error report and logs it
 func (als *ActivityLogService) ReportError(errorType ErrorType, severity ErrorSeverity, component, operation, message string, err error) *ErrorReport {
 	report := &ErrorReport{
-		ID:        generateLogID(),
-		Timestamp: time.Now(),
-		Type:      errorType,
-		Severity:  severity,
-		Component: component,
-		Operation: operation,
-		Message:   message,
-		FirstSeen: time.Now(),
-		LastSeen:  time.Now(),
-		Frequency: 1,
+		ID:          generateLogID(),
+		Timestamp:   time.Now(),
+		Type:        errorType,
+		Severity:    severity,
+		Component:   component,
+		Operation:   operation,
+		Message:     message,
+		FirstSeen:   time.Now(),
+		LastSeen:    time.Now(),
+		Frequency:   1,
 		UserContext: UserContext{
 			// Would be populated with actual user context
 		},
@@ -102,17 +102,17 @@ func (als *ActivityLogService) ReportError(errorType ErrorType, severity ErrorSe
 func (als *ActivityLogService) GetErrorReports(includeResolved bool) []ErrorReport {
 	// This is a simplified implementation
 	// In a full implementation, we'd maintain a separate error reports collection
-	
+
 	errorLevel := LogLevelError
 	limit := 50
 	filter := LogFilter{
 		Level: &errorLevel,
 		Limit: &limit,
 	}
-	
+
 	entries := als.GetLogs(filter)
 	reports := make([]ErrorReport, 0, len(entries))
-	
+
 	for _, entry := range entries {
 		if entry.Level == LogLevelError || entry.Level == LogLevelFatal {
 			report := ErrorReport{
@@ -125,13 +125,13 @@ func (als *ActivityLogService) GetErrorReports(includeResolved bool) []ErrorRepo
 				Frequency: 1,
 				FirstSeen: entry.Timestamp,
 				LastSeen:  entry.Timestamp,
-				Type:      ErrorTypeSystemErr, // Simplified
+				Type:      ErrorTypeSystemErr,  // Simplified
 				Severity:  ErrorSeverityMedium, // Simplified
 			}
 			reports = append(reports, report)
 		}
 	}
-	
+
 	return reports
 }
 
@@ -202,7 +202,7 @@ func (als *ActivityLogService) GetLogs(filter LogFilter) []ActivityLogEntry {
 	defer als.mutex.RUnlock()
 
 	var entries []ActivityLogEntry
-	
+
 	// Get all entries in chronological order
 	if als.full {
 		// Buffer is full, start from writeIdx and wrap around
@@ -235,9 +235,9 @@ func (als *ActivityLogService) GetLogs(filter LogFilter) []ActivityLogEntry {
 // SearchLogs performs a search across log entries
 func (als *ActivityLogService) SearchLogs(ctx context.Context, request LogSearchRequest) (*LogSearchResult, error) {
 	startTime := time.Now()
-	
+
 	entries := als.GetLogs(request.Filter)
-	
+
 	if request.Query != "" {
 		entries = als.searchEntries(entries, request.Query)
 	}
@@ -270,9 +270,9 @@ func (als *ActivityLogService) SearchLogs(ctx context.Context, request LogSearch
 // ExportLogs exports logs to a file in the specified format
 func (als *ActivityLogService) ExportLogs(ctx context.Context, request LogExportRequest) (*LogExportResult, error) {
 	startTime := time.Now()
-	
+
 	entries := als.GetLogs(request.Filter)
-	
+
 	var fileSize int64
 	var err error
 
@@ -337,7 +337,7 @@ func (als *ActivityLogService) UpdateLogConfig(config LogConfig) error {
 	if als.ticker != nil {
 		als.ticker.Stop()
 	}
-	
+
 	if config.FlushInterval > 0 {
 		als.ticker = time.NewTicker(config.FlushInterval)
 		go als.flushLoop()
@@ -411,7 +411,7 @@ func (als *ActivityLogService) addEntry(entry ActivityLogEntry) {
 
 	als.buffer[als.writeIdx] = entry
 	als.writeIdx = (als.writeIdx + 1) % len(als.buffer)
-	
+
 	if als.writeIdx == 0 {
 		als.full = true
 	}
@@ -434,13 +434,13 @@ func (als *ActivityLogService) applyFilter(entries []ActivityLogEntry, filter Lo
 	}
 
 	filtered := make([]ActivityLogEntry, 0, len(entries))
-	
+
 	for _, entry := range entries {
 		if als.matchesFilter(entry, filter) {
 			filtered = append(filtered, entry)
 		}
 	}
-	
+
 	return filtered
 }
 
@@ -448,39 +448,39 @@ func (als *ActivityLogService) matchesFilter(entry ActivityLogEntry, filter LogF
 	if filter.Level != nil && entry.Level != *filter.Level {
 		return false
 	}
-	
+
 	if filter.Component != nil && !strings.Contains(strings.ToLower(entry.Component), strings.ToLower(*filter.Component)) {
 		return false
 	}
-	
+
 	if filter.Operation != nil && !strings.Contains(strings.ToLower(entry.Operation), strings.ToLower(*filter.Operation)) {
 		return false
 	}
-	
+
 	if filter.ProjectID != nil && entry.ProjectID != *filter.ProjectID {
 		return false
 	}
-	
+
 	if filter.UserAction != nil && entry.UserAction != *filter.UserAction {
 		return false
 	}
-	
+
 	if filter.StartTime != nil && entry.Timestamp.Before(*filter.StartTime) {
 		return false
 	}
-	
+
 	if filter.EndTime != nil && entry.Timestamp.After(*filter.EndTime) {
 		return false
 	}
-	
+
 	if filter.Search != nil {
 		searchTerm := strings.ToLower(*filter.Search)
 		if !strings.Contains(strings.ToLower(entry.Message), searchTerm) &&
-		   !strings.Contains(strings.ToLower(entry.Details), searchTerm) {
+			!strings.Contains(strings.ToLower(entry.Details), searchTerm) {
 			return false
 		}
 	}
-	
+
 	return true
 }
 
@@ -493,16 +493,16 @@ func isEmptyFilter(filter LogFilter) bool {
 func (als *ActivityLogService) searchEntries(entries []ActivityLogEntry, query string) []ActivityLogEntry {
 	query = strings.ToLower(query)
 	filtered := make([]ActivityLogEntry, 0, len(entries))
-	
+
 	for _, entry := range entries {
 		if strings.Contains(strings.ToLower(entry.Message), query) ||
-		   strings.Contains(strings.ToLower(entry.Details), query) ||
-		   strings.Contains(strings.ToLower(entry.Component), query) ||
-		   strings.Contains(strings.ToLower(entry.Operation), query) {
+			strings.Contains(strings.ToLower(entry.Details), query) ||
+			strings.Contains(strings.ToLower(entry.Component), query) ||
+			strings.Contains(strings.ToLower(entry.Operation), query) {
 			filtered = append(filtered, entry)
 		}
 	}
-	
+
 	return filtered
 }
 
@@ -515,7 +515,7 @@ func (als *ActivityLogService) exportToJSON(entries []ActivityLogEntry, filePath
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
-	
+
 	if err := encoder.Encode(entries); err != nil {
 		return 0, err
 	}
@@ -550,7 +550,7 @@ func (als *ActivityLogService) exportToCSV(entries []ActivityLogEntry, filePath 
 		if entry.Duration != nil {
 			durationStr = entry.Duration.String()
 		}
-		
+
 		record := []string{
 			entry.ID,
 			entry.Timestamp.Format(time.RFC3339),
@@ -563,7 +563,7 @@ func (als *ActivityLogService) exportToCSV(entries []ActivityLogEntry, filePath 
 			entry.ProjectID,
 			fmt.Sprintf("%t", entry.UserAction),
 		}
-		
+
 		if err := writer.Write(record); err != nil {
 			return 0, err
 		}
@@ -591,13 +591,13 @@ func (als *ActivityLogService) exportToText(entries []ActivityLogEntry, filePath
 			entry.Component,
 			entry.Operation,
 			entry.Message)
-		
+
 		if entry.Details != "" {
 			line += fmt.Sprintf(" - %s", entry.Details)
 		}
-		
+
 		line += "\n"
-		
+
 		if _, err := file.WriteString(line); err != nil {
 			return 0, err
 		}
@@ -617,7 +617,7 @@ func (als *ActivityLogService) resizeBuffer(newSize int) {
 	}
 
 	newBuffer := make([]ActivityLogEntry, newSize)
-	
+
 	// Copy existing entries to new buffer
 	currentEntries := als.GetLogs(LogFilter{})
 	copyCount := len(currentEntries)
@@ -625,9 +625,9 @@ func (als *ActivityLogService) resizeBuffer(newSize int) {
 		copyCount = newSize
 		currentEntries = currentEntries[:copyCount]
 	}
-	
+
 	copy(newBuffer, currentEntries)
-	
+
 	als.buffer = newBuffer
 	als.writeIdx = copyCount % newSize
 	als.full = copyCount == newSize
@@ -680,12 +680,12 @@ func (als *ActivityLogService) determineStatus() StatusLevel {
 		StartTime: &startTime,
 		Limit:     &limit,
 	}
-	
+
 	errorEntries := als.GetLogs(filter)
 	if len(errorEntries) > 0 {
 		return StatusError
 	}
-	
+
 	// Check for warnings
 	warnLevel := LogLevelWarn
 	filter.Level = &warnLevel
@@ -693,12 +693,12 @@ func (als *ActivityLogService) determineStatus() StatusLevel {
 	if len(warnEntries) > 0 {
 		return StatusWarning
 	}
-	
+
 	// Check for active operations
 	if als.getActiveOperations() > 0 {
 		return StatusWorking
 	}
-	
+
 	return StatusIdle
 }
 
@@ -724,7 +724,7 @@ func (als *ActivityLogService) getActiveOperations() int {
 		UserAction: &userAction,
 		StartTime:  &startTime,
 	}
-	
+
 	return len(als.GetLogs(filter))
 }
 

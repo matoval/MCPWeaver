@@ -13,11 +13,11 @@ import (
 
 // SecureHTTPClient provides a secure HTTP client with built-in protections
 type SecureHTTPClient struct {
-	client           *http.Client
-	app              *App
+	client            *http.Client
+	app               *App
 	securityValidator *SecurityValidator
-	maxResponseSize  int64
-	allowInsecure    bool
+	maxResponseSize   int64
+	allowInsecure     bool
 }
 
 // HTTPClientConfig holds configuration for the secure HTTP client
@@ -82,13 +82,13 @@ func NewSecureHTTPClient(app *App, config HTTPClientConfig) *SecureHTTPClient {
 			if len(via) >= config.MaxRedirects {
 				return fmt.Errorf("too many redirects (max: %d)", config.MaxRedirects)
 			}
-			
+
 			// Validate redirect URL for SSRF protection
 			validator := NewSecurityValidator(app)
 			if err := validator.ValidateURL(req.URL.String()); err != nil {
 				return fmt.Errorf("redirect blocked by security policy: %w", err)
 			}
-			
+
 			return nil
 		},
 	}
@@ -169,7 +169,7 @@ func (c *SecureHTTPClient) Do(req *http.Request) (*http.Response, error) {
 				})
 			}
 		}
-		
+
 		return nil, c.app.createAPIError("network", "REQUEST_FAILED", "HTTP request failed", map[string]string{
 			"url":   req.URL.String(),
 			"error": err.Error(),
@@ -189,22 +189,22 @@ func (c *SecureHTTPClient) Do(req *http.Request) (*http.Response, error) {
 func (c *SecureHTTPClient) setSecureHeaders(req *http.Request) {
 	// Set User-Agent
 	req.Header.Set("User-Agent", "MCPWeaver/1.0 (OpenAPI to MCP Converter)")
-	
+
 	// Set Accept header
 	req.Header.Set("Accept", "application/json, application/yaml, text/yaml, text/plain")
-	
+
 	// Set Accept-Encoding
 	req.Header.Set("Accept-Encoding", "gzip, deflate")
-	
+
 	// Set Connection header
 	req.Header.Set("Connection", "close")
-	
+
 	// Set Cache-Control to prevent caching sensitive data
 	req.Header.Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	
+
 	// Set Pragma for HTTP/1.0 compatibility
 	req.Header.Set("Pragma", "no-cache")
-	
+
 	// Remove potentially dangerous headers
 	dangerousHeaders := []string{
 		"X-Forwarded-For",
@@ -213,7 +213,7 @@ func (c *SecureHTTPClient) setSecureHeaders(req *http.Request) {
 		"X-Forwarded-Host",
 		"Authorization", // Remove any existing auth headers for security
 	}
-	
+
 	for _, header := range dangerousHeaders {
 		req.Header.Del(header)
 	}
@@ -251,10 +251,10 @@ func (c *SecureHTTPClient) validateResponse(resp *http.Response) error {
 	// Check for suspicious headers
 	suspiciousHeaders := []string{
 		"X-Frame-Options",
-		"X-XSS-Protection", 
+		"X-XSS-Protection",
 		"X-Content-Type-Options",
 	}
-	
+
 	for _, header := range suspiciousHeaders {
 		if value := resp.Header.Get(header); value != "" {
 			// These headers suggest the response might be HTML/web content rather than API data
@@ -277,7 +277,7 @@ func (c *SecureHTTPClient) isAllowedContentType(contentType string) bool {
 	if contentType == "" {
 		return true // Allow empty content type
 	}
-	
+
 	allowedTypes := []string{
 		"application/json",
 		"application/yaml",
@@ -288,17 +288,17 @@ func (c *SecureHTTPClient) isAllowedContentType(contentType string) bool {
 		"application/openapi+json",
 		"application/openapi+yaml",
 	}
-	
+
 	// Normalize content type (remove charset, etc.)
 	normalizedType := strings.ToLower(strings.Split(contentType, ";")[0])
 	normalizedType = strings.TrimSpace(normalizedType)
-	
+
 	for _, allowed := range allowedTypes {
 		if normalizedType == allowed {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -372,7 +372,7 @@ func (c *SecureHTTPClient) ValidateServerCertificate(resp *http.Response, expect
 	}
 
 	// Additional certificate validation could be added here
-	
+
 	return nil
 }
 

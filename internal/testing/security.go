@@ -26,7 +26,7 @@ func (sch *SecureCommandHelper) ValidateServerPath(serverPath string) (string, e
 
 	// Clean the path to remove any .. or . components
 	cleanPath := filepath.Clean(serverPath)
-	
+
 	// Convert to absolute path
 	absPath, err := filepath.Abs(cleanPath)
 	if err != nil {
@@ -38,7 +38,7 @@ func (sch *SecureCommandHelper) ValidateServerPath(serverPath string) (string, e
 	if err != nil {
 		return "", fmt.Errorf("path does not exist: %w", err)
 	}
-	
+
 	if !info.IsDir() {
 		return "", fmt.Errorf("path is not a directory: %s", absPath)
 	}
@@ -204,7 +204,7 @@ func (sch *SecureCommandHelper) SecureExecutablePath(workDir, baseName string) (
 
 	// Create safe executable path within the working directory
 	execPath := filepath.Join(validWorkDir, baseName)
-	
+
 	// Ensure the resulting path is still within the working directory
 	relPath, err := filepath.Rel(validWorkDir, execPath)
 	if err != nil || strings.HasPrefix(relPath, "..") {
@@ -277,7 +277,7 @@ func (sch *SecureCommandHelper) SecureRunExecutable(ctx context.Context, workDir
 func (sch *SecureCommandHelper) createExecutableCommand(ctx context.Context, workDir, execPath string) (*exec.Cmd, error) {
 	// Split path to get just the executable name
 	_, execName := filepath.Split(execPath)
-	
+
 	// Create command with absolute path to avoid variable detection
 	if strings.Contains(execPath, "/") || strings.Contains(execPath, "\\") {
 		// Use the validated full path
@@ -286,7 +286,7 @@ func (sch *SecureCommandHelper) createExecutableCommand(ctx context.Context, wor
 		cmd.Dir = workDir
 		return cmd, nil
 	}
-	
+
 	// Fallback for relative names
 	cmd := exec.CommandContext(ctx, execName)
 	cmd.Dir = workDir

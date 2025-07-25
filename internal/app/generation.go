@@ -108,7 +108,7 @@ func (a *App) GetGenerationJob(jobID string) (*GenerationJob, error) {
 func (a *App) cleanupCompletedJobs() {
 	jobsMutex.Lock()
 	defer jobsMutex.Unlock()
-	
+
 	for id, job := range activeJobs {
 		if job.Status == GenerationStatusCompleted || job.Status == GenerationStatusFailed {
 			// Only keep jobs for the last 5 minutes
@@ -277,7 +277,7 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 	// Get file statistics
 	generatedFiles := []GeneratedFile{}
 	expectedFiles := []string{"main.go", "go.mod", "README.md"}
-	
+
 	for _, filename := range expectedFiles {
 		filePath := filepath.Join(project.OutputPath, filename)
 		if info, err := os.Stat(filePath); err == nil {
@@ -292,17 +292,17 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 			default:
 				fileType = "other"
 			}
-			
+
 			// Count lines of code
 			linesOfCode := 0
 			if content, err := os.ReadFile(filePath); err == nil {
 				linesOfCode = len(strings.Split(string(content), "\n"))
 			}
-			
+
 			generatedFiles = append(generatedFiles, GeneratedFile{
-				Path: filePath,
-				Type: fileType,
-				Size: int(info.Size()),
+				Path:        filePath,
+				Type:        fileType,
+				Size:        int(info.Size()),
 				LinesOfCode: linesOfCode,
 			})
 		}
@@ -335,7 +335,7 @@ func (a *App) runGeneration(job *GenerationJob, project *Project) {
 	runtime.EventsEmit(a.ctx, "generation:completed", job)
 
 	// Send notification
-	a.emitNotification("success", "Generation Complete", 
+	a.emitNotification("success", "Generation Complete",
 		fmt.Sprintf("MCP server generated successfully with %d tools", len(tools)))
 }
 
@@ -363,7 +363,7 @@ func (a *App) handleGenerationError(job *GenerationJob, message string) {
 	job.CurrentStep = "Generation failed"
 	endTime := time.Now()
 	job.EndTime = &endTime
-	
+
 	job.Errors = append(job.Errors, GenerationError{
 		Type:    "generation",
 		Message: message,
@@ -430,7 +430,7 @@ func generateJobID() string {
 // calculateSpecComplexity calculates the complexity of the OpenAPI spec
 func (a *App) calculateSpecComplexity(api *parser.ParsedAPI, tools []mapping.MCPTool) string {
 	score := 0
-	
+
 	// Base score from number of operations
 	operationCount := len(api.Operations)
 	if operationCount > 50 {
@@ -440,7 +440,7 @@ func (a *App) calculateSpecComplexity(api *parser.ParsedAPI, tools []mapping.MCP
 	} else if operationCount > 10 {
 		score += 1
 	}
-	
+
 	// Score from number of tools generated
 	toolCount := len(tools)
 	if toolCount > 50 {
@@ -450,7 +450,7 @@ func (a *App) calculateSpecComplexity(api *parser.ParsedAPI, tools []mapping.MCP
 	} else if toolCount > 10 {
 		score += 1
 	}
-	
+
 	// Score from parameter complexity
 	totalParams := 0
 	for _, op := range api.Operations {
@@ -459,7 +459,7 @@ func (a *App) calculateSpecComplexity(api *parser.ParsedAPI, tools []mapping.MCP
 			totalParams += 1 // Count request body as additional complexity
 		}
 	}
-	
+
 	if totalParams > 100 {
 		score += 3
 	} else if totalParams > 50 {
@@ -467,12 +467,12 @@ func (a *App) calculateSpecComplexity(api *parser.ParsedAPI, tools []mapping.MCP
 	} else if totalParams > 20 {
 		score += 1
 	}
-	
+
 	// Score from server configuration
 	if len(api.Servers) > 3 {
 		score += 1
 	}
-	
+
 	// Determine complexity level
 	switch {
 	case score >= 8:

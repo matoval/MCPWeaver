@@ -18,7 +18,7 @@ func NewService(config *ManagerConfig) *Service {
 	if config == nil {
 		config = DefaultManagerConfig()
 	}
-	
+
 	return &Service{
 		manager:  NewManager(config),
 		registry: NewRegistry(config),
@@ -31,7 +31,7 @@ func (s *Service) Initialize() error {
 	if err := s.manager.Initialize(); err != nil {
 		return fmt.Errorf("failed to initialize plugin manager: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -46,11 +46,11 @@ func (s *Service) Shutdown() error {
 func (s *Service) GetPlugins() (map[string]*PluginInstanceAPI, error) {
 	plugins := s.manager.GetPlugins()
 	apiPlugins := make(map[string]*PluginInstanceAPI)
-	
+
 	for id, instance := range plugins {
 		apiPlugins[id] = ToPluginInstanceAPI(instance)
 	}
-	
+
 	return apiPlugins, nil
 }
 
@@ -60,7 +60,7 @@ func (s *Service) GetPlugin(pluginID string) (*PluginInstanceAPI, error) {
 	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	return ToPluginInstanceAPI(instance), nil
 }
 
@@ -93,12 +93,12 @@ func (s *Service) ConfigurePlugin(pluginID string, config json.RawMessage) error
 func (s *Service) GetPluginsByCapability(capability string) ([]*PluginInstanceAPI, error) {
 	cap := Capability(capability)
 	instances := s.manager.GetPluginsByCapability(cap)
-	
+
 	apiInstances := make([]*PluginInstanceAPI, len(instances))
 	for i, instance := range instances {
 		apiInstances[i] = ToPluginInstanceAPI(instance)
 	}
-	
+
 	return apiInstances, nil
 }
 
@@ -112,7 +112,7 @@ func (s *Service) SearchPlugins(ctx context.Context, query string, category stri
 		Tags:     tags,
 		Limit:    limit,
 	}
-	
+
 	return s.registry.Search(ctx, searchReq)
 }
 
@@ -122,7 +122,7 @@ func (s *Service) GetMarketplacePlugin(ctx context.Context, pluginID string) (*M
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return ToMarketplacePluginAPI(plugin), nil
 }
 
@@ -132,12 +132,12 @@ func (s *Service) GetFeaturedPlugins(ctx context.Context, limit int) ([]*Marketp
 	if err != nil {
 		return nil, err
 	}
-	
+
 	apiPlugins := make([]*MarketplacePluginAPI, len(plugins))
 	for i, plugin := range plugins {
 		apiPlugins[i] = ToMarketplacePluginAPI(plugin)
 	}
-	
+
 	return apiPlugins, nil
 }
 
@@ -153,12 +153,12 @@ func (s *Service) InstallPlugin(ctx context.Context, pluginID string) error {
 	if err := s.registry.Download(ctx, pluginID, downloadPath); err != nil {
 		return fmt.Errorf("failed to download plugin: %w", err)
 	}
-	
+
 	// Load plugin
 	if err := s.manager.LoadPlugin(downloadPath); err != nil {
 		return fmt.Errorf("failed to load plugin: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -169,12 +169,12 @@ func (s *Service) CheckForUpdates(ctx context.Context) (map[string]*MarketplaceP
 	if err != nil {
 		return nil, err
 	}
-	
+
 	apiUpdates := make(map[string]*MarketplacePluginAPI)
 	for pluginID, plugin := range updates {
 		apiUpdates[pluginID] = ToMarketplacePluginAPI(plugin)
 	}
-	
+
 	return apiUpdates, nil
 }
 
@@ -186,12 +186,12 @@ func (s *Service) ExecuteTemplateProcessor(ctx context.Context, pluginID string,
 	if !exists {
 		return "", fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	processor, ok := instance.Plugin.(TemplateProcessor)
 	if !ok {
 		return "", fmt.Errorf("plugin is not a template processor: %s", pluginID)
 	}
-	
+
 	return processor.ProcessTemplate(ctx, template, data)
 }
 
@@ -201,19 +201,19 @@ func (s *Service) ExecuteValidator(ctx context.Context, pluginID string, specDat
 	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	validator, ok := instance.Plugin.(Validator)
 	if !ok {
 		return nil, fmt.Errorf("plugin is not a validator: %s", pluginID)
 	}
-	
+
 	// Convert spec data to ParsedAPI (simplified)
 	// In a real implementation, you'd properly convert the data
 	result, err := validator.ValidateSpec(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return ToValidationResultAPI(result), nil
 }
 
@@ -223,12 +223,12 @@ func (s *Service) ExecuteOutputConverter(ctx context.Context, pluginID string, i
 	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	converter, ok := instance.Plugin.(OutputConverter)
 	if !ok {
 		return nil, fmt.Errorf("plugin is not an output converter: %s", pluginID)
 	}
-	
+
 	return converter.ConvertOutput(ctx, input, inputFormat, outputFormat)
 }
 
@@ -238,12 +238,12 @@ func (s *Service) ExecuteIntegration(ctx context.Context, pluginID string, actio
 	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	integration, ok := instance.Plugin.(Integration)
 	if !ok {
 		return nil, fmt.Errorf("plugin is not an integration: %s", pluginID)
 	}
-	
+
 	return integration.ExecuteAction(ctx, action, params)
 }
 
@@ -253,17 +253,17 @@ func (s *Service) ExecuteTests(ctx context.Context, pluginID string, serverPath 
 	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	tester, ok := instance.Plugin.(Testing)
 	if !ok {
 		return nil, fmt.Errorf("plugin is not a testing plugin: %s", pluginID)
 	}
-	
+
 	result, err := tester.RunTests(ctx, serverPath, config)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return ToTestResultAPI(result), nil
 }
 
@@ -275,7 +275,7 @@ func (s *Service) ValidatePluginConfig(pluginID string, config json.RawMessage) 
 	if !exists {
 		return fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	// Validate configuration against plugin schema
 	return s.manager.validatePluginConfig(instance, config)
 }
@@ -318,11 +318,11 @@ func ToValidationResultAPI(result *ValidationResult) *ValidationResultAPI {
 	if result == nil {
 		return nil
 	}
-	
+
 	apiResult := &ValidationResultAPI{
 		Valid: result.Valid,
 	}
-	
+
 	// Convert errors
 	apiResult.Errors = make([]ValidationErrorAPI, len(result.Errors))
 	for i, err := range result.Errors {
@@ -338,7 +338,7 @@ func ToValidationResultAPI(result *ValidationResult) *ValidationResultAPI {
 			Context:  err.Context,
 		}
 	}
-	
+
 	// Convert warnings
 	apiResult.Warnings = make([]ValidationErrorAPI, len(result.Warnings))
 	for i, warn := range result.Warnings {
@@ -354,7 +354,7 @@ func ToValidationResultAPI(result *ValidationResult) *ValidationResultAPI {
 			Context:  warn.Context,
 		}
 	}
-	
+
 	// Convert info
 	apiResult.Info = make([]ValidationErrorAPI, len(result.Info))
 	for i, info := range result.Info {
@@ -370,7 +370,7 @@ func ToValidationResultAPI(result *ValidationResult) *ValidationResultAPI {
 			Context:  info.Context,
 		}
 	}
-	
+
 	// Convert stats
 	if result.Stats != nil {
 		apiResult.Stats = &ValidationStatsAPI{
@@ -381,7 +381,7 @@ func ToValidationResultAPI(result *ValidationResult) *ValidationResultAPI {
 			LinesChecked: result.Stats.LinesChecked,
 		}
 	}
-	
+
 	return apiResult
 }
 
@@ -390,13 +390,13 @@ func ToTestResultAPI(result *TestResult) *TestResultAPI {
 	if result == nil {
 		return nil
 	}
-	
+
 	apiResult := &TestResultAPI{
 		Passed:   result.Passed,
 		Duration: int64(result.Duration),
 		Summary:  result.Summary,
 	}
-	
+
 	// Convert test cases
 	apiResult.Tests = make([]TestCaseAPI, len(result.Tests))
 	for i, test := range result.Tests {
@@ -408,7 +408,7 @@ func ToTestResultAPI(result *TestResult) *TestResultAPI {
 			Error:    test.Error,
 		}
 	}
-	
+
 	// Convert coverage
 	if result.Coverage != nil {
 		apiResult.Coverage = &CoverageAPI{
@@ -419,7 +419,7 @@ func ToTestResultAPI(result *TestResult) *TestResultAPI {
 			Functions: result.Coverage.Functions,
 		}
 	}
-	
+
 	// Convert performance
 	if result.Performance != nil {
 		apiResult.Performance = &PerformanceAPI{
@@ -431,6 +431,6 @@ func ToTestResultAPI(result *TestResult) *TestResultAPI {
 			CPUUsage:          result.Performance.CPUUsage,
 		}
 	}
-	
+
 	return apiResult
 }

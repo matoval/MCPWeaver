@@ -27,7 +27,7 @@ func (eb *EventBus) Initialize() error {
 func (eb *EventBus) Shutdown() error {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
-	
+
 	eb.subscribers = make(map[string][]EventHandler)
 	return nil
 }
@@ -36,7 +36,7 @@ func (eb *EventBus) Shutdown() error {
 func (eb *EventBus) Subscribe(eventType string, handler EventHandler) {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
-	
+
 	eb.subscribers[eventType] = append(eb.subscribers[eventType], handler)
 }
 
@@ -44,7 +44,7 @@ func (eb *EventBus) Subscribe(eventType string, handler EventHandler) {
 func (eb *EventBus) Unsubscribe(eventType string, plugin interface{}) {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
-	
+
 	if handlers, exists := eb.subscribers[eventType]; exists {
 		// Remove handlers for this plugin (simplified approach)
 		// In a real implementation, you'd need a more sophisticated way to match handlers
@@ -57,12 +57,12 @@ func (eb *EventBus) Emit(ctx context.Context, event *PluginEvent) error {
 	eb.mu.RLock()
 	handlers := eb.subscribers[event.Type]
 	eb.mu.RUnlock()
-	
+
 	for _, handler := range handlers {
 		go func(h EventHandler) {
 			_ = h(ctx, event)
 		}(handler)
 	}
-	
+
 	return nil
 }

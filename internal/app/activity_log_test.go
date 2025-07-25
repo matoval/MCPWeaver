@@ -54,7 +54,7 @@ func TestActivityLogService(t *testing.T) {
 		Limit:  10,
 		Offset: 0,
 	}
-	
+
 	searchResult, err := service.SearchLogs(context.Background(), searchReq)
 	if err != nil {
 		t.Errorf("Search failed: %v", err)
@@ -125,16 +125,16 @@ func TestActivityLogCircularBuffer(t *testing.T) {
 func TestActivityLogWithApp(t *testing.T) {
 	// Test integration with App
 	app := NewApp()
-	
+
 	// Test activity logging through app
 	app.LogActivity(LogLevelInfo, "App", "TestOp", "App test message")
-	
+
 	// Test getting logs through app API
 	logs, err := app.GetActivityLogs(context.Background(), LogFilter{})
 	if err != nil {
 		t.Errorf("Failed to get activity logs: %v", err)
 	}
-	
+
 	if len(logs) == 0 {
 		t.Error("Expected at least one log entry")
 	}
@@ -146,12 +146,12 @@ func TestActivityLogWithApp(t *testing.T) {
 		Limit:  10,
 		Offset: 0,
 	}
-	
+
 	searchResult, err := app.SearchActivityLogs(context.Background(), searchReq)
 	if err != nil {
 		t.Errorf("Failed to search activity logs: %v", err)
 	}
-	
+
 	if len(searchResult.Entries) == 0 {
 		t.Error("Expected at least one search result")
 	}
@@ -161,7 +161,7 @@ func TestActivityLogWithApp(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to get application status: %v", err)
 	}
-	
+
 	if status == nil {
 		t.Error("Expected application status, got nil")
 	}

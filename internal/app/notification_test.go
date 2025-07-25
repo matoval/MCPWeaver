@@ -117,11 +117,11 @@ func TestNotificationService_ShowToast(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := service.ShowToast(tt.toast)
-			
+
 			if tt.expectError && err == nil {
 				t.Error("Expected error but got none")
 			}
-			
+
 			if !tt.expectError && err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
@@ -188,9 +188,9 @@ func TestNotificationService_SystemNotification(t *testing.T) {
 		{
 			name: "Critical system notification with actions",
 			notification: &SystemNotification{
-				Title:   "Critical System Alert",
-				Body:    "Immediate attention required",
-				Urgency: SystemUrgencyCritical,
+				Title:    "Critical System Alert",
+				Body:     "Immediate attention required",
+				Urgency:  SystemUrgencyCritical,
 				Category: CategorySecurity,
 				Actions: []NotificationActionBtn{
 					{ID: "fix", Label: "Fix Now", Type: ActionTypeInstallNow},
@@ -204,11 +204,11 @@ func TestNotificationService_SystemNotification(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := service.ShowSystemNotification(tt.notification)
-			
+
 			if tt.expectError && err == nil {
 				t.Error("Expected error but got none")
 			}
-			
+
 			if !tt.expectError && err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
@@ -874,7 +874,7 @@ func TestNotificationAPI_DoNotDisturbMode(t *testing.T) {
 
 func TestNotificationAPI_ErrorHandling(t *testing.T) {
 	app := NewApp() // App without notification service
-	
+
 	// Test API methods with nil service
 	err := app.ShowToastNotification(&ToastNotification{Title: "Test", Message: "Test"})
 	if err == nil {

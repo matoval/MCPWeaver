@@ -93,7 +93,7 @@ func TestUpdateCheck(t *testing.T) {
 
 	// Use nil context for testing to avoid Wails runtime issues
 	service := NewUpdateService(nil)
-	
+
 	// Update configuration to use mock server
 	config := service.config
 	config.UpdateURL = server.URL
@@ -328,7 +328,7 @@ func TestUpdateServiceIntegration(t *testing.T) {
 			}],
 			"prerelease": false
 		}`
-		
+
 		if r.URL.Path == "/download" {
 			w.Header().Set("Content-Type", "application/octet-stream")
 			w.WriteHeader(http.StatusOK)
@@ -338,7 +338,7 @@ func TestUpdateServiceIntegration(t *testing.T) {
 			}
 			return
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(response))
@@ -346,7 +346,7 @@ func TestUpdateServiceIntegration(t *testing.T) {
 	defer server.Close()
 
 	service := NewUpdateService(nil)
-	
+
 	// Update configuration for testing
 	config := service.config
 	config.UpdateURL = server.URL

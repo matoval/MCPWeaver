@@ -174,12 +174,12 @@ func (v *SyntaxValidator) validateGoFile(filePath string, result *ValidationResu
 
 	// Check for required imports
 	requiredImports := map[string]bool{
-		"context":     false,
-		"encoding/json": false,
-		"fmt":         false,
-		"log":         false,
-		"os":          false,
-		"time":        false,
+		"context":                         false,
+		"encoding/json":                   false,
+		"fmt":                             false,
+		"log":                             false,
+		"os":                              false,
+		"time":                            false,
 		"github.com/sourcegraph/jsonrpc2": false,
 	}
 

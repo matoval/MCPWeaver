@@ -25,42 +25,42 @@ func NewDiagnosticsEngine(config *TestConfig) *DiagnosticsEngine {
 
 // DiagnosticReport represents a comprehensive diagnostic analysis
 type DiagnosticReport struct {
-	ReportID          string                    `json:"reportId"`
-	Timestamp         time.Time                 `json:"timestamp"`
-	ServerPath        string                    `json:"serverPath"`
-	FailureAnalysis   *FailureAnalysis          `json:"failureAnalysis"`
-	EnvironmentInfo   *EnvironmentInfo          `json:"environmentInfo"`
-	CodeAnalysis      *CodeAnalysis             `json:"codeAnalysis"`
-	Dependencies      *DependencyAnalysis       `json:"dependencies"`
-	Recommendations   []DiagnosticRecommendation `json:"recommendations"`
-	TroubleshootingGuide *TroubleshootingGuide  `json:"troubleshootingGuide"`
-	RelatedIssues     []RelatedIssue            `json:"relatedIssues"`
-	Severity          string                    `json:"severity"`
-	EstimatedFixTime  string                    `json:"estimatedFixTime"`
+	ReportID             string                     `json:"reportId"`
+	Timestamp            time.Time                  `json:"timestamp"`
+	ServerPath           string                     `json:"serverPath"`
+	FailureAnalysis      *FailureAnalysis           `json:"failureAnalysis"`
+	EnvironmentInfo      *EnvironmentInfo           `json:"environmentInfo"`
+	CodeAnalysis         *CodeAnalysis              `json:"codeAnalysis"`
+	Dependencies         *DependencyAnalysis        `json:"dependencies"`
+	Recommendations      []DiagnosticRecommendation `json:"recommendations"`
+	TroubleshootingGuide *TroubleshootingGuide      `json:"troubleshootingGuide"`
+	RelatedIssues        []RelatedIssue             `json:"relatedIssues"`
+	Severity             string                     `json:"severity"`
+	EstimatedFixTime     string                     `json:"estimatedFixTime"`
 }
 
 // FailureAnalysis contains detailed analysis of test failures
 type FailureAnalysis struct {
-	FailureType       string                 `json:"failureType"`
-	FailureCategory   string                 `json:"failureCategory"`
-	PrimaryError      string                 `json:"primaryError"`
-	SecondaryErrors   []string               `json:"secondaryErrors"`
-	FailedStages      []StageFailureInfo     `json:"failedStages"`
-	ErrorPatterns     []ErrorPattern         `json:"errorPatterns"`
-	RootCause         *RootCauseAnalysis     `json:"rootCause"`
-	Impact            string                 `json:"impact"`
-	Reproducibility   string                 `json:"reproducibility"`
+	FailureType     string             `json:"failureType"`
+	FailureCategory string             `json:"failureCategory"`
+	PrimaryError    string             `json:"primaryError"`
+	SecondaryErrors []string           `json:"secondaryErrors"`
+	FailedStages    []StageFailureInfo `json:"failedStages"`
+	ErrorPatterns   []ErrorPattern     `json:"errorPatterns"`
+	RootCause       *RootCauseAnalysis `json:"rootCause"`
+	Impact          string             `json:"impact"`
+	Reproducibility string             `json:"reproducibility"`
 }
 
 // StageFailureInfo contains information about failed pipeline stages
 type StageFailureInfo struct {
-	StageName      string            `json:"stageName"`
-	ErrorMessage   string            `json:"errorMessage"`
-	FailureTime    time.Time         `json:"failureTime"`
-	Duration       time.Duration     `json:"duration"`
-	RetryCount     int               `json:"retryCount"`
-	Context        map[string]string `json:"context"`
-	Suggestions    []string          `json:"suggestions"`
+	StageName    string            `json:"stageName"`
+	ErrorMessage string            `json:"errorMessage"`
+	FailureTime  time.Time         `json:"failureTime"`
+	Duration     time.Duration     `json:"duration"`
+	RetryCount   int               `json:"retryCount"`
+	Context      map[string]string `json:"context"`
+	Suggestions  []string          `json:"suggestions"`
 }
 
 // ErrorPattern represents a recognized error pattern
@@ -74,22 +74,22 @@ type ErrorPattern struct {
 
 // RootCauseAnalysis provides deep analysis of the root cause
 type RootCauseAnalysis struct {
-	ProbableCause    string            `json:"probableCause"`
-	ConfidenceLevel  float64           `json:"confidenceLevel"`
-	ContributingFactors []string       `json:"contributingFactors"`
-	Evidence         []string          `json:"evidence"`
-	Analysis         string            `json:"analysis"`
+	ProbableCause       string   `json:"probableCause"`
+	ConfidenceLevel     float64  `json:"confidenceLevel"`
+	ContributingFactors []string `json:"contributingFactors"`
+	Evidence            []string `json:"evidence"`
+	Analysis            string   `json:"analysis"`
 }
 
 // EnvironmentInfo contains environment analysis
 type EnvironmentInfo struct {
-	GoVersion         string            `json:"goVersion"`
-	OperatingSystem   string            `json:"operatingSystem"`
-	Architecture      string            `json:"architecture"`
-	AvailableTools    map[string]bool   `json:"availableTools"`
-	EnvironmentVars   map[string]string `json:"environmentVars"`
-	PathInfo          []string          `json:"pathInfo"`
-	SystemResources   *SystemResources  `json:"systemResources"`
+	GoVersion       string            `json:"goVersion"`
+	OperatingSystem string            `json:"operatingSystem"`
+	Architecture    string            `json:"architecture"`
+	AvailableTools  map[string]bool   `json:"availableTools"`
+	EnvironmentVars map[string]string `json:"environmentVars"`
+	PathInfo        []string          `json:"pathInfo"`
+	SystemResources *SystemResources  `json:"systemResources"`
 }
 
 // SystemResources contains system resource information
@@ -102,23 +102,23 @@ type SystemResources struct {
 
 // CodeAnalysis contains analysis of the generated code
 type CodeAnalysis struct {
-	FilesAnalyzed     int                 `json:"filesAnalyzed"`
-	LinesOfCode       int                 `json:"linesOfCode"`
-	SyntaxIssues      []SyntaxIssue       `json:"syntaxIssues"`
-	StructuralIssues  []StructuralIssue   `json:"structuralIssues"`
-	QualityMetrics    *QualityMetrics     `json:"qualityMetrics"`
-	MissingComponents []string            `json:"missingComponents"`
-	CodeSmells        []CodeSmell         `json:"codeSmells"`
+	FilesAnalyzed     int               `json:"filesAnalyzed"`
+	LinesOfCode       int               `json:"linesOfCode"`
+	SyntaxIssues      []SyntaxIssue     `json:"syntaxIssues"`
+	StructuralIssues  []StructuralIssue `json:"structuralIssues"`
+	QualityMetrics    *QualityMetrics   `json:"qualityMetrics"`
+	MissingComponents []string          `json:"missingComponents"`
+	CodeSmells        []CodeSmell       `json:"codeSmells"`
 }
 
 // SyntaxIssue represents a syntax-related issue
 type SyntaxIssue struct {
-	File        string `json:"file"`
-	Line        int    `json:"line"`
-	Column      int    `json:"column"`
-	Message     string `json:"message"`
-	Severity    string `json:"severity"`
-	Suggestion  string `json:"suggestion"`
+	File       string `json:"file"`
+	Line       int    `json:"line"`
+	Column     int    `json:"column"`
+	Message    string `json:"message"`
+	Severity   string `json:"severity"`
+	Suggestion string `json:"suggestion"`
 }
 
 // StructuralIssue represents a structural code issue
@@ -151,13 +151,13 @@ type CodeSmell struct {
 
 // DependencyAnalysis contains dependency analysis
 type DependencyAnalysis struct {
-	TotalDependencies int                    `json:"totalDependencies"`
-	DirectDependencies int                   `json:"directDependencies"`
-	IndirectDependencies int                 `json:"indirectDependencies"`
-	OutdatedDependencies []OutdatedDependency `json:"outdatedDependencies"`
+	TotalDependencies      int                    `json:"totalDependencies"`
+	DirectDependencies     int                    `json:"directDependencies"`
+	IndirectDependencies   int                    `json:"indirectDependencies"`
+	OutdatedDependencies   []OutdatedDependency   `json:"outdatedDependencies"`
 	VulnerableDependencies []VulnerableDependency `json:"vulnerableDependencies"`
-	LicenseIssues       []LicenseIssue        `json:"licenseIssues"`
-	DependencyConflicts []DependencyConflict  `json:"dependencyConflicts"`
+	LicenseIssues          []LicenseIssue         `json:"licenseIssues"`
+	DependencyConflicts    []DependencyConflict   `json:"dependencyConflicts"`
 }
 
 // OutdatedDependency represents an outdated dependency
@@ -188,21 +188,21 @@ type LicenseIssue struct {
 
 // DependencyConflict represents a dependency version conflict
 type DependencyConflict struct {
-	Package        string   `json:"package"`
+	Package             string   `json:"package"`
 	ConflictingVersions []string `json:"conflictingVersions"`
-	Resolution     string   `json:"resolution"`
+	Resolution          string   `json:"resolution"`
 }
 
 // DiagnosticRecommendation represents an actionable recommendation
 type DiagnosticRecommendation struct {
-	ID          string   `json:"id"`
-	Priority    string   `json:"priority"`
-	Category    string   `json:"category"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Actions     []Action `json:"actions"`
-	Resources   []string `json:"resources"`
-	EstimatedTime string `json:"estimatedTime"`
+	ID            string   `json:"id"`
+	Priority      string   `json:"priority"`
+	Category      string   `json:"category"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
+	Actions       []Action `json:"actions"`
+	Resources     []string `json:"resources"`
+	EstimatedTime string   `json:"estimatedTime"`
 }
 
 // Action represents a specific action to take
@@ -216,10 +216,10 @@ type Action struct {
 
 // TroubleshootingGuide provides step-by-step troubleshooting
 type TroubleshootingGuide struct {
-	QuickFixes      []QuickFix      `json:"quickFixes"`
-	DetailedSteps   []DetailedStep  `json:"detailedSteps"`
-	CommonPitfalls  []CommonPitfall `json:"commonPitfalls"`
-	PreventionTips  []string        `json:"preventionTips"`
+	QuickFixes     []QuickFix      `json:"quickFixes"`
+	DetailedSteps  []DetailedStep  `json:"detailedSteps"`
+	CommonPitfalls []CommonPitfall `json:"commonPitfalls"`
+	PreventionTips []string        `json:"preventionTips"`
 }
 
 // QuickFix represents a quick solution attempt
@@ -252,21 +252,21 @@ type CommonPitfall struct {
 
 // RelatedIssue represents a related known issue
 type RelatedIssue struct {
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	URL         string   `json:"url"`
-	Similarity  float64  `json:"similarity"`
-	Status      string   `json:"status"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	URL         string  `json:"url"`
+	Similarity  float64 `json:"similarity"`
+	Status      string  `json:"status"`
 }
 
 // AnalyzeFailures performs comprehensive failure analysis
 func (de *DiagnosticsEngine) AnalyzeFailures(ctx context.Context, serverPath string, testResult *TestResult, pipelineResult *PipelineResult) (*DiagnosticReport, error) {
 	reportID := fmt.Sprintf("diag_%d", time.Now().Unix())
-	
+
 	report := &DiagnosticReport{
-		ReportID:    reportID,
-		Timestamp:   time.Now(),
-		ServerPath:  serverPath,
+		ReportID:        reportID,
+		Timestamp:       time.Now(),
+		ServerPath:      serverPath,
 		Recommendations: make([]DiagnosticRecommendation, 0),
 		RelatedIssues:   make([]RelatedIssue, 0),
 	}
@@ -326,7 +326,7 @@ func (de *DiagnosticsEngine) analyzeFailures(testResult *TestResult, pipelineRes
 	if testResult != nil && !testResult.Success {
 		analysis.PrimaryError = "Test execution failed"
 		analysis.SecondaryErrors = append(analysis.SecondaryErrors, testResult.Errors...)
-		
+
 		// Categorize failure type
 		analysis.FailureType = de.categorizeFailureType(testResult.Errors)
 		analysis.FailureCategory = de.categorizeFailure(testResult.Errors)
@@ -455,7 +455,7 @@ func (de *DiagnosticsEngine) generateStageSuggestions(stageName, errorMessage st
 // detectErrorPatterns detects common error patterns
 func (de *DiagnosticsEngine) detectErrorPatterns(errors []string) []ErrorPattern {
 	patterns := make([]ErrorPattern, 0)
-	
+
 	commonPatterns := []struct {
 		pattern     string
 		description string
@@ -495,7 +495,7 @@ func (de *DiagnosticsEngine) detectErrorPatterns(errors []string) []ErrorPattern
 	}
 
 	errorText := strings.Join(errors, "\n")
-	
+
 	for _, patternInfo := range commonPatterns {
 		matched, _ := regexp.MatchString(patternInfo.pattern, errorText)
 		if matched {
@@ -517,7 +517,7 @@ func (de *DiagnosticsEngine) detectErrorPatterns(errors []string) []ErrorPattern
 func (de *DiagnosticsEngine) performRootCauseAnalysis(analysis *FailureAnalysis) *RootCauseAnalysis {
 	rootCause := &RootCauseAnalysis{
 		ContributingFactors: make([]string, 0),
-		Evidence:           make([]string, 0),
+		Evidence:            make([]string, 0),
 	}
 
 	// Analyze based on failure type
@@ -565,8 +565,8 @@ func (de *DiagnosticsEngine) performRootCauseAnalysis(analysis *FailureAnalysis)
 func (de *DiagnosticsEngine) generateRootCauseAnalysisText(rootCause *RootCauseAnalysis) string {
 	return fmt.Sprintf(
 		"Based on the error patterns and evidence collected, the most probable cause is: %s (confidence: %.0f%%). "+
-		"Contributing factors include: %s. "+
-		"Evidence supporting this analysis: %s.",
+			"Contributing factors include: %s. "+
+			"Evidence supporting this analysis: %s.",
 		rootCause.ProbableCause,
 		rootCause.ConfidenceLevel*100,
 		strings.Join(rootCause.ContributingFactors, ", "),
@@ -577,32 +577,32 @@ func (de *DiagnosticsEngine) generateRootCauseAnalysisText(rootCause *RootCauseA
 // determineImpact determines the impact of the failure
 func (de *DiagnosticsEngine) determineImpact(analysis *FailureAnalysis) string {
 	failedStagesCount := len(analysis.FailedStages)
-	
+
 	if strings.Contains(analysis.FailureType, "compilation") {
 		return "high" // Compilation failures prevent any functionality
 	}
-	
+
 	if failedStagesCount >= 3 {
 		return "high"
 	} else if failedStagesCount >= 2 {
 		return "medium"
 	}
-	
+
 	return "low"
 }
 
 // determineReproducibility determines how reproducible the failure is
 func (de *DiagnosticsEngine) determineReproducibility(analysis *FailureAnalysis) string {
-	if strings.Contains(analysis.FailureType, "compilation") || 
-	   strings.Contains(analysis.FailureType, "syntax") {
+	if strings.Contains(analysis.FailureType, "compilation") ||
+		strings.Contains(analysis.FailureType, "syntax") {
 		return "always" // Syntax/compilation errors are deterministic
 	}
-	
+
 	if strings.Contains(analysis.FailureType, "timeout") ||
-	   strings.Contains(analysis.FailureType, "network") {
+		strings.Contains(analysis.FailureType, "network") {
 		return "intermittent" // Network/timing issues can be intermittent
 	}
-	
+
 	return "often" // Default
 }
 
@@ -656,10 +656,10 @@ func (de *DiagnosticsEngine) analyzeCode(ctx context.Context, serverPath string)
 	if content, err := os.ReadFile(mainFile); err == nil {
 		analysis.FilesAnalyzed++
 		analysis.LinesOfCode += strings.Count(string(content), "\n")
-		
+
 		// Check for missing components
 		analysis.MissingComponents = de.checkMissingComponents(string(content))
-		
+
 		// Detect code smells
 		analysis.CodeSmells = de.detectCodeSmells(string(content))
 	}
@@ -676,7 +676,7 @@ func (de *DiagnosticsEngine) analyzeCode(ctx context.Context, serverPath string)
 // checkMissingComponents checks for missing required components
 func (de *DiagnosticsEngine) checkMissingComponents(content string) []string {
 	missing := make([]string, 0)
-	
+
 	requiredComponents := map[string]string{
 		"main function":     `func main\(\)`,
 		"MCP server type":   `type.*Server.*struct`,
@@ -703,14 +703,14 @@ func (de *DiagnosticsEngine) detectCodeSmells(content string) []CodeSmell {
 	functionPattern := `func\s+\w+\([^)]*\)[^{]*\{`
 	re := regexp.MustCompile(functionPattern)
 	matches := re.FindAllStringIndex(content, -1)
-	
+
 	for _, match := range matches {
 		// Simple heuristic: count lines in function
 		functionStart := match[0]
 		remainingContent := content[functionStart:]
 		braceCount := 0
 		lines := 0
-		
+
 		for i, char := range remainingContent {
 			if char == '\n' {
 				lines++
@@ -747,8 +747,8 @@ func (de *DiagnosticsEngine) analyzeDependencies(ctx context.Context, serverPath
 	analysis := &DependencyAnalysis{
 		OutdatedDependencies:   make([]OutdatedDependency, 0),
 		VulnerableDependencies: make([]VulnerableDependency, 0),
-		LicenseIssues:         make([]LicenseIssue, 0),
-		DependencyConflicts:   make([]DependencyConflict, 0),
+		LicenseIssues:          make([]LicenseIssue, 0),
+		DependencyConflicts:    make([]DependencyConflict, 0),
 	}
 
 	// Read go.mod file
@@ -762,8 +762,8 @@ func (de *DiagnosticsEngine) analyzeDependencies(ctx context.Context, serverPath
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		if strings.Contains(line, "require") || 
-		   (strings.Contains(line, "/") && !strings.HasPrefix(line, "//")) {
+		if strings.Contains(line, "require") ||
+			(strings.Contains(line, "/") && !strings.HasPrefix(line, "//")) {
 			analysis.TotalDependencies++
 		}
 	}

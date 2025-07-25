@@ -16,8 +16,8 @@ import (
 
 // Performance constants for file operations
 const (
-	maxFileSize = 10 * 1024 * 1024 // 10MB max file size
-	bufferSize  = 64 * 1024        // 64KB buffer for file operations
+	maxFileSize     = 10 * 1024 * 1024 // 10MB max file size
+	bufferSize      = 64 * 1024        // 64KB buffer for file operations
 	maxResponseSize = 10 * 1024 * 1024 // 10MB max response size for URL downloads
 )
 
@@ -64,7 +64,7 @@ func (a *App) fileExists(path string) error {
 		})
 	} else if err != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to check file existence", map[string]string{
-			"path": path,
+			"path":  path,
 			"error": err.Error(),
 		})
 	}
@@ -88,7 +88,7 @@ func (a *App) dirExists(path string) error {
 	testFile := filepath.Join(path, fmt.Sprintf(".mcpweaver_test_%d", time.Now().UnixNano()))
 	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Directory is not writable", map[string]string{
-			"path": path,
+			"path":  path,
 			"error": err.Error(),
 		})
 	}
@@ -105,7 +105,7 @@ func (a *App) ensureDir(path string) error {
 
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to create directory", map[string]string{
-			"path": path,
+			"path":  path,
 			"error": err.Error(),
 		})
 	}
@@ -193,7 +193,7 @@ func (a *App) SaveFile(content string, defaultPath string, filters []FileFilter)
 	// Write content to file
 	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
 		return "", a.createAPIError("file_system", ErrCodeFileAccess, "Failed to save file", map[string]string{
-			"path": filePath,
+			"path":  filePath,
 			"error": err.Error(),
 		})
 	}
@@ -212,7 +212,7 @@ func (a *App) ReadFile(path string) (string, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", a.createAPIError("file_system", ErrCodeFileAccess, "Failed to read file", map[string]string{
-			"path": path,
+			"path":  path,
 			"error": err.Error(),
 		})
 	}
@@ -228,7 +228,7 @@ func (a *App) WriteFile(path string, content string) error {
 
 	// Create security validator
 	securityValidator := NewSecurityValidator(a)
-	
+
 	// Validate file path for security
 	if err := securityValidator.ValidateFilePath(path); err != nil {
 		return err
@@ -237,12 +237,12 @@ func (a *App) WriteFile(path string, content string) error {
 	// Validate content size
 	if len(content) > maxFileSize {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Content too large", map[string]string{
-			"path": path,
-			"size": fmt.Sprintf("%d", len(content)),
+			"path":     path,
+			"size":     fmt.Sprintf("%d", len(content)),
 			"max_size": fmt.Sprintf("%d", maxFileSize),
 		})
 	}
-	
+
 	// Check if file exists and require confirmation for overwrite
 	if _, err := os.Stat(path); err == nil {
 		// File exists - in a real implementation, this would trigger a user confirmation dialog
@@ -259,7 +259,7 @@ func (a *App) WriteFile(path string, content string) error {
 	// Write content to file
 	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to write file", map[string]string{
-			"path": path,
+			"path":  path,
 			"error": err.Error(),
 		})
 	}
@@ -280,10 +280,10 @@ func (a *App) FileExists(path string) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	}
-	
+
 	// Other error occurred
 	return false, a.createAPIError("file_system", ErrCodeFileAccess, "Failed to check file existence", map[string]string{
-		"path": path,
+		"path":  path,
 		"error": err.Error(),
 	})
 }
@@ -335,7 +335,7 @@ func (a *App) GetSupportedFileFormats() []string {
 func (a *App) DetectFileFormat(content string, filename string) (string, error) {
 	// First, try to detect based on content
 	content = strings.TrimSpace(content)
-	
+
 	if len(content) == 0 {
 		return "", a.createAPIError("validation", ErrCodeValidation, "File is empty", nil)
 	}
@@ -375,14 +375,14 @@ func (a *App) DetectFileFormat(content string, filename string) (string, error) 
 		if err := json.Unmarshal([]byte(content), &jsonData); err == nil {
 			return "json", nil
 		}
-		
+
 		var yamlData map[string]interface{}
 		if err := yaml.Unmarshal([]byte(content), &yamlData); err == nil {
 			return "yaml", nil
 		}
-		
+
 		return "", a.createAPIError("validation", ErrCodeValidation, "Unable to detect file format", map[string]string{
-			"filename": filename,
+			"filename":  filename,
 			"extension": ext,
 		})
 	}
@@ -412,7 +412,7 @@ func (a *App) ImportOpenAPISpec(filePath string) (*ImportResult, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, a.createAPIError("file_system", ErrCodeFileAccess, "Failed to read file", map[string]string{
-			"path": filePath,
+			"path":  filePath,
 			"error": err.Error(),
 		})
 	}
@@ -421,7 +421,7 @@ func (a *App) ImportOpenAPISpec(filePath string) (*ImportResult, error) {
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		return nil, a.createAPIError("file_system", ErrCodeFileAccess, "Failed to get file info", map[string]string{
-			"path": filePath,
+			"path":  filePath,
 			"error": err.Error(),
 		})
 	}
@@ -453,7 +453,7 @@ func (a *App) ImportOpenAPISpecFromURL(url string) (*ImportResult, error) {
 
 	// Create security validator
 	securityValidator := NewSecurityValidator(a)
-	
+
 	// Validate URL for SSRF protection
 	if err := securityValidator.ValidateURL(url); err != nil {
 		return nil, err
@@ -473,7 +473,7 @@ func (a *App) ImportOpenAPISpecFromURL(url string) (*ImportResult, error) {
 	if err != nil {
 		a.emitFileProgress(progressID, "import", 0, "Failed to connect", 1, 0)
 		return nil, a.createAPIError("network", ErrCodeNetworkError, "Failed to fetch URL", map[string]string{
-			"url": url,
+			"url":   url,
 			"error": err.Error(),
 		})
 	}
@@ -483,7 +483,7 @@ func (a *App) ImportOpenAPISpecFromURL(url string) (*ImportResult, error) {
 	if resp.StatusCode != http.StatusOK {
 		a.emitFileProgress(progressID, "import", 0, "HTTP error: "+resp.Status, 1, 0)
 		return nil, a.createAPIError("network", ErrCodeNetworkError, "Failed to fetch URL", map[string]string{
-			"url": url,
+			"url":    url,
 			"status": resp.Status,
 		})
 	}
@@ -495,16 +495,16 @@ func (a *App) ImportOpenAPISpecFromURL(url string) (*ImportResult, error) {
 	if err != nil {
 		a.emitFileProgress(progressID, "import", 0, "Failed to read response", 1, 0)
 		return nil, a.createAPIError("network", ErrCodeNetworkError, "Failed to read response", map[string]string{
-			"url": url,
+			"url":   url,
 			"error": err.Error(),
 		})
 	}
-	
+
 	// Check if we hit the size limit
 	if len(content) >= maxResponseSize {
 		a.emitFileProgress(progressID, "import", 0, "Response too large", 1, 0)
 		return nil, a.createAPIError("validation", "RESPONSE_TOO_LARGE", "Downloaded content exceeds maximum size limit", map[string]string{
-			"url": url,
+			"url":     url,
 			"maxSize": fmt.Sprintf("%d", maxResponseSize),
 		})
 	}
@@ -558,7 +558,7 @@ func (a *App) ExportGeneratedServer(projectID, targetDir string) (*ExportResult,
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		a.emitFileProgress(progressID, "export", 0, "Failed to create directory", 1, 0)
 		return nil, a.createAPIError("file_system", ErrCodeFileAccess, "Failed to create target directory", map[string]string{
-			"path": targetDir,
+			"path":  targetDir,
 			"error": err.Error(),
 		})
 	}
@@ -599,7 +599,7 @@ func (a *App) ExportGeneratedServer(projectID, targetDir string) (*ExportResult,
 			return nil, a.createAPIError("file_system", ErrCodeFileAccess, "Failed to copy file", map[string]string{
 				"source": sourcePath,
 				"target": targetPath,
-				"error": err.Error(),
+				"error":  err.Error(),
 			})
 		}
 
@@ -653,10 +653,10 @@ func (a *App) ExportGeneratedServer(projectID, targetDir string) (*ExportResult,
 // parseOpenAPIContent parses and validates OpenAPI content
 func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error) {
 	result := &ImportResult{
-		Content:   content,
-		Valid:     false,
-		Errors:    []string{},
-		Warnings:  []string{},
+		Content:  content,
+		Valid:    false,
+		Errors:   []string{},
+		Warnings: []string{},
 	}
 
 	// Validate content size
@@ -672,11 +672,11 @@ func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error)
 
 	// Create security validator for content validation
 	securityValidator := NewSecurityValidator(a)
-	
+
 	// Basic validation - check if content is valid JSON or YAML
 	var specData map[string]interface{}
 	var parseError error
-	
+
 	// Try parsing as JSON first
 	if err := json.Unmarshal([]byte(content), &specData); err != nil {
 		// Validate YAML security before parsing
@@ -684,7 +684,7 @@ func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error)
 			result.Errors = append(result.Errors, "YAML security validation failed: "+err.Error())
 			return result, nil
 		}
-		
+
 		// Try parsing as YAML
 		if err := yaml.Unmarshal([]byte(content), &specData); err != nil {
 			result.Errors = append(result.Errors, "Invalid JSON or YAML format: "+err.Error())
@@ -720,8 +720,8 @@ func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error)
 
 	// Extract and validate basic info
 	info := &SpecInfo{
-		Version: openApiVersion,
-		Title: "Unknown",
+		Version:     openApiVersion,
+		Title:       "Unknown",
 		Description: "",
 	}
 
@@ -732,14 +732,14 @@ func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error)
 			result.Errors = append(result.Errors, "Missing required 'info.version' field")
 			return result, nil
 		}
-		
+
 		if title, ok := infoData["title"].(string); ok {
 			info.Title = title
 		} else {
 			result.Errors = append(result.Errors, "Missing required 'info.title' field")
 			return result, nil
 		}
-		
+
 		if description, ok := infoData["description"].(string); ok {
 			info.Description = description
 		}
@@ -751,12 +751,12 @@ func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error)
 	// Validate and count operations
 	operationCount := 0
 	schemaCount := 0
-	
+
 	if paths, ok := specData["paths"].(map[string]interface{}); ok {
 		if len(paths) == 0 {
 			result.Warnings = append(result.Warnings, "No paths defined in the specification")
 		}
-		
+
 		for pathName, pathData := range paths {
 			if pathMethods, ok := pathData.(map[string]interface{}); ok {
 				for method := range pathMethods {
@@ -765,7 +765,7 @@ func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error)
 					}
 				}
 			}
-			
+
 			// Validate path format
 			if !strings.HasPrefix(pathName, "/") {
 				result.Warnings = append(result.Warnings, "Path '"+pathName+"' should start with '/'")
@@ -818,18 +818,18 @@ func (a *App) parseOpenAPIContent(content, source string) (*ImportResult, error)
 		if bp, ok := specData["basePath"].(string); ok {
 			basePath = bp
 		}
-		
+
 		serverInfo := ServerInfo{
-			URL: scheme + "://" + host + basePath,
+			URL:         scheme + "://" + host + basePath,
 			Description: "Generated from Swagger 2.0 host",
 		}
 		servers = append(servers, serverInfo)
 	}
-	
+
 	if len(servers) == 0 {
 		result.Warnings = append(result.Warnings, "No servers defined in the specification")
 	}
-	
+
 	info.Servers = servers
 
 	// Extract security schemes
@@ -899,17 +899,17 @@ func (a *App) isValidServerURL(url string) bool {
 	if url == "" {
 		return false
 	}
-	
+
 	// Basic validation - should be a valid URL or template
 	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
 		return true
 	}
-	
+
 	// Allow relative URLs and templates
 	if strings.HasPrefix(url, "/") || strings.Contains(url, "{") {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -1012,7 +1012,7 @@ func (a *App) AddRecentFile(filePath string, fileType string) error {
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to get file info", map[string]string{
-			"path": filePath,
+			"path":  filePath,
 			"error": err.Error(),
 		})
 	}

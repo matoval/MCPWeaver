@@ -28,8 +28,8 @@ type Generation struct {
 	CurrentStep      string     `json:"currentStep" db:"current_step"`
 	StartTime        time.Time  `json:"startTime" db:"start_time"`
 	EndTime          *time.Time `json:"endTime" db:"end_time"`
-	Results          string     `json:"results" db:"results"`   // JSON serialized GenerationResults
-	Errors           string     `json:"errors" db:"errors"`     // JSON serialized GenerationError array
+	Results          string     `json:"results" db:"results"` // JSON serialized GenerationResults
+	Errors           string     `json:"errors" db:"errors"`   // JSON serialized GenerationError array
 	ProcessingTimeMs int64      `json:"processingTimeMs" db:"processing_time_ms"`
 }
 

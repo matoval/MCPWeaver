@@ -40,13 +40,13 @@ func (r *Repository) Transaction(fn func(*sql.Tx) error) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Execute the function
 	err = fn(tx)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	
+
 	return tx.Commit()
 }

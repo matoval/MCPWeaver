@@ -107,7 +107,7 @@ func (em *ErrorManager) CreateGenerationError(message string, projectID string, 
 func (em *ErrorManager) CreateInternalError(message string, err error) *APIError {
 	// Get stack trace
 	stackTrace := getStackTrace(2) // Skip this function and the caller
-	
+
 	return em.CreateError(
 		ErrorTypeSystem,
 		ErrCodeInternalError,
@@ -224,24 +224,24 @@ var (
 		"Try again in a few moments",
 		"Verify the service is available",
 	}
-	
+
 	FileSystemSuggestions = []string{
 		"Check that the file or directory exists",
 		"Verify you have the necessary permissions",
 		"Ensure the path is correct",
 	}
-	
+
 	GenerationSuggestions = []string{
 		"Check the OpenAPI specification for errors",
 		"Verify the project configuration",
 		"Try regenerating the server",
 	}
-	
+
 	InternalSuggestions = []string{
 		"This is an internal error. Please contact support if it persists",
 		"Try refreshing the page or restarting the application",
 	}
-	
+
 	DatabaseSuggestions = []string{
 		"Check database connectivity",
 		"Verify the operation is valid",
@@ -273,7 +273,7 @@ func getStackTrace(skip int) string {
 	const depth = 32
 	var pcs [depth]uintptr
 	n := runtime.Callers(skip+1, pcs[:])
-	
+
 	var trace string
 	frames := runtime.CallersFrames(pcs[:n])
 	for {

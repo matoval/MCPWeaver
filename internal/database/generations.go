@@ -22,20 +22,20 @@ func (r *GenerationRepository) Create(generation *Generation) error {
 		INSERT INTO generations (id, project_id, status, progress, current_step, start_time, results, errors, processing_time_ms)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
-	
+
 	if generation.StartTime.IsZero() {
 		generation.StartTime = time.Now()
 	}
-	
-	_, err := r.db.conn.Exec(query, 
+
+	_, err := r.db.conn.Exec(query,
 		generation.ID, generation.ProjectID, generation.Status, generation.Progress,
-		generation.CurrentStep, generation.StartTime, generation.Results, 
+		generation.CurrentStep, generation.StartTime, generation.Results,
 		generation.Errors, generation.ProcessingTimeMs)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to create generation: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -47,20 +47,20 @@ func (r *GenerationRepository) GetByID(id string) (*Generation, error) {
 		FROM generations 
 		WHERE id = ?
 	`
-	
+
 	generation := &Generation{}
 	err := r.db.conn.QueryRow(query, id).Scan(
 		&generation.ID, &generation.ProjectID, &generation.Status, &generation.Progress,
 		&generation.CurrentStep, &generation.StartTime, &generation.EndTime,
 		&generation.Results, &generation.Errors, &generation.ProcessingTimeMs)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("generation not found")
 		}
 		return nil, fmt.Errorf("failed to get generation: %w", err)
 	}
-	
+
 	return generation, nil
 }
 
@@ -73,13 +73,13 @@ func (r *GenerationRepository) GetByProjectID(projectID string) ([]*Generation, 
 		WHERE project_id = ?
 		ORDER BY start_time DESC
 	`
-	
+
 	rows, err := r.db.conn.Query(query, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query generations: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var generations []*Generation
 	for rows.Next() {
 		generation := &Generation{}
@@ -92,7 +92,7 @@ func (r *GenerationRepository) GetByProjectID(projectID string) ([]*Generation, 
 		}
 		generations = append(generations, generation)
 	}
-	
+
 	return generations, nil
 }
 
@@ -104,46 +104,46 @@ func (r *GenerationRepository) Update(generation *Generation) error {
 			results = ?, errors = ?, processing_time_ms = ?
 		WHERE id = ?
 	`
-	
-	result, err := r.db.conn.Exec(query, 
-		generation.Status, generation.Progress, generation.CurrentStep, 
-		generation.EndTime, generation.Results, generation.Errors, 
+
+	result, err := r.db.conn.Exec(query,
+		generation.Status, generation.Progress, generation.CurrentStep,
+		generation.EndTime, generation.Results, generation.Errors,
 		generation.ProcessingTimeMs, generation.ID)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to update generation: %w", err)
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
-	
+
 	if rowsAffected == 0 {
 		return fmt.Errorf("generation not found")
 	}
-	
+
 	return nil
 }
 
 // Delete deletes a generation
 func (r *GenerationRepository) Delete(id string) error {
 	query := `DELETE FROM generations WHERE id = ?`
-	
+
 	result, err := r.db.conn.Exec(query, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete generation: %w", err)
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
-	
+
 	if rowsAffected == 0 {
 		return fmt.Errorf("generation not found")
 	}
-	
+
 	return nil
 }
 
@@ -156,13 +156,13 @@ func (r *GenerationRepository) GetRecent(limit int) ([]*Generation, error) {
 		ORDER BY start_time DESC
 		LIMIT ?
 	`
-	
+
 	rows, err := r.db.conn.Query(query, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query recent generations: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var generations []*Generation
 	for rows.Next() {
 		generation := &Generation{}
@@ -175,7 +175,7 @@ func (r *GenerationRepository) GetRecent(limit int) ([]*Generation, error) {
 		}
 		generations = append(generations, generation)
 	}
-	
+
 	return generations, nil
 }
 
@@ -188,13 +188,13 @@ func (r *GenerationRepository) GetByStatus(status string) ([]*Generation, error)
 		WHERE status = ?
 		ORDER BY start_time DESC
 	`
-	
+
 	rows, err := r.db.conn.Query(query, status)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query generations by status: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var generations []*Generation
 	for rows.Next() {
 		generation := &Generation{}
@@ -207,6 +207,6 @@ func (r *GenerationRepository) GetByStatus(status string) ([]*Generation, error)
 		}
 		generations = append(generations, generation)
 	}
-	
+
 	return generations, nil
 }
