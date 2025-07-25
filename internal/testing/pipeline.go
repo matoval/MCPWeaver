@@ -26,44 +26,44 @@ func NewTestPipeline(config *TestConfig) *TestPipeline {
 
 // PipelineStage represents a stage in the test pipeline
 type PipelineStage struct {
-	Name        string                                                    `json:"name"`
-	Description string                                                    `json:"description"`
-	Enabled     bool                                                      `json:"enabled"`
-	Parallel    bool                                                      `json:"parallel"`
-	Execute     func(ctx context.Context, serverPath string) error       `json:"-"`
-	Validate    func(ctx context.Context, result *TestResult) error      `json:"-"`
-	Timeout     time.Duration                                             `json:"timeout"`
-	Retries     int                                                       `json:"retries"`
-	OnFailure   string                                                    `json:"onFailure"` // "continue", "stop", "retry"
+	Name        string                                              `json:"name"`
+	Description string                                              `json:"description"`
+	Enabled     bool                                                `json:"enabled"`
+	Parallel    bool                                                `json:"parallel"`
+	Execute     func(ctx context.Context, serverPath string) error  `json:"-"`
+	Validate    func(ctx context.Context, result *TestResult) error `json:"-"`
+	Timeout     time.Duration                                       `json:"timeout"`
+	Retries     int                                                 `json:"retries"`
+	OnFailure   string                                              `json:"onFailure"` // "continue", "stop", "retry"
 }
 
 // PipelineResult represents the result of a pipeline execution
 type PipelineResult struct {
-	PipelineID      string                       `json:"pipelineId"`
-	StartTime       time.Time                    `json:"startTime"`
-	EndTime         time.Time                    `json:"endTime"`
-	Duration        time.Duration                `json:"duration"`
-	Success         bool                         `json:"success"`
-	StageResults    map[string]*StageResult      `json:"stageResults"`
-	TestResult      *TestResult                  `json:"testResult,omitempty"`
-	Errors          []string                     `json:"errors"`
-	TotalStages     int                          `json:"totalStages"`
-	CompletedStages int                          `json:"completedStages"`
-	SkippedStages   int                          `json:"skippedStages"`
-	FailedStages    int                          `json:"failedStages"`
+	PipelineID      string                  `json:"pipelineId"`
+	StartTime       time.Time               `json:"startTime"`
+	EndTime         time.Time               `json:"endTime"`
+	Duration        time.Duration           `json:"duration"`
+	Success         bool                    `json:"success"`
+	StageResults    map[string]*StageResult `json:"stageResults"`
+	TestResult      *TestResult             `json:"testResult,omitempty"`
+	Errors          []string                `json:"errors"`
+	TotalStages     int                     `json:"totalStages"`
+	CompletedStages int                     `json:"completedStages"`
+	SkippedStages   int                     `json:"skippedStages"`
+	FailedStages    int                     `json:"failedStages"`
 }
 
 // StageResult represents the result of a single pipeline stage
 type StageResult struct {
-	StageName   string        `json:"stageName"`
-	StartTime   time.Time     `json:"startTime"`
-	EndTime     time.Time     `json:"endTime"`
-	Duration    time.Duration `json:"duration"`
-	Success     bool          `json:"success"`
-	Skipped     bool          `json:"skipped"`
-	RetryCount  int           `json:"retryCount"`
-	ErrorMessage string       `json:"errorMessage,omitempty"`
-	Details     map[string]interface{} `json:"details,omitempty"`
+	StageName    string                 `json:"stageName"`
+	StartTime    time.Time              `json:"startTime"`
+	EndTime      time.Time              `json:"endTime"`
+	Duration     time.Duration          `json:"duration"`
+	Success      bool                   `json:"success"`
+	Skipped      bool                   `json:"skipped"`
+	RetryCount   int                    `json:"retryCount"`
+	ErrorMessage string                 `json:"errorMessage,omitempty"`
+	Details      map[string]interface{} `json:"details,omitempty"`
 }
 
 // ExecutePipeline runs the complete test pipeline
@@ -436,44 +436,44 @@ func NewBatchTestRunner(config *TestConfig) *BatchTestRunner {
 
 // BatchTestRequest represents a batch test request
 type BatchTestRequest struct {
-	RequestID    string   `json:"requestId"`
-	ServerPaths  []string `json:"serverPaths"`
-	Parallel     bool     `json:"parallel"`
-	MaxWorkers   int      `json:"maxWorkers"`
-	StopOnFailure bool    `json:"stopOnFailure"`
+	RequestID     string   `json:"requestId"`
+	ServerPaths   []string `json:"serverPaths"`
+	Parallel      bool     `json:"parallel"`
+	MaxWorkers    int      `json:"maxWorkers"`
+	StopOnFailure bool     `json:"stopOnFailure"`
 }
 
 // BatchTestResult represents the result of a batch test run
 type BatchTestResult struct {
-	RequestID       string                      `json:"requestId"`
-	StartTime       time.Time                   `json:"startTime"`
-	EndTime         time.Time                   `json:"endTime"`
-	Duration        time.Duration               `json:"duration"`
-	Success         bool                        `json:"success"`
-	TotalServers    int                         `json:"totalServers"`
-	CompletedTests  int                         `json:"completedTests"`
-	FailedTests     int                         `json:"failedTests"`
-	SkippedTests    int                         `json:"skippedTests"`
-	ServerResults   map[string]*PipelineResult  `json:"serverResults"`
-	Errors          []string                    `json:"errors"`
-	Summary         *BatchTestSummary           `json:"summary"`
+	RequestID      string                     `json:"requestId"`
+	StartTime      time.Time                  `json:"startTime"`
+	EndTime        time.Time                  `json:"endTime"`
+	Duration       time.Duration              `json:"duration"`
+	Success        bool                       `json:"success"`
+	TotalServers   int                        `json:"totalServers"`
+	CompletedTests int                        `json:"completedTests"`
+	FailedTests    int                        `json:"failedTests"`
+	SkippedTests   int                        `json:"skippedTests"`
+	ServerResults  map[string]*PipelineResult `json:"serverResults"`
+	Errors         []string                   `json:"errors"`
+	Summary        *BatchTestSummary          `json:"summary"`
 }
 
 // BatchTestSummary provides aggregate statistics
 type BatchTestSummary struct {
-	AverageTestDuration    time.Duration            `json:"averageTestDuration"`
-	FastestTest            time.Duration            `json:"fastestTest"`
-	SlowestTest            time.Duration            `json:"slowestTest"`
-	SuccessRate            float64                  `json:"successRate"`
-	CommonFailures         map[string]int           `json:"commonFailures"`
-	StageSuccessRates      map[string]float64       `json:"stageSuccessRates"`
-	ResourceUsageSummary   map[string]interface{}   `json:"resourceUsageSummary"`
+	AverageTestDuration  time.Duration          `json:"averageTestDuration"`
+	FastestTest          time.Duration          `json:"fastestTest"`
+	SlowestTest          time.Duration          `json:"slowestTest"`
+	SuccessRate          float64                `json:"successRate"`
+	CommonFailures       map[string]int         `json:"commonFailures"`
+	StageSuccessRates    map[string]float64     `json:"stageSuccessRates"`
+	ResourceUsageSummary map[string]interface{} `json:"resourceUsageSummary"`
 }
 
 // RunBatchTests executes tests on multiple servers
 func (btr *BatchTestRunner) RunBatchTests(ctx context.Context, request *BatchTestRequest) (*BatchTestResult, error) {
 	startTime := time.Now()
-	
+
 	result := &BatchTestResult{
 		RequestID:     request.RequestID,
 		StartTime:     startTime,
@@ -498,7 +498,7 @@ func (btr *BatchTestRunner) runSequentialBatchTests(ctx context.Context, request
 			result.Errors = append(result.Errors, fmt.Sprintf("Pipeline execution failed for %s: %v", serverPath, err))
 			result.FailedTests++
 			result.Success = false
-			
+
 			if request.StopOnFailure {
 				break
 			}
@@ -506,13 +506,13 @@ func (btr *BatchTestRunner) runSequentialBatchTests(ctx context.Context, request
 		}
 
 		result.ServerResults[serverPath] = pipelineResult
-		
+
 		if pipelineResult.Success {
 			result.CompletedTests++
 		} else {
 			result.FailedTests++
 			result.Success = false
-			
+
 			if request.StopOnFailure {
 				break
 			}
@@ -551,14 +551,14 @@ func (btr *BatchTestRunner) runParallelBatchTests(ctx context.Context, request *
 	// Collect results
 	for i := 0; i < len(request.ServerPaths); i++ {
 		workerRes := <-results
-		
+
 		if workerRes.Error != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("Pipeline execution failed for %s: %v", workerRes.ServerPath, workerRes.Error))
 			result.FailedTests++
 			result.Success = false
 		} else {
 			result.ServerResults[workerRes.ServerPath] = workerRes.PipelineResult
-			
+
 			if workerRes.PipelineResult.Success {
 				result.CompletedTests++
 			} else {
@@ -587,7 +587,7 @@ func (btr *BatchTestRunner) worker(ctx context.Context, jobs <-chan string, resu
 	for serverPath := range jobs {
 		pipeline := NewTestPipeline(btr.config) // Create new pipeline for each worker
 		pipelineResult, err := pipeline.ExecutePipeline(ctx, serverPath)
-		
+
 		results <- &workerResult{
 			ServerPath:     serverPath,
 			PipelineResult: pipelineResult,
@@ -599,8 +599,8 @@ func (btr *BatchTestRunner) worker(ctx context.Context, jobs <-chan string, resu
 // generateBatchSummary generates summary statistics for batch test results
 func (btr *BatchTestRunner) generateBatchSummary(result *BatchTestResult) *BatchTestSummary {
 	summary := &BatchTestSummary{
-		CommonFailures:    make(map[string]int),
-		StageSuccessRates: make(map[string]float64),
+		CommonFailures:       make(map[string]int),
+		StageSuccessRates:    make(map[string]float64),
 		ResourceUsageSummary: make(map[string]interface{}),
 	}
 
@@ -615,7 +615,7 @@ func (btr *BatchTestRunner) generateBatchSummary(result *BatchTestResult) *Batch
 
 	for _, pipelineResult := range result.ServerResults {
 		totalDuration += pipelineResult.Duration
-		
+
 		if first {
 			fastest = pipelineResult.Duration
 			slowest = pipelineResult.Duration

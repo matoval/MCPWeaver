@@ -19,7 +19,7 @@ func TestNewService(t *testing.T) {
 
 func TestGenerateToolName(t *testing.T) {
 	service := NewService("https://api.example.com")
-	
+
 	tests := []struct {
 		operation parser.Operation
 		expected  string
@@ -50,7 +50,7 @@ func TestGenerateToolName(t *testing.T) {
 
 func TestGenerateToolDescription(t *testing.T) {
 	service := NewService("https://api.example.com")
-	
+
 	tests := []struct {
 		operation parser.Operation
 		expected  string
@@ -81,7 +81,7 @@ func TestGenerateToolDescription(t *testing.T) {
 
 func TestGetActionFromMethod(t *testing.T) {
 	service := NewService("https://api.example.com")
-	
+
 	tests := []struct {
 		method   string
 		expected string
@@ -106,7 +106,7 @@ func TestGetActionFromMethod(t *testing.T) {
 
 func TestGetResourceFromPath(t *testing.T) {
 	service := NewService("https://api.example.com")
-	
+
 	tests := []struct {
 		path     string
 		expected string
@@ -130,7 +130,7 @@ func TestGetResourceFromPath(t *testing.T) {
 
 func TestMapParameterToProperty(t *testing.T) {
 	service := NewService("https://api.example.com")
-	
+
 	// Create a test parameter
 	param := parser.Parameter{
 		Name:        "userId",
@@ -145,20 +145,20 @@ func TestMapParameterToProperty(t *testing.T) {
 		},
 		Example: "123e4567-e89b-12d3-a456-426614174000",
 	}
-	
+
 	result, err := service.mapParameterToProperty(param)
 	if err != nil {
 		t.Fatalf("mapParameterToProperty failed: %v", err)
 	}
-	
+
 	if result.Type != "string" {
 		t.Errorf("Expected type 'string', got %s", result.Type)
 	}
-	
+
 	if result.Format != "uuid" {
 		t.Errorf("Expected format 'uuid', got %s", result.Format)
 	}
-	
+
 	if result.Description != "User ID" {
 		t.Errorf("Expected description 'User ID', got %s", result.Description)
 	}
@@ -166,7 +166,7 @@ func TestMapParameterToProperty(t *testing.T) {
 
 func TestMapOperationToTool(t *testing.T) {
 	service := NewService("https://api.example.com")
-	
+
 	// Create a test operation
 	operation := parser.Operation{
 		ID:          "getUser",
@@ -188,36 +188,36 @@ func TestMapOperationToTool(t *testing.T) {
 			},
 		},
 	}
-	
+
 	result, err := service.mapOperationToTool(operation)
 	if err != nil {
 		t.Fatalf("mapOperationToTool failed: %v", err)
 	}
-	
+
 	if result.Name != "getUser" {
 		t.Errorf("Expected name 'getUser', got %s", result.Name)
 	}
-	
+
 	if result.Method != "GET" {
 		t.Errorf("Expected method 'GET', got %s", result.Method)
 	}
-	
+
 	if result.Path != "/users/{id}" {
 		t.Errorf("Expected path '/users/{id}', got %s", result.Path)
 	}
-	
+
 	if result.BaseURL != "https://api.example.com" {
 		t.Errorf("Expected baseURL 'https://api.example.com', got %s", result.BaseURL)
 	}
-	
+
 	if len(result.InputSchema.Properties) != 1 {
 		t.Errorf("Expected 1 property, got %d", len(result.InputSchema.Properties))
 	}
-	
+
 	if len(result.InputSchema.Required) != 1 {
 		t.Errorf("Expected 1 required parameter, got %d", len(result.InputSchema.Required))
 	}
-	
+
 	if result.InputSchema.Required[0] != "id" {
 		t.Errorf("Expected required parameter 'id', got %s", result.InputSchema.Required[0])
 	}

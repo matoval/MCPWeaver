@@ -35,7 +35,7 @@ func (s *ValidatorIntegrationTestSuite) TestValidateFile_ValidSpec() {
 
 	// Test validation
 	result, err := s.service.ValidateFile(s.ctx, filePath)
-	
+
 	s.helper.AssertNoError(err)
 	s.helper.AssertNotNil(result)
 	s.helper.AssertEqual(true, result.Valid)
@@ -50,7 +50,7 @@ func (s *ValidatorIntegrationTestSuite) TestValidateFile_InvalidSpec() {
 
 	// Test validation
 	result, err := s.service.ValidateFile(s.ctx, filePath)
-	
+
 	s.helper.AssertNoError(err) // Validation should succeed but return invalid result
 	s.helper.AssertNotNil(result)
 	s.helper.AssertEqual(false, result.Valid)
@@ -60,7 +60,7 @@ func (s *ValidatorIntegrationTestSuite) TestValidateFile_InvalidSpec() {
 func (s *ValidatorIntegrationTestSuite) TestValidateFile_NonExistentFile() {
 	// Test with non-existent file
 	result, err := s.service.ValidateFile(s.ctx, "/non/existent/file.yaml")
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertNil(result)
 }
@@ -72,7 +72,7 @@ func (s *ValidatorIntegrationTestSuite) TestValidateFile_EmptyFile() {
 
 	// Test validation
 	result, err := s.service.ValidateFile(s.ctx, filePath)
-	
+
 	if err != nil {
 		s.helper.AssertError(err)
 		s.helper.AssertNil(result)
@@ -117,16 +117,16 @@ paths:
       responses:
         '201':
           description: Post created`
-	
+
 	filePath, cleanup := s.helper.CreateTempFile(specContent, ".yaml")
 	defer cleanup()
 
 	// Test validation
 	result, err := s.service.ValidateFile(s.ctx, filePath)
-	
+
 	s.helper.AssertNoError(err)
 	s.helper.AssertNotNil(result)
-	
+
 	// Should be valid but might have warnings
 	if result.Valid {
 		// Valid specs might still have warnings
@@ -137,9 +137,9 @@ paths:
 func (s *ValidatorIntegrationTestSuite) TestValidateFile_MultipleFormats() {
 	// Test different file extensions
 	testCases := []struct {
-		name      string
-		extension string
-		content   string
+		name       string
+		extension  string
+		content    string
 		shouldPass bool
 	}{
 		{
@@ -187,7 +187,7 @@ func (s *ValidatorIntegrationTestSuite) TestValidateFile_ContextCancellation() {
 
 	// Test validation with canceled context
 	result, err := s.service.ValidateFile(cancelCtx, filePath)
-	
+
 	// Should handle canceled context gracefully
 	if err != nil {
 		s.helper.AssertError(err)
@@ -198,7 +198,7 @@ func (s *ValidatorIntegrationTestSuite) TestValidateFile_ContextCancellation() {
 
 func (s *ValidatorIntegrationTestSuite) TestValidateFile_ErrorRecovery() {
 	// Test that validator recovers from errors
-	
+
 	// First try to validate an invalid file
 	invalidContent := helpers.InvalidOpenAPISpec()
 	invalidPath, cleanup1 := s.helper.CreateTempFile(invalidContent, ".yaml")
@@ -232,13 +232,13 @@ func (s *ValidatorIntegrationTestSuite) TestValidateFile_ValidationResult_Detail
 
 	// Test result structure
 	s.helper.AssertEqual(true, result.Valid)
-	s.helper.AssertNotNil(result.Errors)     // Should be empty slice, not nil
-	s.helper.AssertNotNil(result.Warnings)  // Should be empty slice, not nil
+	s.helper.AssertNotNil(result.Errors)      // Should be empty slice, not nil
+	s.helper.AssertNotNil(result.Warnings)    // Should be empty slice, not nil
 	s.helper.AssertNotNil(result.Suggestions) // Should be empty slice, not nil
-	
+
 	// Validation time should be reasonable
 	s.helper.AssertEqual(true, result.ValidationTime >= 0)
-	
+
 	// Check if spec info is populated
 	if result.SpecInfo != nil {
 		s.helper.AssertEqual("Test API", result.SpecInfo.Title)
@@ -251,14 +251,14 @@ func (s *ValidatorIntegrationTestSuite) TestValidateFile_ValidationResult_Detail
 func (s *ValidatorIntegrationTestSuite) TestValidateFile_MemoryUsage() {
 	// Test validating multiple files doesn't leak memory
 	specContent := helpers.ValidateOpenAPISpec()
-	
+
 	for i := 0; i < 10; i++ {
 		filePath, cleanup := s.helper.CreateTempFile(specContent, ".yaml")
-		
+
 		result, err := s.service.ValidateFile(s.ctx, filePath)
 		s.helper.AssertNoError(err)
 		s.helper.AssertNotNil(result)
-		
+
 		cleanup() // Clean up immediately to test memory management
 	}
 }

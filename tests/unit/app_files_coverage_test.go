@@ -123,9 +123,9 @@ func (s *AppFilesCoverageTestSuite) TestGetDefaultOpenAPIFilters() {
 	// Should include common OpenAPI formats
 	found := false
 	for _, filter := range filters {
-		if strings.Contains(filter.DisplayName, "OpenAPI") || 
-		   strings.Contains(filter.DisplayName, "YAML") ||
-		   strings.Contains(filter.Pattern, "*.yaml") {
+		if strings.Contains(filter.DisplayName, "OpenAPI") ||
+			strings.Contains(filter.DisplayName, "YAML") ||
+			strings.Contains(filter.Pattern, "*.yaml") {
 			found = true
 			break
 		}

@@ -49,10 +49,10 @@ type NotificationSubscriber interface {
 // NewNotificationService creates a new notification service instance
 func NewNotificationService(ctx context.Context, db *sql.DB) *NotificationService {
 	config := DefaultNotificationSystem()
-	
+
 	// Detect test mode (when nil context provided)
 	isTestMode := ctx == nil
-	
+
 	// Use background context if none provided (for testing)
 	if ctx == nil {
 		ctx = context.Background()
@@ -355,7 +355,7 @@ func (ns *NotificationService) DismissAllToasts() error {
 	defer ns.mutex.Unlock()
 
 	dismissedIDs := make([]string, 0, len(ns.activeToasts))
-	
+
 	for id := range ns.activeToasts {
 		dismissedIDs = append(dismissedIDs, id)
 		ns.updateHistoryDismissal(id)
@@ -384,13 +384,13 @@ func (ns *NotificationService) MarkAsRead(id string) error {
 			if ns.history[i].ReadAt == nil {
 				now := time.Now()
 				ns.history[i].ReadAt = &now
-				
+
 				// Update statistics
 				ns.stats.TotalRead++
-				
+
 				// Notify subscribers
 				ns.notifySubscribers("OnNotificationRead", id)
-				
+
 				// Emit to frontend
 				ns.emitEvent("notification:marked_read", map[string]interface{}{
 					"id":        id,
@@ -522,7 +522,7 @@ func (ns *NotificationService) GetNotificationHistory(limit int, offset int, cat
 	defer ns.historyMutex.RUnlock()
 
 	filtered := make([]NotificationHistory, 0)
-	
+
 	// Filter by category if specified
 	for _, hist := range ns.history {
 		if category == "" || hist.Category == category {
@@ -887,7 +887,7 @@ func (ns *NotificationService) isThrottled(category NotificationCategory, priori
 	if rule, exists := ns.config.ThrottleSettings.ByCategory[category]; exists {
 		categoryKey := string(category)
 		timestamps := ns.throttleTracker[categoryKey]
-		
+
 		// Count notifications in the last minute and hour
 		minuteCount := 0
 		hourCount := 0
@@ -909,7 +909,7 @@ func (ns *NotificationService) isThrottled(category NotificationCategory, priori
 	if rule, exists := ns.config.ThrottleSettings.ByPriority[priority]; exists {
 		priorityKey := string(priority)
 		timestamps := ns.throttleTracker[priorityKey]
-		
+
 		minuteCount := 0
 		hourCount := 0
 		for _, ts := range timestamps {
@@ -941,16 +941,16 @@ func (ns *NotificationService) isThrottled(category NotificationCategory, priori
 	}
 
 	return totalMinuteCount >= ns.config.ThrottleSettings.MaxPerMinute ||
-		   totalHourCount >= ns.config.ThrottleSettings.MaxPerHour
+		totalHourCount >= ns.config.ThrottleSettings.MaxPerHour
 }
 
 func (ns *NotificationService) trackNotification(category NotificationCategory, priority NotificationPriority) {
 	now := time.Now()
-	
+
 	// Track by category
 	categoryKey := string(category)
 	ns.throttleTracker[categoryKey] = append(ns.throttleTracker[categoryKey], now)
-	
+
 	// Track by priority
 	priorityKey := string(priority)
 	ns.throttleTracker[priorityKey] = append(ns.throttleTracker[priorityKey], now)
@@ -1023,7 +1023,7 @@ func (ns *NotificationService) startQueueProcessor() {
 				// Silently handle panics during shutdown
 			}
 		}()
-		
+
 		for {
 			select {
 			case <-ns.queueProcessor.C:
@@ -1069,7 +1069,7 @@ func (ns *NotificationService) startPeriodicCleanup() {
 	if ns.isTestMode || ns.stopChan == nil {
 		return
 	}
-	
+
 	// Clean up expired toasts every minute
 	ns.ticker = time.NewTicker(time.Minute)
 	go func() {
@@ -1078,7 +1078,7 @@ func (ns *NotificationService) startPeriodicCleanup() {
 				// Silently handle panics during shutdown
 			}
 		}()
-		
+
 		for {
 			select {
 			case <-ns.ticker.C:
@@ -1349,7 +1349,7 @@ func (ns *NotificationService) emitEvent(eventName string, data interface{}) {
 	if ns.isTestMode {
 		return
 	}
-	
+
 	// Only emit events if we have a valid Wails context
 	if ns.ctx != nil {
 		defer func() {

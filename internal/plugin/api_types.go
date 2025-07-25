@@ -45,12 +45,12 @@ type DependencyAPI struct {
 
 // PluginInstanceAPI represents a loaded plugin instance for API
 type PluginInstanceAPI struct {
-	Info      *PluginInfoAPI `json:"info"`
-	Status    string         `json:"status"` // Convert PluginStatus to string
-	Config    json.RawMessage `json:"config,omitempty"`
-	LoadedAt  string         `json:"loadedAt"` // ISO 8601 string
-	LastError string         `json:"lastError,omitempty"`
-	Stats     *PluginStatsAPI `json:"stats"`
+	Info      *PluginInfoAPI     `json:"info"`
+	Status    string             `json:"status"` // Convert PluginStatus to string
+	Config    json.RawMessage    `json:"config,omitempty"`
+	LoadedAt  string             `json:"loadedAt"` // ISO 8601 string
+	LastError string             `json:"lastError,omitempty"`
+	Stats     *PluginStatsAPI    `json:"stats"`
 	Manifest  *PluginManifestAPI `json:"manifest"`
 }
 
@@ -121,9 +121,9 @@ type MarketplaceStatsAPI struct {
 
 // PriceAPI represents pricing information for API
 type PriceAPI struct {
-	Amount   float64  `json:"amount"`
-	Currency string   `json:"currency"`
-	Type     string   `json:"type"`
+	Amount   float64   `json:"amount"`
+	Currency string    `json:"currency"`
+	Type     string    `json:"type"`
 	Trial    *TrialAPI `json:"trial,omitempty"`
 }
 
@@ -135,11 +135,11 @@ type TrialAPI struct {
 
 // ValidationResultAPI represents validation results for API
 type ValidationResultAPI struct {
-	Valid    bool                   `json:"valid"`
-	Errors   []ValidationErrorAPI   `json:"errors,omitempty"`
-	Warnings []ValidationErrorAPI   `json:"warnings,omitempty"`
-	Info     []ValidationErrorAPI   `json:"info,omitempty"`
-	Stats    *ValidationStatsAPI    `json:"stats,omitempty"`
+	Valid    bool                 `json:"valid"`
+	Errors   []ValidationErrorAPI `json:"errors,omitempty"`
+	Warnings []ValidationErrorAPI `json:"warnings,omitempty"`
+	Info     []ValidationErrorAPI `json:"info,omitempty"`
+	Stats    *ValidationStatsAPI  `json:"stats,omitempty"`
 }
 
 // ValidationErrorAPI represents validation error for API
@@ -157,21 +157,21 @@ type ValidationErrorAPI struct {
 
 // ValidationStatsAPI represents validation statistics for API
 type ValidationStatsAPI struct {
-	TotalChecks   int   `json:"totalChecks"`
-	Duration      int64 `json:"duration"` // nanoseconds
-	RulesApplied  int   `json:"rulesApplied"`
-	FilesChecked  int   `json:"filesChecked"`
-	LinesChecked  int   `json:"linesChecked"`
+	TotalChecks  int   `json:"totalChecks"`
+	Duration     int64 `json:"duration"` // nanoseconds
+	RulesApplied int   `json:"rulesApplied"`
+	FilesChecked int   `json:"filesChecked"`
+	LinesChecked int   `json:"linesChecked"`
 }
 
 // TestResultAPI represents test results for API
 type TestResultAPI struct {
-	Passed      bool             `json:"passed"`
-	Duration    int64            `json:"duration"` // nanoseconds
-	Tests       []TestCaseAPI    `json:"tests"`
-	Coverage    *CoverageAPI     `json:"coverage,omitempty"`
-	Performance *PerformanceAPI  `json:"performance,omitempty"`
-	Summary     string           `json:"summary"`
+	Passed      bool            `json:"passed"`
+	Duration    int64           `json:"duration"` // nanoseconds
+	Tests       []TestCaseAPI   `json:"tests"`
+	Coverage    *CoverageAPI    `json:"coverage,omitempty"`
+	Performance *PerformanceAPI `json:"performance,omitempty"`
+	Summary     string          `json:"summary"`
 }
 
 // TestCaseAPI represents test case for API
@@ -218,7 +218,7 @@ func ToPluginInfoAPI(info *PluginInfo) *PluginInfoAPI {
 	if info == nil {
 		return nil
 	}
-	
+
 	apiInfo := &PluginInfoAPI{
 		ID:          info.ID,
 		Name:        info.Name,
@@ -233,13 +233,13 @@ func ToPluginInfoAPI(info *PluginInfo) *PluginInfoAPI {
 		MaxVersion:  info.MaxVersion,
 		Metadata:    info.Metadata,
 	}
-	
+
 	// Convert permissions
 	apiInfo.Permissions = make([]string, len(info.Permissions))
 	for i, perm := range info.Permissions {
 		apiInfo.Permissions[i] = string(perm)
 	}
-	
+
 	// Convert config
 	if info.Config != nil {
 		apiInfo.Config = &PluginConfigAPI{
@@ -249,7 +249,7 @@ func ToPluginInfoAPI(info *PluginInfo) *PluginInfoAPI {
 			Examples: info.Config.Examples,
 		}
 	}
-	
+
 	// Convert dependencies
 	apiInfo.Dependencies = make([]DependencyAPI, len(info.Dependencies))
 	for i, dep := range info.Dependencies {
@@ -261,7 +261,7 @@ func ToPluginInfoAPI(info *PluginInfo) *PluginInfoAPI {
 			Repository: dep.Repository,
 		}
 	}
-	
+
 	return apiInfo
 }
 
@@ -270,7 +270,7 @@ func ToPluginInstanceAPI(instance *PluginInstance) *PluginInstanceAPI {
 	if instance == nil {
 		return nil
 	}
-	
+
 	apiInstance := &PluginInstanceAPI{
 		Info:      ToPluginInfoAPI(instance.Info),
 		Status:    string(instance.Status),
@@ -278,7 +278,7 @@ func ToPluginInstanceAPI(instance *PluginInstance) *PluginInstanceAPI {
 		LoadedAt:  instance.LoadedAt.Format(time.RFC3339),
 		LastError: instance.LastError,
 	}
-	
+
 	// Convert stats
 	if instance.Stats != nil {
 		apiInstance.Stats = &PluginStatsAPI{
@@ -290,12 +290,12 @@ func ToPluginInstanceAPI(instance *PluginInstance) *PluginInstanceAPI {
 			MemoryUsage:     instance.Stats.MemoryUsage,
 		}
 	}
-	
+
 	// Convert manifest
 	if instance.Manifest != nil {
 		apiInstance.Manifest = ToPluginManifestAPI(instance.Manifest)
 	}
-	
+
 	return apiInstance
 }
 
@@ -304,7 +304,7 @@ func ToPluginManifestAPI(manifest *PluginManifest) *PluginManifestAPI {
 	if manifest == nil {
 		return nil
 	}
-	
+
 	apiManifest := &PluginManifestAPI{
 		PluginInfoAPI: ToPluginInfoAPI(manifest.PluginInfo),
 		Checksum:      manifest.Checksum,
@@ -313,7 +313,7 @@ func ToPluginManifestAPI(manifest *PluginManifest) *PluginManifestAPI {
 		Verified:      manifest.Verified,
 		Signature:     manifest.Signature,
 	}
-	
+
 	// Convert files
 	apiManifest.Files = make([]PluginFileAPI, len(manifest.Files))
 	for i, file := range manifest.Files {
@@ -326,7 +326,7 @@ func ToPluginManifestAPI(manifest *PluginManifest) *PluginManifestAPI {
 			Arch:     file.Arch,
 		}
 	}
-	
+
 	return apiManifest
 }
 
@@ -335,7 +335,7 @@ func ToMarketplacePluginAPI(plugin *MarketplacePlugin) *MarketplacePluginAPI {
 	if plugin == nil {
 		return nil
 	}
-	
+
 	apiPlugin := &MarketplacePluginAPI{
 		PluginInfoAPI: ToPluginInfoAPI(plugin.PluginInfo),
 		DownloadURL:   plugin.DownloadURL,
@@ -346,7 +346,7 @@ func ToMarketplacePluginAPI(plugin *MarketplacePlugin) *MarketplacePluginAPI {
 		Verified:      plugin.Verified,
 		Category:      plugin.Category,
 	}
-	
+
 	// Convert reviews
 	apiPlugin.Reviews = make([]ReviewAPI, len(plugin.Reviews))
 	for i, review := range plugin.Reviews {
@@ -359,7 +359,7 @@ func ToMarketplacePluginAPI(plugin *MarketplacePlugin) *MarketplacePluginAPI {
 			Helpful:   review.Helpful,
 		}
 	}
-	
+
 	// Convert stats
 	if plugin.Stats != nil {
 		apiPlugin.Stats = &MarketplaceStatsAPI{
@@ -370,7 +370,7 @@ func ToMarketplacePluginAPI(plugin *MarketplacePlugin) *MarketplacePluginAPI {
 			Compatibility: plugin.Stats.Compatibility,
 		}
 	}
-	
+
 	// Convert price
 	if plugin.Price != nil {
 		apiPlugin.Price = &PriceAPI{
@@ -378,7 +378,7 @@ func ToMarketplacePluginAPI(plugin *MarketplacePlugin) *MarketplacePluginAPI {
 			Currency: plugin.Price.Currency,
 			Type:     plugin.Price.Type,
 		}
-		
+
 		if plugin.Price.Trial != nil {
 			apiPlugin.Price.Trial = &TrialAPI{
 				Duration: int64(plugin.Price.Trial.Duration),
@@ -386,7 +386,7 @@ func ToMarketplacePluginAPI(plugin *MarketplacePlugin) *MarketplacePluginAPI {
 			}
 		}
 	}
-	
+
 	return apiPlugin
 }
 
@@ -395,7 +395,7 @@ func ToPluginEventAPI(event *PluginEvent) *PluginEventAPI {
 	if event == nil {
 		return nil
 	}
-	
+
 	return &PluginEventAPI{
 		Type:      event.Type,
 		Source:    event.Source,

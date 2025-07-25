@@ -15,7 +15,7 @@ func (a *App) CreateProject(request CreateProjectRequest) (*Project, error) {
 	if request.Name == "" {
 		return nil, a.createAPIError("validation", ErrCodeValidation, "Project name is required", nil)
 	}
-	
+
 	if request.OutputPath == "" {
 		return nil, a.createAPIError("validation", ErrCodeValidation, "Output path is required", nil)
 	}
@@ -213,7 +213,7 @@ func (a *App) DeleteProject(id string) error {
 // GetRecentProjects returns recently accessed projects
 func (a *App) GetRecentProjects() ([]*Project, error) {
 	projects := make([]*Project, 0)
-	
+
 	for _, projectID := range a.settings.RecentProjects {
 		project, err := a.GetProject(projectID)
 		if err == nil {
@@ -258,8 +258,8 @@ func (a *App) ExportProject(projectID string) (string, error) {
 
 	// Create export data
 	exportData := map[string]interface{}{
-		"version":   "1.0.0",
-		"project":   project,
+		"version":    "1.0.0",
+		"project":    project,
 		"exportedAt": time.Now().Format(time.RFC3339),
 	}
 
@@ -368,10 +368,10 @@ func (a *App) dbProjectToAPI(dbProject *database.Project) *Project {
 func (a *App) addToRecentProjects(projectID string) {
 	// Remove if already exists
 	a.removeFromRecentProjects(projectID)
-	
+
 	// Add to beginning
 	a.settings.RecentProjects = append([]string{projectID}, a.settings.RecentProjects...)
-	
+
 	// Keep only last 10
 	if len(a.settings.RecentProjects) > 10 {
 		a.settings.RecentProjects = a.settings.RecentProjects[:10]

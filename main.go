@@ -23,17 +23,17 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:            "MCPWeaver",
-		Width:            1200,
-		Height:           800,
-		MinWidth:         800,
-		MinHeight:        600,
-		MaxWidth:         0,
-		MaxHeight:        0,
-		DisableResize:    false,
-		Fullscreen:       false,
-		Frameless:        false,
-		StartHidden:      false,
+		Title:             "MCPWeaver",
+		Width:             1200,
+		Height:            800,
+		MinWidth:          800,
+		MinHeight:         600,
+		MaxWidth:          0,
+		MaxHeight:         0,
+		DisableResize:     false,
+		Fullscreen:        false,
+		Frameless:         false,
+		StartHidden:       false,
 		HideWindowOnClose: false,
 		AssetServer: &assetserver.Options{
 			Assets: assets,

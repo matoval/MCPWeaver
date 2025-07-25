@@ -36,7 +36,7 @@ func (a *App) ValidateSpec(specPath string) (*ValidationResult, error) {
 
 	// Cache miss - perform validation
 	startTime := time.Now()
-	
+
 	// Use the comprehensive validator service
 	result, err := a.validatorService.ValidateFile(a.ctx, specPath)
 	if err != nil {
@@ -77,7 +77,7 @@ func (a *App) ValidateURL(url string) (*ValidationResult, error) {
 
 	// Cache miss - perform validation
 	startTime := time.Now()
-	
+
 	// Use the comprehensive validator service
 	result, err := a.validatorService.ValidateURL(a.ctx, url)
 	if err != nil {
@@ -119,7 +119,7 @@ func (a *App) convertValidatorResult(vResult *validator.ValidationResult) *Valid
 			Severity: string(verr.Severity),
 			Code:     verr.Code,
 		}
-		
+
 		if verr.Location != nil {
 			result.Errors[i].Location = &ErrorLocation{
 				File:   verr.Location.File,
@@ -150,7 +150,7 @@ func (a *App) convertValidatorResult(vResult *validator.ValidationResult) *Valid
 			SecuritySchemes: make([]SecurityScheme, len(vResult.SpecInfo.SecuritySchemes)),
 			Servers:         make([]ServerInfo, len(vResult.SpecInfo.Servers)),
 		}
-		
+
 		// Convert security schemes
 		for i, scheme := range vResult.SpecInfo.SecuritySchemes {
 			result.SpecInfo.SecuritySchemes[i] = SecurityScheme{
@@ -159,7 +159,7 @@ func (a *App) convertValidatorResult(vResult *validator.ValidationResult) *Valid
 				Description: scheme.Description,
 			}
 		}
-		
+
 		// Convert servers
 		for i, server := range vResult.SpecInfo.Servers {
 			result.SpecInfo.Servers[i] = ServerInfo{
@@ -210,9 +210,9 @@ func (a *App) ExportValidationResult(result *ValidationResult) (string, error) {
 
 	// Create export data
 	exportData := map[string]interface{}{
-		"version":         "1.0.0",
+		"version":          "1.0.0",
 		"validationResult": result,
-		"exportedAt":      time.Now().Format(time.RFC3339),
+		"exportedAt":       time.Now().Format(time.RFC3339),
 	}
 
 	// Marshal to JSON
@@ -271,7 +271,7 @@ func (a *App) validateOperations(operations []parser.Operation, result *Validati
 	}
 
 	operationIds := make(map[string]bool)
-	
+
 	for _, op := range operations {
 		// Check for duplicate operation IDs
 		if op.ID != "" {
@@ -355,13 +355,13 @@ func (a *App) validateSchemas(schemas map[string]*openapi3.SchemaRef, result *Va
 func (a *App) addGeneralSuggestions(parsedAPI *parser.ParsedAPI, result *ValidationResult) {
 	// Check for missing base URL
 	if parsedAPI.BaseURL == "" && len(parsedAPI.Servers) == 0 {
-		result.Suggestions = append(result.Suggestions, 
+		result.Suggestions = append(result.Suggestions,
 			"Consider adding server information to specify the base URL")
 	}
 
 	// Check for complex specifications
 	if len(parsedAPI.Operations) > 50 {
-		result.Suggestions = append(result.Suggestions, 
+		result.Suggestions = append(result.Suggestions,
 			"Large specifications may result in many MCP tools. Consider grouping related operations")
 	}
 
@@ -372,7 +372,7 @@ func (a *App) addGeneralSuggestions(parsedAPI *parser.ParsedAPI, result *Validat
 	}
 
 	if !hasSecuritySchemes {
-		result.Suggestions = append(result.Suggestions, 
+		result.Suggestions = append(result.Suggestions,
 			"Consider adding security schemes if your API requires authentication")
 	}
 

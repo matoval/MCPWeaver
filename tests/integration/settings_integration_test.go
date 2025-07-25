@@ -21,14 +21,14 @@ func TestSettingsIntegrationFullWorkflow(t *testing.T) {
 
 	// Create test database
 	dbPath := filepath.Join(tempDir, "test.db")
-	db, err := database.NewDB(dbPath)
+	db, err := database.Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
-	defer db.Close()
+	defer db.GetConn().Close()
 
 	// Create app instance with test database
-	testApp := &app.App{}
+	testApp := app.NewApp()
 	// Note: In a real integration test, you would inject the database dependency
 
 	// Test 1: Load default settings
@@ -90,8 +90,8 @@ func TestSettingsIntegrationFullWorkflow(t *testing.T) {
 
 	// Test 4: Settings persistence
 	// Simulate app restart by creating new app instance
-	testApp2 := &app.App{}
-	
+	testApp2 := app.NewApp()
+
 	persistedSettings, err := testApp2.GetSettings()
 	if err != nil {
 		t.Fatalf("Failed to get persisted settings: %v", err)
@@ -272,8 +272,8 @@ func TestSettingsMigrationIntegration(t *testing.T) {
 	}
 
 	// Create app and run migration
-	testApp := &app.App{}
-	
+	testApp := app.NewApp()
+
 	// Test migration
 	migratedSettings, err := testApp.MigrateAndLoadSettings()
 	if err != nil {
@@ -313,12 +313,12 @@ func TestSettingsMigrationIntegration(t *testing.T) {
 }
 
 func TestSettingsValidationIntegration(t *testing.T) {
-	testApp := &app.App{}
+	testApp := app.NewApp()
 
 	// Test validation of complex settings updates
 	testCases := []struct {
-		name     string
-		settings app.AppSettings
+		name        string
+		settings    app.AppSettings
 		expectError bool
 	}{
 		{
@@ -359,11 +359,11 @@ func TestSettingsValidationIntegration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := testApp.UpdateSettings(tc.settings)
-			
+
 			if tc.expectError && err == nil {
 				t.Error("Expected validation error but got none")
 			}
-			
+
 			if !tc.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 			}
@@ -372,33 +372,33 @@ func TestSettingsValidationIntegration(t *testing.T) {
 }
 
 func TestSettingsPerformanceIntegration(t *testing.T) {
-	testApp := &app.App{}
+	testApp := app.NewApp()
 
 	// Test that settings operations complete within reasonable time
 	start := time.Now()
-	
+
 	// Perform multiple settings operations
 	for i := 0; i < 100; i++ {
 		settings, err := testApp.GetSettings()
 		if err != nil {
 			t.Fatalf("Failed to get settings on iteration %d: %v", i, err)
 		}
-		
+
 		// Modify a setting
 		if i%2 == 0 {
 			settings.Theme = "dark"
 		} else {
 			settings.Theme = "light"
 		}
-		
+
 		err = testApp.UpdateSettings(*settings)
 		if err != nil {
 			t.Fatalf("Failed to update settings on iteration %d: %v", i, err)
 		}
 	}
-	
+
 	elapsed := time.Since(start)
-	
+
 	// Settings operations should complete quickly (under 1 second for 100 operations)
 	if elapsed > time.Second {
 		t.Errorf("Settings operations took too long: %v", elapsed)
@@ -406,11 +406,11 @@ func TestSettingsPerformanceIntegration(t *testing.T) {
 }
 
 func TestRecentProjectsIntegration(t *testing.T) {
-	testApp := &app.App{}
+	testApp := app.NewApp()
 
 	// Add multiple recent projects
 	projectIDs := []string{"proj1", "proj2", "proj3", "proj4", "proj5"}
-	
+
 	for _, id := range projectIDs {
 		err := testApp.AddRecentProject(id)
 		if err != nil {

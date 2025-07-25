@@ -17,11 +17,11 @@ func TestService_ValidateFile(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name        string
-		specContent string
-		filename    string
-		wantValid   bool
-		wantErrors  int
+		name         string
+		specContent  string
+		filename     string
+		wantValid    bool
+		wantErrors   int
 		wantWarnings int
 	}{
 		{
@@ -60,9 +60,9 @@ components:
       required:
         - id
 `,
-			filename:    "valid_spec.yaml",
-			wantValid:   true,
-			wantErrors:  0,
+			filename:     "valid_spec.yaml",
+			wantValid:    true,
+			wantErrors:   0,
 			wantWarnings: 0,
 		},
 		{
@@ -137,7 +137,7 @@ paths:
 			// Create temporary file
 			tempDir := t.TempDir()
 			filePath := filepath.Join(tempDir, tt.filename)
-			
+
 			err := os.WriteFile(filePath, []byte(tt.specContent), 0644)
 			if err != nil {
 				t.Fatalf("Failed to write test file: %v", err)
@@ -228,7 +228,7 @@ func TestService_ValidateURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := service.ValidateURL(ctx, tt.url)
-			
+
 			if (err != nil) != tt.wantError {
 				t.Errorf("ValidateURL() error = %v, wantError %v", err, tt.wantError)
 			}
@@ -332,7 +332,7 @@ func TestService_ComplexityAssessment(t *testing.T) {
 				pathItem := &openapi3.PathItem{
 					Get: &openapi3.Operation{
 						OperationID: fmt.Sprintf("operation%d", i),
-						Responses: &openapi3.Responses{},
+						Responses:   &openapi3.Responses{},
 					},
 				}
 				successResponse := &openapi3.ResponseRef{
@@ -356,9 +356,9 @@ func TestService_ErrorSuggestions(t *testing.T) {
 	service := New()
 
 	tests := []struct {
-		name           string
-		errorMsg       string
-		wantContains   []string
+		name            string
+		errorMsg        string
+		wantContains    []string
 		wantNotContains []string
 	}{
 		{
@@ -522,7 +522,7 @@ components:
 	// Create temporary file
 	tempDir := t.TempDir()
 	filePath := filepath.Join(tempDir, "performance_test.yaml")
-	
+
 	err := os.WriteFile(filePath, []byte(specContent), 0644)
 	if err != nil {
 		t.Fatalf("Failed to write test file: %v", err)
@@ -577,7 +577,7 @@ components:
 	// Create temporary file
 	tempDir := b.TempDir()
 	filePath := filepath.Join(tempDir, "benchmark_spec.yaml")
-	
+
 	err := os.WriteFile(filePath, []byte(specContent), 0644)
 	if err != nil {
 		b.Fatalf("Failed to write test file: %v", err)

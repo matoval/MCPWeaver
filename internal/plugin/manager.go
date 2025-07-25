@@ -16,27 +16,27 @@ import (
 
 // Manager handles plugin lifecycle and orchestration
 type Manager struct {
-	plugins     map[string]*PluginInstance
-	middleware  []MiddlewarePlugin
-	validators  []Validator
-	converters  []OutputConverter
-	processors  []TemplateProcessor
+	plugins      map[string]*PluginInstance
+	middleware   []MiddlewarePlugin
+	validators   []Validator
+	converters   []OutputConverter
+	processors   []TemplateProcessor
 	integrations []Integration
-	testers     []Testing
+	testers      []Testing
 	uiComponents []UIComponent
-	parsers     []ParserPlugin
-	generators  []GeneratorPlugin
-	listeners   []EventListener
-	
-	config      *ManagerConfig
-	loader      *Loader
-	registry    *Registry
-	security    *SecurityManager
-	eventBus    *EventBus
-	
-	mu          sync.RWMutex
-	ctx         context.Context
-	cancel      context.CancelFunc
+	parsers      []ParserPlugin
+	generators   []GeneratorPlugin
+	listeners    []EventListener
+
+	config   *ManagerConfig
+	loader   *Loader
+	registry *Registry
+	security *SecurityManager
+	eventBus *EventBus
+
+	mu     sync.RWMutex
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // ManagerConfig configures the plugin manager
@@ -78,9 +78,9 @@ func NewManager(config *ManagerConfig) *Manager {
 	if config == nil {
 		config = DefaultManagerConfig()
 	}
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	return &Manager{
 		plugins:      make(map[string]*PluginInstance),
 		middleware:   make([]MiddlewarePlugin, 0),
@@ -93,13 +93,13 @@ func NewManager(config *ManagerConfig) *Manager {
 		parsers:      make([]ParserPlugin, 0),
 		generators:   make([]GeneratorPlugin, 0),
 		listeners:    make([]EventListener, 0),
-		
+
 		config:   config,
 		loader:   NewLoader(config),
 		registry: NewRegistry(config),
 		security: NewSecurityManager(config),
 		eventBus: NewEventBus(),
-		
+
 		ctx:    ctx,
 		cancel: cancel,
 	}
@@ -109,60 +109,60 @@ func NewManager(config *ManagerConfig) *Manager {
 func (m *Manager) Initialize() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// Create required directories
 	if err := m.createDirectories(); err != nil {
 		return fmt.Errorf("failed to create directories: %w", err)
 	}
-	
+
 	// Initialize security manager
 	if err := m.security.Initialize(); err != nil {
 		return fmt.Errorf("failed to initialize security: %w", err)
 	}
-	
+
 	// Initialize event bus
 	if err := m.eventBus.Initialize(); err != nil {
 		return fmt.Errorf("failed to initialize event bus: %w", err)
 	}
-	
+
 	// Load plugins from plugin directory
 	if err := m.loadInstalledPlugins(); err != nil {
 		return fmt.Errorf("failed to load plugins: %w", err)
 	}
-	
+
 	// Start update checker if enabled
 	if m.config.EnableMarketplace && m.config.UpdateCheck > 0 {
 		go m.updateChecker()
 	}
-	
+
 	return nil
 }
 
 // Shutdown stops the plugin manager and all plugins
 func (m *Manager) Shutdown() error {
 	m.cancel()
-	
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	var errors []error
-	
+
 	// Shutdown all plugins
 	for id := range m.plugins {
 		if err := m.unloadPluginUnsafe(id); err != nil {
 			errors = append(errors, fmt.Errorf("failed to unload plugin %s: %w", id, err))
 		}
 	}
-	
+
 	// Shutdown subsystems
 	if err := m.eventBus.Shutdown(); err != nil {
 		errors = append(errors, fmt.Errorf("failed to shutdown event bus: %w", err))
 	}
-	
+
 	if len(errors) > 0 {
 		return fmt.Errorf("shutdown errors: %v", errors)
 	}
-	
+
 	return nil
 }
 
@@ -170,7 +170,7 @@ func (m *Manager) Shutdown() error {
 func (m *Manager) LoadPlugin(pluginPath string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	return m.loadPluginUnsafe(pluginPath)
 }
 
@@ -178,7 +178,7 @@ func (m *Manager) LoadPlugin(pluginPath string) error {
 func (m *Manager) UnloadPlugin(pluginID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	return m.unloadPluginUnsafe(pluginID)
 }
 
@@ -186,7 +186,7 @@ func (m *Manager) UnloadPlugin(pluginID string) error {
 func (m *Manager) GetPlugin(pluginID string) (*PluginInstance, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	instance, exists := m.plugins[pluginID]
 	return instance, exists
 }
@@ -195,12 +195,12 @@ func (m *Manager) GetPlugin(pluginID string) (*PluginInstance, bool) {
 func (m *Manager) GetPlugins() map[string]*PluginInstance {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	plugins := make(map[string]*PluginInstance)
 	for id, instance := range m.plugins {
 		plugins[id] = instance
 	}
-	
+
 	return plugins
 }
 
@@ -208,7 +208,7 @@ func (m *Manager) GetPlugins() map[string]*PluginInstance {
 func (m *Manager) GetPluginsByCapability(capability Capability) []*PluginInstance {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	var result []*PluginInstance
 	for _, instance := range m.plugins {
 		if instance.Status == PluginStatusActive {
@@ -221,7 +221,7 @@ func (m *Manager) GetPluginsByCapability(capability Capability) []*PluginInstanc
 			}
 		}
 	}
-	
+
 	return result
 }
 
@@ -229,16 +229,16 @@ func (m *Manager) GetPluginsByCapability(capability Capability) []*PluginInstanc
 func (m *Manager) EnablePlugin(pluginID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	instance, exists := m.plugins[pluginID]
 	if !exists {
 		return fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	if instance.Status != PluginStatusDisabled {
 		return fmt.Errorf("plugin is not disabled: %s", pluginID)
 	}
-	
+
 	return m.activatePluginUnsafe(instance)
 }
 
@@ -246,16 +246,16 @@ func (m *Manager) EnablePlugin(pluginID string) error {
 func (m *Manager) DisablePlugin(pluginID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	instance, exists := m.plugins[pluginID]
 	if !exists {
 		return fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	if instance.Status != PluginStatusActive {
 		return fmt.Errorf("plugin is not active: %s", pluginID)
 	}
-	
+
 	return m.deactivatePluginUnsafe(instance)
 }
 
@@ -263,28 +263,28 @@ func (m *Manager) DisablePlugin(pluginID string) error {
 func (m *Manager) ConfigurePlugin(pluginID string, config json.RawMessage) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	instance, exists := m.plugins[pluginID]
 	if !exists {
 		return fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	// Validate configuration
 	if err := m.validatePluginConfig(instance, config); err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
-	
+
 	// Store old config for rollback
 	oldConfig := instance.Config
 	instance.Config = config
-	
+
 	// Re-initialize plugin with new config
 	if err := instance.Plugin.Initialize(m.ctx, config); err != nil {
 		// Rollback on error
 		instance.Config = oldConfig
 		return fmt.Errorf("failed to apply configuration: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -296,13 +296,13 @@ func (m *Manager) createDirectories() error {
 		m.config.CacheDir,
 		m.config.TempDir,
 	}
-	
+
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -311,12 +311,12 @@ func (m *Manager) loadInstalledPlugins() error {
 		if err != nil {
 			return err
 		}
-		
+
 		// Look for plugin manifests
 		if d.IsDir() || !strings.HasSuffix(path, ".json") {
 			return nil
 		}
-		
+
 		// Check if this looks like a manifest
 		if strings.HasSuffix(path, ".manifest.json") {
 			if err := m.loadPluginFromManifest(path); err != nil {
@@ -324,7 +324,7 @@ func (m *Manager) loadInstalledPlugins() error {
 				fmt.Printf("Failed to load plugin from %s: %v\n", path, err)
 			}
 		}
-		
+
 		return nil
 	})
 }
@@ -334,17 +334,17 @@ func (m *Manager) loadPluginFromManifest(manifestPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read manifest: %w", err)
 	}
-	
+
 	var manifest PluginManifest
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
-	
+
 	// Security validation
 	if err := m.security.ValidateManifest(&manifest); err != nil {
 		return fmt.Errorf("security validation failed: %w", err)
 	}
-	
+
 	// Load the plugin
 	pluginDir := filepath.Dir(manifestPath)
 	return m.loadPluginFromDirectory(pluginDir, &manifest)
@@ -359,11 +359,11 @@ func (m *Manager) loadPluginFromDirectory(pluginDir string, manifest *PluginMani
 			break
 		}
 	}
-	
+
 	if pluginFile == "" {
 		return fmt.Errorf("no plugin binary found")
 	}
-	
+
 	return m.loadPluginUnsafe(pluginFile)
 }
 
@@ -373,24 +373,24 @@ func (m *Manager) loadPluginUnsafe(pluginPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to load plugin: %w", err)
 	}
-	
+
 	info := plugin.GetInfo()
-	
+
 	// Check if already loaded
 	if _, exists := m.plugins[info.ID]; exists {
 		return fmt.Errorf("plugin already loaded: %s", info.ID)
 	}
-	
+
 	// Check plugin limits
 	if len(m.plugins) >= m.config.MaxPlugins {
 		return fmt.Errorf("maximum plugin limit reached: %d", m.config.MaxPlugins)
 	}
-	
+
 	// Validate plugin
 	if err := m.validatePlugin(plugin); err != nil {
 		return fmt.Errorf("plugin validation failed: %w", err)
 	}
-	
+
 	// Create instance
 	instance := &PluginInstance{
 		Plugin:   plugin,
@@ -399,16 +399,16 @@ func (m *Manager) loadPluginUnsafe(pluginPath string) error {
 		LoadedAt: time.Now(),
 		Stats:    &PluginStats{},
 	}
-	
+
 	// Store instance
 	m.plugins[info.ID] = instance
-	
+
 	// Activate plugin
 	if err := m.activatePluginUnsafe(instance); err != nil {
 		delete(m.plugins, info.ID)
 		return fmt.Errorf("failed to activate plugin: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -417,27 +417,27 @@ func (m *Manager) unloadPluginUnsafe(pluginID string) error {
 	if !exists {
 		return fmt.Errorf("plugin not found: %s", pluginID)
 	}
-	
+
 	instance.Status = PluginStatusUnloading
-	
+
 	// Deactivate if active
 	if instance.Status == PluginStatusActive {
 		if err := m.deactivatePluginUnsafe(instance); err != nil {
 			return err
 		}
 	}
-	
+
 	// Shutdown plugin
 	if err := instance.Plugin.Shutdown(m.ctx); err != nil {
 		return fmt.Errorf("failed to shutdown plugin: %w", err)
 	}
-	
+
 	// Remove from collections
 	m.removePluginFromCollections(instance)
-	
+
 	// Remove from registry
 	delete(m.plugins, pluginID)
-	
+
 	return nil
 }
 
@@ -448,13 +448,13 @@ func (m *Manager) activatePluginUnsafe(instance *PluginInstance) error {
 		instance.LastError = err.Error()
 		return fmt.Errorf("failed to initialize plugin: %w", err)
 	}
-	
+
 	// Add to appropriate collections based on capabilities
 	m.addPluginToCollections(instance)
-	
+
 	instance.Status = PluginStatusActive
 	instance.LastError = ""
-	
+
 	// Emit plugin loaded event
 	event := &PluginEvent{
 		Type:      "plugin.loaded",
@@ -466,18 +466,18 @@ func (m *Manager) activatePluginUnsafe(instance *PluginInstance) error {
 			"version":  instance.Info.Version,
 		},
 	}
-	
+
 	m.eventBus.Emit(m.ctx, event)
-	
+
 	return nil
 }
 
 func (m *Manager) deactivatePluginUnsafe(instance *PluginInstance) error {
 	// Remove from collections
 	m.removePluginFromCollections(instance)
-	
+
 	instance.Status = PluginStatusDisabled
-	
+
 	// Emit plugin unloaded event
 	event := &PluginEvent{
 		Type:      "plugin.unloaded",
@@ -488,15 +488,15 @@ func (m *Manager) deactivatePluginUnsafe(instance *PluginInstance) error {
 			"pluginId": instance.Info.ID,
 		},
 	}
-	
+
 	m.eventBus.Emit(m.ctx, event)
-	
+
 	return nil
 }
 
 func (m *Manager) addPluginToCollections(instance *PluginInstance) {
 	capabilities := instance.Plugin.GetCapabilities()
-	
+
 	for _, capability := range capabilities {
 		switch capability {
 		case CapabilityMiddleware:
@@ -538,11 +538,11 @@ func (m *Manager) addPluginToCollections(instance *PluginInstance) {
 			}
 		}
 	}
-	
+
 	// Add event listeners
 	if listener, ok := instance.Plugin.(EventListener); ok {
 		m.listeners = append(m.listeners, listener)
-		
+
 		// Subscribe to events
 		subscriptions := listener.GetSubscriptions()
 		for _, eventType := range subscriptions {
@@ -555,7 +555,7 @@ func (m *Manager) addPluginToCollections(instance *PluginInstance) {
 
 func (m *Manager) removePluginFromCollections(instance *PluginInstance) {
 	capabilities := instance.Plugin.GetCapabilities()
-	
+
 	for _, capability := range capabilities {
 		switch capability {
 		case CapabilityMiddleware:
@@ -578,11 +578,11 @@ func (m *Manager) removePluginFromCollections(instance *PluginInstance) {
 			m.generators = removeGeneratorPlugin(m.generators, instance.Plugin)
 		}
 	}
-	
+
 	// Remove event listeners
 	if listener, ok := instance.Plugin.(EventListener); ok {
 		m.listeners = removeEventListener(m.listeners, instance.Plugin)
-		
+
 		// Unsubscribe from events
 		subscriptions := listener.GetSubscriptions()
 		for _, eventType := range subscriptions {
@@ -599,23 +599,23 @@ func (m *Manager) sortMiddleware() {
 
 func (m *Manager) validatePlugin(plugin Plugin) error {
 	info := plugin.GetInfo()
-	
+
 	// Check required fields
 	if info.ID == "" || info.Name == "" || info.Version == "" {
 		return fmt.Errorf("missing required plugin info")
 	}
-	
+
 	// Check permissions
 	if err := m.security.ValidatePermissions(info.Permissions); err != nil {
 		return fmt.Errorf("invalid permissions: %w", err)
 	}
-	
+
 	// Check capabilities
 	capabilities := plugin.GetCapabilities()
 	if len(capabilities) == 0 {
 		return fmt.Errorf("plugin must have at least one capability")
 	}
-	
+
 	return nil
 }
 
@@ -623,7 +623,7 @@ func (m *Manager) validatePluginConfig(instance *PluginInstance, config json.Raw
 	if instance.Info.Config == nil {
 		return nil // No config schema to validate against
 	}
-	
+
 	// TODO: Implement JSON Schema validation
 	return nil
 }
@@ -631,7 +631,7 @@ func (m *Manager) validatePluginConfig(instance *PluginInstance, config json.Raw
 func (m *Manager) updateChecker() {
 	ticker := time.NewTicker(m.config.UpdateCheck)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-m.ctx.Done():

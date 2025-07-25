@@ -8,83 +8,83 @@ import (
 
 // NotificationSystem represents the notification system configuration
 type NotificationSystem struct {
-	Enabled              bool                      `json:"enabled"`
-	ToastEnabled         bool                      `json:"toastEnabled"`
-	SystemEnabled        bool                      `json:"systemEnabled"`
-	SoundEnabled         bool                      `json:"soundEnabled"`
-	DoNotDisturbMode     bool                      `json:"doNotDisturbMode"`
-	DoNotDisturbSchedule *DoNotDisturbSchedule     `json:"doNotDisturbSchedule,omitempty"`
+	Enabled               bool                     `json:"enabled"`
+	ToastEnabled          bool                     `json:"toastEnabled"`
+	SystemEnabled         bool                     `json:"systemEnabled"`
+	SoundEnabled          bool                     `json:"soundEnabled"`
+	DoNotDisturbMode      bool                     `json:"doNotDisturbMode"`
+	DoNotDisturbSchedule  *DoNotDisturbSchedule    `json:"doNotDisturbSchedule,omitempty"`
 	MaxToastNotifications int                      `json:"maxToastNotifications"`
-	ToastDuration        time.Duration             `json:"toastDuration"`
-	HistoryRetention     time.Duration             `json:"historyRetention"`
-	ThrottleSettings     *NotificationThrottle     `json:"throttleSettings"`
-	Preferences          *NotificationPreferences  `json:"preferences"`
+	ToastDuration         time.Duration            `json:"toastDuration"`
+	HistoryRetention      time.Duration            `json:"historyRetention"`
+	ThrottleSettings      *NotificationThrottle    `json:"throttleSettings"`
+	Preferences           *NotificationPreferences `json:"preferences"`
 }
 
 // ToastNotification represents a toast notification
 type ToastNotification struct {
-	ID           string                   `json:"id"`
-	Type         ToastType                `json:"type"`
-	Title        string                   `json:"title"`
-	Message      string                   `json:"message"`
-	Icon         string                   `json:"icon,omitempty"`
-	Duration     time.Duration            `json:"duration"`
-	Position     ToastPosition            `json:"position"`
-	Actions      []NotificationActionBtn  `json:"actions,omitempty"`
-	CreatedAt    time.Time                `json:"createdAt"`
-	ExpiresAt    time.Time                `json:"expiresAt"`
-	Persistent   bool                     `json:"persistent"`
-	AutoDismiss  bool                     `json:"autoDismiss"`
-	Priority     NotificationPriority     `json:"priority"`
-	Category     NotificationCategory     `json:"category"`
-	Metadata     map[string]interface{}   `json:"metadata,omitempty"`
-	Progress     *NotificationProgress    `json:"progress,omitempty"`
+	ID          string                  `json:"id"`
+	Type        ToastType               `json:"type"`
+	Title       string                  `json:"title"`
+	Message     string                  `json:"message"`
+	Icon        string                  `json:"icon,omitempty"`
+	Duration    time.Duration           `json:"duration"`
+	Position    ToastPosition           `json:"position"`
+	Actions     []NotificationActionBtn `json:"actions,omitempty"`
+	CreatedAt   time.Time               `json:"createdAt"`
+	ExpiresAt   time.Time               `json:"expiresAt"`
+	Persistent  bool                    `json:"persistent"`
+	AutoDismiss bool                    `json:"autoDismiss"`
+	Priority    NotificationPriority    `json:"priority"`
+	Category    NotificationCategory    `json:"category"`
+	Metadata    map[string]interface{}  `json:"metadata,omitempty"`
+	Progress    *NotificationProgress   `json:"progress,omitempty"`
 }
 
 // SystemNotification represents a system-level desktop notification
 type SystemNotification struct {
-	ID         string                   `json:"id"`
-	Title      string                   `json:"title"`
-	Body       string                   `json:"body"`
-	Icon       string                   `json:"icon,omitempty"`
-	Sound      string                   `json:"sound,omitempty"`
-	Actions    []NotificationActionBtn  `json:"actions,omitempty"`
-	Urgency    SystemUrgency            `json:"urgency"`
-	Tag        string                   `json:"tag,omitempty"`
-	CreatedAt  time.Time                `json:"createdAt"`
-	Category   NotificationCategory     `json:"category"`
-	Timeout    time.Duration            `json:"timeout"`
-	Silent     bool                     `json:"silent"`
-	Metadata   map[string]interface{}   `json:"metadata,omitempty"`
+	ID        string                  `json:"id"`
+	Title     string                  `json:"title"`
+	Body      string                  `json:"body"`
+	Icon      string                  `json:"icon,omitempty"`
+	Sound     string                  `json:"sound,omitempty"`
+	Actions   []NotificationActionBtn `json:"actions,omitempty"`
+	Urgency   SystemUrgency           `json:"urgency"`
+	Tag       string                  `json:"tag,omitempty"`
+	CreatedAt time.Time               `json:"createdAt"`
+	Category  NotificationCategory    `json:"category"`
+	Timeout   time.Duration           `json:"timeout"`
+	Silent    bool                    `json:"silent"`
+	Metadata  map[string]interface{}  `json:"metadata,omitempty"`
 }
 
 // NotificationHistory represents a stored notification for history
 type NotificationHistory struct {
-	ID            string                  `json:"id"`
-	Type          string                  `json:"type"` // "toast" or "system"
-	Title         string                  `json:"title"`
-	Message       string                  `json:"message"`
-	Icon          string                  `json:"icon,omitempty"`
-	Actions       []NotificationActionBtn `json:"actions,omitempty"`
-	Category      NotificationCategory    `json:"category"`
-	Priority      NotificationPriority    `json:"priority"`
-	CreatedAt     time.Time               `json:"createdAt"`
-	ReadAt        *time.Time              `json:"readAt,omitempty"`
-	DismissedAt   *time.Time              `json:"dismissedAt,omitempty"`
-	InteractedAt  *time.Time              `json:"interactedAt,omitempty"`
-	ActionTaken   string                  `json:"actionTaken,omitempty"`
-	Source        string                  `json:"source"`
-	Metadata      map[string]interface{}  `json:"metadata,omitempty"`
+	ID           string                  `json:"id"`
+	Type         string                  `json:"type"` // "toast" or "system"
+	Title        string                  `json:"title"`
+	Message      string                  `json:"message"`
+	Icon         string                  `json:"icon,omitempty"`
+	Actions      []NotificationActionBtn `json:"actions,omitempty"`
+	Category     NotificationCategory    `json:"category"`
+	Priority     NotificationPriority    `json:"priority"`
+	CreatedAt    time.Time               `json:"createdAt"`
+	ReadAt       *time.Time              `json:"readAt,omitempty"`
+	DismissedAt  *time.Time              `json:"dismissedAt,omitempty"`
+	InteractedAt *time.Time              `json:"interactedAt,omitempty"`
+	ActionTaken  string                  `json:"actionTaken,omitempty"`
+	Source       string                  `json:"source"`
+	Metadata     map[string]interface{}  `json:"metadata,omitempty"`
 }
 
 // NotificationActionBtn represents an action button on a notification
 type NotificationActionBtn struct {
-	ID       string     `json:"id"`
-	Label    string     `json:"label"`
-	Type     ActionType `json:"type"`
-	Icon     string     `json:"icon,omitempty"`
-	Style    ActionStyle `json:"style"`
-	Callback string     `json:"callback,omitempty"`
+	ID       string                 `json:"id"`
+	Label    string                 `json:"label"`
+	Type     ActionType             `json:"type"`
+	Icon     string                 `json:"icon,omitempty"`
+	Style    ActionStyle            `json:"style"`
+	Callback string                 `json:"callback,omitempty"`
 	Data     map[string]interface{} `json:"data,omitempty"`
 }
 
@@ -129,13 +129,13 @@ type NotificationFilter struct {
 
 // NotificationThrottle represents throttling settings
 type NotificationThrottle struct {
-	Enabled           bool          `json:"enabled"`
-	MaxPerMinute      int           `json:"maxPerMinute"`
-	MaxPerHour        int           `json:"maxPerHour"`
-	BurstAllowance    int           `json:"burstAllowance"`
-	CooldownPeriod    time.Duration `json:"cooldownPeriod"`
-	ByCategory        map[NotificationCategory]ThrottleRule `json:"byCategory"`
-	ByPriority        map[NotificationPriority]ThrottleRule `json:"byPriority"`
+	Enabled        bool                                  `json:"enabled"`
+	MaxPerMinute   int                                   `json:"maxPerMinute"`
+	MaxPerHour     int                                   `json:"maxPerHour"`
+	BurstAllowance int                                   `json:"burstAllowance"`
+	CooldownPeriod time.Duration                         `json:"cooldownPeriod"`
+	ByCategory     map[NotificationCategory]ThrottleRule `json:"byCategory"`
+	ByPriority     map[NotificationPriority]ThrottleRule `json:"byPriority"`
 }
 
 // ThrottleRule represents throttling rules for specific categories or priorities
@@ -148,12 +148,12 @@ type ThrottleRule struct {
 
 // DoNotDisturbSchedule represents the schedule for do not disturb mode
 type DoNotDisturbSchedule struct {
-	Enabled     bool              `json:"enabled"`
-	StartTime   string            `json:"startTime"`   // HH:MM format
-	EndTime     string            `json:"endTime"`     // HH:MM format
-	Days        []time.Weekday    `json:"days"`        // Days of week
-	Exceptions  []time.Time       `json:"exceptions"`  // Specific dates to override
-	AllowUrgent bool              `json:"allowUrgent"` // Allow critical/urgent notifications
+	Enabled     bool           `json:"enabled"`
+	StartTime   string         `json:"startTime"`   // HH:MM format
+	EndTime     string         `json:"endTime"`     // HH:MM format
+	Days        []time.Weekday `json:"days"`        // Days of week
+	Exceptions  []time.Time    `json:"exceptions"`  // Specific dates to override
+	AllowUrgent bool           `json:"allowUrgent"` // Allow critical/urgent notifications
 }
 
 // NotificationQueue represents a queue of pending notifications
@@ -175,35 +175,35 @@ type QueuedNotification struct {
 
 // NotificationTemplate represents a reusable notification template
 type NotificationTemplate struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Type        string                 `json:"type"` // "toast" or "system"
-	Title       string                 `json:"title"`
-	Message     string                 `json:"message"`
-	Icon        string                 `json:"icon,omitempty"`
+	ID          string                  `json:"id"`
+	Name        string                  `json:"name"`
+	Description string                  `json:"description"`
+	Type        string                  `json:"type"` // "toast" or "system"
+	Title       string                  `json:"title"`
+	Message     string                  `json:"message"`
+	Icon        string                  `json:"icon,omitempty"`
 	Actions     []NotificationActionBtn `json:"actions,omitempty"`
-	Category    NotificationCategory   `json:"category"`
-	Priority    NotificationPriority   `json:"priority"`
-	Variables   []TemplateVariable     `json:"variables,omitempty"`
-	CreatedAt   time.Time              `json:"createdAt"`
-	UpdatedAt   time.Time              `json:"updatedAt"`
+	Category    NotificationCategory    `json:"category"`
+	Priority    NotificationPriority    `json:"priority"`
+	Variables   []TemplateVariable      `json:"variables,omitempty"`
+	CreatedAt   time.Time               `json:"createdAt"`
+	UpdatedAt   time.Time               `json:"updatedAt"`
 }
 
 // NotificationStats represents statistics about notifications
 type NotificationStats struct {
-	TotalSent       int64                                    `json:"totalSent"`
-	TotalToast      int64                                    `json:"totalToast"`
-	TotalSystem     int64                                    `json:"totalSystem"`
-	TotalRead       int64                                    `json:"totalRead"`
-	TotalDismissed  int64                                    `json:"totalDismissed"`
-	TotalInteracted int64                                    `json:"totalInteracted"`
-	ByCategory      map[NotificationCategory]CategoryStats  `json:"byCategory"`
-	ByPriority      map[NotificationPriority]PriorityStats  `json:"byPriority"`
-	ByHour          map[int]int64                            `json:"byHour"`
-	ByDay           map[time.Weekday]int64                   `json:"byDay"`
-	PeriodStart     time.Time                                `json:"periodStart"`
-	PeriodEnd       time.Time                                `json:"periodEnd"`
+	TotalSent       int64                                  `json:"totalSent"`
+	TotalToast      int64                                  `json:"totalToast"`
+	TotalSystem     int64                                  `json:"totalSystem"`
+	TotalRead       int64                                  `json:"totalRead"`
+	TotalDismissed  int64                                  `json:"totalDismissed"`
+	TotalInteracted int64                                  `json:"totalInteracted"`
+	ByCategory      map[NotificationCategory]CategoryStats `json:"byCategory"`
+	ByPriority      map[NotificationPriority]PriorityStats `json:"byPriority"`
+	ByHour          map[int]int64                          `json:"byHour"`
+	ByDay           map[time.Weekday]int64                 `json:"byDay"`
+	PeriodStart     time.Time                              `json:"periodStart"`
+	PeriodEnd       time.Time                              `json:"periodEnd"`
 }
 
 // CategoryStats represents statistics for a notification category
@@ -242,12 +242,12 @@ const (
 type ToastPosition string
 
 const (
-	ToastPositionTopLeft     ToastPosition = "top-left"
-	ToastPositionTopCenter   ToastPosition = "top-center"
-	ToastPositionTopRight    ToastPosition = "top-right"
-	ToastPositionBottomLeft  ToastPosition = "bottom-left"
+	ToastPositionTopLeft      ToastPosition = "top-left"
+	ToastPositionTopCenter    ToastPosition = "top-center"
+	ToastPositionTopRight     ToastPosition = "top-right"
+	ToastPositionBottomLeft   ToastPosition = "bottom-left"
 	ToastPositionBottomCenter ToastPosition = "bottom-center"
-	ToastPositionBottomRight ToastPosition = "bottom-right"
+	ToastPositionBottomRight  ToastPosition = "bottom-right"
 )
 
 // SystemUrgency defines the urgency level for system notifications
@@ -292,11 +292,11 @@ const (
 type FilterCondition string
 
 const (
-	FilterConditionContains  FilterCondition = "contains"
-	FilterConditionEquals    FilterCondition = "equals"
+	FilterConditionContains   FilterCondition = "contains"
+	FilterConditionEquals     FilterCondition = "equals"
 	FilterConditionStartsWith FilterCondition = "startsWith"
-	FilterConditionEndsWith  FilterCondition = "endsWith"
-	FilterConditionRegex     FilterCondition = "regex"
+	FilterConditionEndsWith   FilterCondition = "endsWith"
+	FilterConditionRegex      FilterCondition = "regex"
 )
 
 // FilterAction defines what happens when a filter matches
@@ -429,7 +429,7 @@ func (dnd *DoNotDisturbSchedule) IsInDoNotDisturbPeriod() bool {
 	}
 
 	now := time.Now()
-	
+
 	// Check if current day is in the schedule
 	currentDay := now.Weekday()
 	dayIncluded := false
@@ -439,7 +439,7 @@ func (dnd *DoNotDisturbSchedule) IsInDoNotDisturbPeriod() bool {
 			break
 		}
 	}
-	
+
 	if !dayIncluded {
 		return false
 	}
@@ -449,7 +449,7 @@ func (dnd *DoNotDisturbSchedule) IsInDoNotDisturbPeriod() bool {
 	if err != nil {
 		return false
 	}
-	
+
 	endTime, err := time.Parse("15:04", dnd.EndTime)
 	if err != nil {
 		return false
@@ -464,7 +464,7 @@ func (dnd *DoNotDisturbSchedule) IsInDoNotDisturbPeriod() bool {
 	if endTimeOfDay.Before(startTimeOfDay) {
 		return currentTime.After(startTimeOfDay) || currentTime.Before(endTimeOfDay)
 	}
-	
+
 	// Normal periods (e.g., 09:00 to 17:00)
 	return currentTime.After(startTimeOfDay) && currentTime.Before(endTimeOfDay)
 }

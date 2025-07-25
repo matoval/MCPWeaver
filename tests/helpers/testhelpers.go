@@ -29,17 +29,17 @@ func NewTestHelper(t *testing.T) *TestHelper {
 func (h *TestHelper) CreateTempDB() (*database.DB, string, func()) {
 	tempDir := h.t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := database.Open(dbPath)
 	require.NoError(h.t, err, "Failed to create temp database")
-	
+
 	cleanup := func() {
 		if db != nil {
 			db.Close()
 		}
 		os.RemoveAll(tempDir)
 	}
-	
+
 	return db, dbPath, cleanup
 }
 
@@ -47,11 +47,11 @@ func (h *TestHelper) CreateTempDB() (*database.DB, string, func()) {
 func (h *TestHelper) CreateMockDB() (*sql.DB, sqlmock.Sqlmock, func()) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	require.NoError(h.t, err, "Failed to create mock database")
-	
+
 	cleanup := func() {
 		db.Close()
 	}
-	
+
 	return db, mock, cleanup
 }
 
@@ -60,25 +60,25 @@ func (h *TestHelper) CreateTempFile(content string, extension string) (string, f
 	tempDir := h.t.TempDir()
 	fileName := fmt.Sprintf("test_%d%s", time.Now().UnixNano(), extension)
 	filePath := filepath.Join(tempDir, fileName)
-	
+
 	err := os.WriteFile(filePath, []byte(content), 0644)
 	require.NoError(h.t, err, "Failed to create temp file")
-	
+
 	cleanup := func() {
 		os.RemoveAll(tempDir)
 	}
-	
+
 	return filePath, cleanup
 }
 
 // CreateTempDir creates a temporary directory
 func (h *TestHelper) CreateTempDir() (string, func()) {
 	tempDir := h.t.TempDir()
-	
+
 	cleanup := func() {
 		os.RemoveAll(tempDir)
 	}
-	
+
 	return tempDir, cleanup
 }
 
@@ -237,7 +237,7 @@ servers:
   - url: https://api.large.com
 paths:
 `
-	
+
 	// Add many paths for performance testing
 	for i := 0; i < 100; i++ {
 		spec += fmt.Sprintf(`
@@ -272,7 +272,7 @@ paths:
           description: Created
 `, i, i, i)
 	}
-	
+
 	return spec
 }
 
@@ -284,14 +284,14 @@ func GetTestFixturePath(filename string) string {
 // WaitForCondition waits for a condition to be true with timeout
 func (h *TestHelper) WaitForCondition(condition func() bool, timeout time.Duration, message string) {
 	deadline := time.Now().Add(timeout)
-	
+
 	for time.Now().Before(deadline) {
 		if condition() {
 			return
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	
+
 	h.t.Fatalf("Condition not met within timeout: %s", message)
 }
 
@@ -305,8 +305,8 @@ func (h *TestHelper) MeasureTime(fn func()) time.Duration {
 // AssertPerformance asserts that function executes within expected time
 func (h *TestHelper) AssertPerformance(fn func(), maxDuration time.Duration, msgAndArgs ...interface{}) {
 	duration := h.MeasureTime(fn)
-	assert.True(h.t, duration <= maxDuration, 
-		"Expected execution time <= %v, got %v. %v", 
+	assert.True(h.t, duration <= maxDuration,
+		"Expected execution time <= %v, got %v. %v",
 		maxDuration, duration, fmt.Sprint(msgAndArgs...))
 }
 
@@ -317,12 +317,12 @@ func (h *TestHelper) AssertMemoryUsage(fn func(), maxMemoryMB float64, msgAndArg
 	var m1, m2 runtime.MemStats
 	runtime.ReadMemStats(&m1)
 	runtime.GC()
-	
+
 	fn()
-	
+
 	runtime.GC()
 	runtime.ReadMemStats(&m2)
-	
+
 	memoryUsedMB := float64(m2.Alloc-m1.Alloc) / 1024 / 1024
 	assert.True(h.t, memoryUsedMB <= maxMemoryMB,
 		"Expected memory usage <= %.2f MB, got %.2f MB. %v",

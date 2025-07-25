@@ -33,17 +33,17 @@ func (p *ProjectUpdateRequest) convertValues() {
 }
 
 type Project struct {
-	ID              string           `json:"id"`
-	Name            string           `json:"name"`
-	SpecPath        string           `json:"specPath"`
-	SpecURL         string           `json:"specUrl"`
-	OutputPath      string           `json:"outputPath"`
-	Settings        ProjectSettings  `json:"settings"`
-	Status          ProjectStatus    `json:"status"`
-	CreatedAt       time.Time        `json:"createdAt"`
-	UpdatedAt       time.Time        `json:"updatedAt"`
-	LastGenerated   *time.Time       `json:"lastGenerated,omitempty"`
-	GenerationCount int              `json:"generationCount"`
+	ID              string          `json:"id"`
+	Name            string          `json:"name"`
+	SpecPath        string          `json:"specPath"`
+	SpecURL         string          `json:"specUrl"`
+	OutputPath      string          `json:"outputPath"`
+	Settings        ProjectSettings `json:"settings"`
+	Status          ProjectStatus   `json:"status"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
+	LastGenerated   *time.Time      `json:"lastGenerated,omitempty"`
+	GenerationCount int             `json:"generationCount"`
 }
 
 func (p *Project) convertValues() {
@@ -166,13 +166,13 @@ type ValidationWarning struct {
 }
 
 type SpecInfo struct {
-	Version         string            `json:"version"`
-	Title           string            `json:"title"`
-	Description     string            `json:"description"`
-	OperationCount  int               `json:"operationCount"`
-	SchemaCount     int               `json:"schemaCount"`
-	SecuritySchemes []SecurityScheme  `json:"securitySchemes"`
-	Servers         []ServerInfo      `json:"servers"`
+	Version         string           `json:"version"`
+	Title           string           `json:"title"`
+	Description     string           `json:"description"`
+	OperationCount  int              `json:"operationCount"`
+	SchemaCount     int              `json:"schemaCount"`
+	SecuritySchemes []SecurityScheme `json:"securitySchemes"`
+	Servers         []ServerInfo     `json:"servers"`
 }
 
 type SecurityScheme struct {
@@ -195,18 +195,18 @@ type FileFilter struct {
 
 // Settings Types
 type AppSettings struct {
-	Theme                string                `json:"theme"`
-	Language             string                `json:"language"`
-	AutoSave             bool                  `json:"autoSave"`
-	DefaultOutputPath    string                `json:"defaultOutputPath"`
-	RecentProjects       []string              `json:"recentProjects"`
-	RecentFiles          []string              `json:"recentFiles"`
-	WindowSettings       WindowSettings        `json:"windowSettings"`
-	EditorSettings       EditorSettings        `json:"editorSettings"`
-	GenerationSettings   GenerationSettings    `json:"generationSettings"`
-	NotificationSettings NotificationSettings  `json:"notificationSettings"`
-	AppearanceSettings   AppearanceSettings    `json:"appearanceSettings"`
-	UpdateSettings       UpdateSettings        `json:"updateSettings"`
+	Theme                string               `json:"theme"`
+	Language             string               `json:"language"`
+	AutoSave             bool                 `json:"autoSave"`
+	DefaultOutputPath    string               `json:"defaultOutputPath"`
+	RecentProjects       []string             `json:"recentProjects"`
+	RecentFiles          []string             `json:"recentFiles"`
+	WindowSettings       WindowSettings       `json:"windowSettings"`
+	EditorSettings       EditorSettings       `json:"editorSettings"`
+	GenerationSettings   GenerationSettings   `json:"generationSettings"`
+	NotificationSettings NotificationSettings `json:"notificationSettings"`
+	AppearanceSettings   AppearanceSettings   `json:"appearanceSettings"`
+	UpdateSettings       UpdateSettings       `json:"updateSettings"`
 }
 
 type WindowSettings struct {
@@ -238,28 +238,28 @@ type GenerationSettings struct {
 }
 
 type NotificationSettings struct {
-	EnableDesktopNotifications bool   `json:"enableDesktopNotifications"`
-	EnableSoundNotifications   bool   `json:"enableSoundNotifications"`
-	NotificationPosition       string `json:"notificationPosition"`
-	NotificationDuration       int    `json:"notificationDuration"`
+	EnableDesktopNotifications bool    `json:"enableDesktopNotifications"`
+	EnableSoundNotifications   bool    `json:"enableSoundNotifications"`
+	NotificationPosition       string  `json:"notificationPosition"`
+	NotificationDuration       int     `json:"notificationDuration"`
 	SoundVolume                float64 `json:"soundVolume"`
-	ShowGenerationProgress     bool   `json:"showGenerationProgress"`
-	ShowErrorNotifications     bool   `json:"showErrorNotifications"`
-	ShowSuccessNotifications   bool   `json:"showSuccessNotifications"`
+	ShowGenerationProgress     bool    `json:"showGenerationProgress"`
+	ShowErrorNotifications     bool    `json:"showErrorNotifications"`
+	ShowSuccessNotifications   bool    `json:"showSuccessNotifications"`
 }
 
 type AppearanceSettings struct {
-	UITheme            string  `json:"uiTheme"`
-	AccentColor        string  `json:"accentColor"`
-	WindowOpacity      float64 `json:"windowOpacity"`
-	ShowAnimation      bool    `json:"showAnimation"`
-	ReducedMotion      bool    `json:"reducedMotion"`
-	FontScale          float64 `json:"fontScale"`
-	CompactMode        bool    `json:"compactMode"`
-	ShowSidebar        bool    `json:"showSidebar"`
-	SidebarPosition    string  `json:"sidebarPosition"`
-	ShowStatusBar      bool    `json:"showStatusBar"`
-	ShowToolbar        bool    `json:"showToolbar"`
+	UITheme         string  `json:"uiTheme"`
+	AccentColor     string  `json:"accentColor"`
+	WindowOpacity   float64 `json:"windowOpacity"`
+	ShowAnimation   bool    `json:"showAnimation"`
+	ReducedMotion   bool    `json:"reducedMotion"`
+	FontScale       float64 `json:"fontScale"`
+	CompactMode     bool    `json:"compactMode"`
+	ShowSidebar     bool    `json:"showSidebar"`
+	SidebarPosition string  `json:"sidebarPosition"`
+	ShowStatusBar   bool    `json:"showStatusBar"`
+	ShowToolbar     bool    `json:"showToolbar"`
 }
 
 // Template Types
@@ -291,7 +291,7 @@ type TemplateVariable struct {
 	Type         string   `json:"type"`
 	DefaultValue string   `json:"defaultValue"`
 	Required     bool     `json:"required"`
-	Options      []string `json:"options,omitempty"` // For enum/select type variables
+	Options      []string `json:"options,omitempty"`    // For enum/select type variables
 	Validation   string   `json:"validation,omitempty"` // Validation regex or rules
 }
 
@@ -317,12 +317,12 @@ type UpdateTemplateRequest struct {
 }
 
 type TemplateValidationResult struct {
-	Valid        bool                    `json:"valid"`
-	Errors       []TemplateError         `json:"errors,omitempty"`
-	Warnings     []TemplateWarning       `json:"warnings,omitempty"`
-	Suggestions  []string                `json:"suggestions,omitempty"`
-	Performance  *TemplatePerformance    `json:"performance,omitempty"`
-	Dependencies []TemplateDependency    `json:"dependencies,omitempty"`
+	Valid        bool                 `json:"valid"`
+	Errors       []TemplateError      `json:"errors,omitempty"`
+	Warnings     []TemplateWarning    `json:"warnings,omitempty"`
+	Suggestions  []string             `json:"suggestions,omitempty"`
+	Performance  *TemplatePerformance `json:"performance,omitempty"`
+	Dependencies []TemplateDependency `json:"dependencies,omitempty"`
 }
 
 type TemplateError struct {
@@ -341,10 +341,10 @@ type TemplateWarning struct {
 }
 
 type TemplatePerformance struct {
-	RenderTime    time.Duration `json:"renderTime"`
-	MemoryUsage   int64         `json:"memoryUsage"`
-	Complexity    string        `json:"complexity"` // "low", "medium", "high"
-	CacheHit      bool          `json:"cacheHit"`
+	RenderTime  time.Duration `json:"renderTime"`
+	MemoryUsage int64         `json:"memoryUsage"`
+	Complexity  string        `json:"complexity"` // "low", "medium", "high"
+	CacheHit    bool          `json:"cacheHit"`
 }
 
 type TemplateDependency struct {
@@ -355,18 +355,18 @@ type TemplateDependency struct {
 }
 
 type TemplateImportRequest struct {
-	Source      string            `json:"source"` // "file", "url", "marketplace"
-	Path        string            `json:"path,omitempty"`
-	URL         string            `json:"url,omitempty"`
-	MarketplaceID string          `json:"marketplaceId,omitempty"`
+	Source        string                `json:"source"` // "file", "url", "marketplace"
+	Path          string                `json:"path,omitempty"`
+	URL           string                `json:"url,omitempty"`
+	MarketplaceID string                `json:"marketplaceId,omitempty"`
 	ImportOptions TemplateImportOptions `json:"options,omitempty"`
 }
 
 type TemplateImportOptions struct {
-	OverwriteExisting bool     `json:"overwriteExisting"`
-	ValidateOnly      bool     `json:"validateOnly"`
-	IncludeDependencies bool   `json:"includeDependencies"`
-	TargetType        TemplateType `json:"targetType,omitempty"`
+	OverwriteExisting   bool         `json:"overwriteExisting"`
+	ValidateOnly        bool         `json:"validateOnly"`
+	IncludeDependencies bool         `json:"includeDependencies"`
+	TargetType          TemplateType `json:"targetType,omitempty"`
 }
 
 type TemplateExportRequest struct {
@@ -378,30 +378,30 @@ type TemplateExportRequest struct {
 
 type TemplateExportOptions struct {
 	IncludeDocumentation bool `json:"includeDocumentation"`
-	IncludeExamples     bool `json:"includeExamples"`
-	IncludeDependencies bool `json:"includeDependencies"`
-	Minify              bool `json:"minify"`
+	IncludeExamples      bool `json:"includeExamples"`
+	IncludeDependencies  bool `json:"includeDependencies"`
+	Minify               bool `json:"minify"`
 }
 
 type TemplateTestRequest struct {
-	TemplateID   string                 `json:"templateId"`
-	TestData     map[string]interface{} `json:"testData"`
-	TestOptions  TemplateTestOptions    `json:"options,omitempty"`
+	TemplateID  string                 `json:"templateId"`
+	TestData    map[string]interface{} `json:"testData"`
+	TestOptions TemplateTestOptions    `json:"options,omitempty"`
 }
 
 type TemplateTestOptions struct {
-	ValidateOutput    bool `json:"validateOutput"`
+	ValidateOutput     bool `json:"validateOutput"`
 	MeasurePerformance bool `json:"measurePerformance"`
-	GenerateReport    bool `json:"generateReport"`
+	GenerateReport     bool `json:"generateReport"`
 }
 
 type TemplateTestResult struct {
-	Success     bool                    `json:"success"`
-	Output      string                  `json:"output,omitempty"`
-	Errors      []TemplateError         `json:"errors,omitempty"`
-	Warnings    []TemplateWarning       `json:"warnings,omitempty"`
-	Performance *TemplatePerformance    `json:"performance,omitempty"`
-	Report      *TemplateTestReport     `json:"report,omitempty"`
+	Success     bool                 `json:"success"`
+	Output      string               `json:"output,omitempty"`
+	Errors      []TemplateError      `json:"errors,omitempty"`
+	Warnings    []TemplateWarning    `json:"warnings,omitempty"`
+	Performance *TemplatePerformance `json:"performance,omitempty"`
+	Report      *TemplateTestReport  `json:"report,omitempty"`
 }
 
 type TemplateTestReport struct {
@@ -461,14 +461,14 @@ const (
 
 // ErrorContext provides additional context about where an error occurred
 type ErrorContext struct {
-	Operation   string            `json:"operation"`
-	Component   string            `json:"component"`
-	ProjectID   string            `json:"projectId,omitempty"`
-	UserID      string            `json:"userId,omitempty"`
-	SessionID   string            `json:"sessionId,omitempty"`
-	RequestID   string            `json:"requestId,omitempty"`
-	StackTrace  string            `json:"stackTrace,omitempty"`
-	Metadata    map[string]string `json:"metadata,omitempty"`
+	Operation  string            `json:"operation"`
+	Component  string            `json:"component"`
+	ProjectID  string            `json:"projectId,omitempty"`
+	UserID     string            `json:"userId,omitempty"`
+	SessionID  string            `json:"sessionId,omitempty"`
+	RequestID  string            `json:"requestId,omitempty"`
+	StackTrace string            `json:"stackTrace,omitempty"`
+	Metadata   map[string]string `json:"metadata,omitempty"`
 }
 
 // ErrorCollection aggregates multiple errors for batch operations
@@ -504,12 +504,12 @@ func (ec *ErrorCollection) Error() string {
 
 // RetryPolicy defines retry behavior for operations
 type RetryPolicy struct {
-	MaxRetries      int           `json:"maxRetries"`
-	InitialDelay    time.Duration `json:"initialDelay"`
-	MaxDelay        time.Duration `json:"maxDelay"`
-	BackoffMultiplier float64     `json:"backoffMultiplier"`
-	JitterEnabled   bool          `json:"jitterEnabled"`
-	RetryableErrors []string      `json:"retryableErrors"`
+	MaxRetries        int           `json:"maxRetries"`
+	InitialDelay      time.Duration `json:"initialDelay"`
+	MaxDelay          time.Duration `json:"maxDelay"`
+	BackoffMultiplier float64       `json:"backoffMultiplier"`
+	JitterEnabled     bool          `json:"jitterEnabled"`
+	RetryableErrors   []string      `json:"retryableErrors"`
 }
 
 // DefaultRetryPolicy returns a default retry policy
@@ -547,14 +547,14 @@ const (
 
 // Error type constants
 const (
-	ErrorTypeValidation   = "validation"
-	ErrorTypeSystem       = "system"
-	ErrorTypeNetwork      = "network"
-	ErrorTypeFileSystem   = "filesystem"
-	ErrorTypeDatabase     = "database"
-	ErrorTypeGeneration   = "generation"
-	ErrorTypePermission   = "permission"
-	ErrorTypeConfiguration = "configuration"
+	ErrorTypeValidation     = "validation"
+	ErrorTypeSystem         = "system"
+	ErrorTypeNetwork        = "network"
+	ErrorTypeFileSystem     = "filesystem"
+	ErrorTypeDatabase       = "database"
+	ErrorTypeGeneration     = "generation"
+	ErrorTypePermission     = "permission"
+	ErrorTypeConfiguration  = "configuration"
 	ErrorTypeAuthentication = "authentication"
 )
 
@@ -633,29 +633,29 @@ type RecentFile struct {
 
 // Activity Log and Monitoring Types
 type ActivityLogEntry struct {
-	ID          string                 `json:"id"`
-	Timestamp   time.Time              `json:"timestamp"`
-	Level       LogLevel               `json:"level"`
-	Component   string                 `json:"component"`
-	Operation   string                 `json:"operation"`
-	Message     string                 `json:"message"`
-	Details     string                 `json:"details,omitempty"`
-	Duration    *time.Duration         `json:"duration,omitempty"`
-	ProjectID   string                 `json:"projectId,omitempty"`
-	UserAction  bool                   `json:"userAction"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	ID         string                 `json:"id"`
+	Timestamp  time.Time              `json:"timestamp"`
+	Level      LogLevel               `json:"level"`
+	Component  string                 `json:"component"`
+	Operation  string                 `json:"operation"`
+	Message    string                 `json:"message"`
+	Details    string                 `json:"details,omitempty"`
+	Duration   *time.Duration         `json:"duration,omitempty"`
+	ProjectID  string                 `json:"projectId,omitempty"`
+	UserAction bool                   `json:"userAction"`
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type LogFilter struct {
-	Level      *LogLevel `json:"level,omitempty"`
-	Component  *string   `json:"component,omitempty"`
-	Operation  *string   `json:"operation,omitempty"`
-	ProjectID  *string   `json:"projectId,omitempty"`
-	UserAction *bool     `json:"userAction,omitempty"`
+	Level      *LogLevel  `json:"level,omitempty"`
+	Component  *string    `json:"component,omitempty"`
+	Operation  *string    `json:"operation,omitempty"`
+	ProjectID  *string    `json:"projectId,omitempty"`
+	UserAction *bool      `json:"userAction,omitempty"`
 	StartTime  *time.Time `json:"startTime,omitempty"`
 	EndTime    *time.Time `json:"endTime,omitempty"`
-	Search     *string   `json:"search,omitempty"`
-	Limit      *int      `json:"limit,omitempty"`
+	Search     *string    `json:"search,omitempty"`
+	Limit      *int       `json:"limit,omitempty"`
 }
 
 type ApplicationStatus struct {
@@ -670,49 +670,49 @@ type StatusLevel string
 
 const (
 	StatusIdle    StatusLevel = "idle"
-	StatusWorking StatusLevel = "working"  
+	StatusWorking StatusLevel = "working"
 	StatusError   StatusLevel = "error"
 	StatusWarning StatusLevel = "warning"
 )
 
 type SystemHealth struct {
-	MemoryUsage       float64 `json:"memoryUsage"`     // MB
-	CPUUsage          float64 `json:"cpuUsage"`        // Percentage
-	DiskSpace         float64 `json:"diskSpace"`       // GB available
-	DatabaseSize      float64 `json:"databaseSize"`    // MB
-	TemporaryFiles    int     `json:"temporaryFiles"`  // Count
+	MemoryUsage       float64 `json:"memoryUsage"`    // MB
+	CPUUsage          float64 `json:"cpuUsage"`       // Percentage
+	DiskSpace         float64 `json:"diskSpace"`      // GB available
+	DatabaseSize      float64 `json:"databaseSize"`   // MB
+	TemporaryFiles    int     `json:"temporaryFiles"` // Count
 	ActiveConnections int     `json:"activeConnections"`
 }
 
 type ErrorReport struct {
-	ID           string        `json:"id"`
-	Timestamp    time.Time     `json:"timestamp"`
-	Type         ErrorType     `json:"type"`
-	Severity     ErrorSeverity `json:"severity"`
-	Component    string        `json:"component"`
-	Operation    string        `json:"operation"`
-	Message      string        `json:"message"`
-	Details      string        `json:"details,omitempty"`
-	StackTrace   string        `json:"stackTrace,omitempty"`
-	UserContext  UserContext   `json:"userContext"`
-	SystemInfo   SystemInfo    `json:"systemInfo"`
-	Recovery     RecoveryInfo  `json:"recovery"`
-	Frequency    int           `json:"frequency"`
-	FirstSeen    time.Time     `json:"firstSeen"`
-	LastSeen     time.Time     `json:"lastSeen"`
+	ID          string        `json:"id"`
+	Timestamp   time.Time     `json:"timestamp"`
+	Type        ErrorType     `json:"type"`
+	Severity    ErrorSeverity `json:"severity"`
+	Component   string        `json:"component"`
+	Operation   string        `json:"operation"`
+	Message     string        `json:"message"`
+	Details     string        `json:"details,omitempty"`
+	StackTrace  string        `json:"stackTrace,omitempty"`
+	UserContext UserContext   `json:"userContext"`
+	SystemInfo  SystemInfo    `json:"systemInfo"`
+	Recovery    RecoveryInfo  `json:"recovery"`
+	Frequency   int           `json:"frequency"`
+	FirstSeen   time.Time     `json:"firstSeen"`
+	LastSeen    time.Time     `json:"lastSeen"`
 }
 
 type ErrorType string
 
 const (
-	ErrorTypeValidationErr   ErrorType = "validation"
-	ErrorTypeSystemErr       ErrorType = "system"
-	ErrorTypeNetworkErr      ErrorType = "network"
-	ErrorTypeFileSystemErr   ErrorType = "filesystem"
-	ErrorTypeDatabaseErr     ErrorType = "database"
-	ErrorTypeGenerationErr   ErrorType = "generation"
-	ErrorTypePermissionErr   ErrorType = "permission"
-	ErrorTypeConfigurationErr ErrorType = "configuration"
+	ErrorTypeValidationErr     ErrorType = "validation"
+	ErrorTypeSystemErr         ErrorType = "system"
+	ErrorTypeNetworkErr        ErrorType = "network"
+	ErrorTypeFileSystemErr     ErrorType = "filesystem"
+	ErrorTypeDatabaseErr       ErrorType = "database"
+	ErrorTypeGenerationErr     ErrorType = "generation"
+	ErrorTypePermissionErr     ErrorType = "permission"
+	ErrorTypeConfigurationErr  ErrorType = "configuration"
 	ErrorTypeAuthenticationErr ErrorType = "authentication"
 )
 
@@ -755,10 +755,10 @@ type LogConfig struct {
 }
 
 type LogSearchRequest struct {
-	Query     string     `json:"query"`
-	Filter    LogFilter  `json:"filter"`
-	Limit     int        `json:"limit"`
-	Offset    int        `json:"offset"`
+	Query  string    `json:"query"`
+	Filter LogFilter `json:"filter"`
+	Limit  int       `json:"limit"`
+	Offset int       `json:"offset"`
 }
 
 type LogSearchResult struct {

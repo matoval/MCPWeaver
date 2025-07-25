@@ -96,7 +96,7 @@ func (s *AppSimpleTestSuite) TestProjectValidation() {
 		Name:       "",
 		OutputPath: "/tmp/output",
 	}
-	
+
 	// This simulates the validation logic that would be in CreateProject
 	hasError := request.Name == ""
 	s.helper.AssertEqual(true, hasError)
@@ -106,7 +106,7 @@ func (s *AppSimpleTestSuite) TestProjectValidation() {
 		Name:       "Valid Name",
 		OutputPath: "",
 	}
-	
+
 	hasError2 := request2.OutputPath == ""
 	s.helper.AssertEqual(true, hasError2)
 
@@ -115,7 +115,7 @@ func (s *AppSimpleTestSuite) TestProjectValidation() {
 		Name:       "Valid Project",
 		OutputPath: "/tmp/output",
 	}
-	
+
 	hasError3 := request3.Name == "" || request3.OutputPath == ""
 	s.helper.AssertEqual(false, hasError3)
 }
@@ -151,7 +151,7 @@ func (s *AppSimpleTestSuite) TestFilePathValidation() {
 	s.helper.AssertEqual(false, hasError2)
 }
 
-// Test URL validation logic  
+// Test URL validation logic
 func (s *AppSimpleTestSuite) TestURLValidation() {
 	// Test empty URL validation
 	url := ""
@@ -195,11 +195,11 @@ func (s *AppSimpleTestSuite) TestProjectNameValidation() {
 		name  string
 		valid bool
 	}{
-		{"", false},                    // Empty name
-		{"a", true},                    // Single character
-		{"Valid Project Name", true},   // Normal name
-		{"Project123", true},           // With numbers
-		{"Project-Name_v2", true},      // With special chars
+		{"", false},                  // Empty name
+		{"a", true},                  // Single character
+		{"Valid Project Name", true}, // Normal name
+		{"Project123", true},         // With numbers
+		{"Project-Name_v2", true},    // With special chars
 	}
 
 	for _, tc := range testCases {
@@ -230,7 +230,7 @@ func (s *AppSimpleTestSuite) TestPortValidation() {
 // Test log level validation
 func (s *AppSimpleTestSuite) TestLogLevelValidation() {
 	validLevels := []string{"debug", "info", "warn", "error"}
-	
+
 	testCases := []struct {
 		level string
 		valid bool
@@ -279,7 +279,7 @@ func (s *AppSimpleTestSuite) TestFileSizeValidation() {
 // Test recent projects list management
 func (s *AppSimpleTestSuite) TestRecentProjectsManagement() {
 	recentProjects := []string{}
-	
+
 	// Function to add a project (simulating addToRecentProjects logic)
 	addProject := func(projectID string, recent *[]string) {
 		// Remove if already exists
@@ -289,10 +289,10 @@ func (s *AppSimpleTestSuite) TestRecentProjectsManagement() {
 				break
 			}
 		}
-		
+
 		// Add to beginning
 		*recent = append([]string{projectID}, *recent...)
-		
+
 		// Keep only last 10
 		if len(*recent) > 10 {
 			*recent = (*recent)[:10]
@@ -328,11 +328,11 @@ func (s *AppSimpleTestSuite) TestBasicValidation_Performance() {
 			// Test basic string validation
 			name := "TestProject"
 			_ = name != ""
-			
+
 			// Test numeric validation
 			port := 8080
 			_ = port >= 1000 && port <= 65535
-			
+
 			// Test progress validation
 			progress := 0.5
 			_ = progress >= 0.0 && progress <= 1.0

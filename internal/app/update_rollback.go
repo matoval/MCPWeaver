@@ -123,9 +123,9 @@ func (rm *RollbackManager) PerformRollback(rollbackInfo *RollbackInfo, currentEx
 		// Try to restore from failed backup if rollback copy failed
 		if restoreErr := rm.copyFile(failedBackupPath, currentExePath); restoreErr != nil {
 			return &APIError{
-				Type:    ErrorTypeSystem,
-				Code:    "ROLLBACK_AND_RESTORE_FAILED",
-				Message: fmt.Sprintf("Rollback failed and unable to restore: rollback error: %v, restore error: %v", err, restoreErr),
+				Type:     ErrorTypeSystem,
+				Code:     "ROLLBACK_AND_RESTORE_FAILED",
+				Message:  fmt.Sprintf("Rollback failed and unable to restore: rollback error: %v, restore error: %v", err, restoreErr),
 				Severity: ErrorSeverityCritical,
 			}
 		}
@@ -139,9 +139,9 @@ func (rm *RollbackManager) PerformRollback(rollbackInfo *RollbackInfo, currentEx
 	// Restore original permissions
 	if err := os.Chmod(currentExePath, stat.Mode()); err != nil {
 		return &APIError{
-			Type:    ErrorTypeFileSystem,
-			Code:    "ROLLBACK_PERMISSIONS_FAILED",
-			Message: fmt.Sprintf("Rollback succeeded but failed to set permissions: %v", err),
+			Type:     ErrorTypeFileSystem,
+			Code:     "ROLLBACK_PERMISSIONS_FAILED",
+			Message:  fmt.Sprintf("Rollback succeeded but failed to set permissions: %v", err),
 			Severity: ErrorSeverityMedium,
 		}
 	}
@@ -271,12 +271,12 @@ func (rm *RollbackManager) ValidateBackup(backupPath string) (*BackupValidation,
 // GetRollbackCapabilities returns information about rollback capabilities
 func (rm *RollbackManager) GetRollbackCapabilities() *RollbackCapabilities {
 	backups, _ := rm.ListAvailableBackups()
-	
+
 	return &RollbackCapabilities{
-		Available:    len(backups) > 0,
-		BackupCount:  len(backups),
-		MaxBackups:   rm.maxBackups,
-		BackupDir:    rm.backupDirectory,
+		Available:   len(backups) > 0,
+		BackupCount: len(backups),
+		MaxBackups:  rm.maxBackups,
+		BackupDir:   rm.backupDirectory,
 		Features: []string{
 			"automatic_backup",
 			"multiple_versions",

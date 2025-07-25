@@ -13,73 +13,73 @@ import (
 type Plugin interface {
 	// GetInfo returns plugin metadata
 	GetInfo() *PluginInfo
-	
+
 	// Initialize initializes the plugin with configuration
 	Initialize(ctx context.Context, config json.RawMessage) error
-	
+
 	// Shutdown cleanly shuts down the plugin
 	Shutdown(ctx context.Context) error
-	
+
 	// GetCapabilities returns what the plugin can do
 	GetCapabilities() []Capability
 }
 
 // PluginInfo contains metadata about a plugin
 type PluginInfo struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Version     string            `json:"version"`
-	Description string            `json:"description"`
-	Author      string            `json:"author"`
-	Homepage    string            `json:"homepage,omitempty"`
-	Repository  string            `json:"repository,omitempty"`
-	License     string            `json:"license"`
-	Tags        []string          `json:"tags,omitempty"`
-	MinVersion  string            `json:"minVersion"` // Minimum MCPWeaver version
-	MaxVersion  string            `json:"maxVersion"` // Maximum MCPWeaver version
-	Config      *PluginConfig     `json:"config,omitempty"`
-	Permissions []Permission      `json:"permissions,omitempty"`
-	Dependencies []Dependency     `json:"dependencies,omitempty"`
-	Metadata    map[string]string `json:"metadata,omitempty"`
+	ID           string            `json:"id"`
+	Name         string            `json:"name"`
+	Version      string            `json:"version"`
+	Description  string            `json:"description"`
+	Author       string            `json:"author"`
+	Homepage     string            `json:"homepage,omitempty"`
+	Repository   string            `json:"repository,omitempty"`
+	License      string            `json:"license"`
+	Tags         []string          `json:"tags,omitempty"`
+	MinVersion   string            `json:"minVersion"` // Minimum MCPWeaver version
+	MaxVersion   string            `json:"maxVersion"` // Maximum MCPWeaver version
+	Config       *PluginConfig     `json:"config,omitempty"`
+	Permissions  []Permission      `json:"permissions,omitempty"`
+	Dependencies []Dependency      `json:"dependencies,omitempty"`
+	Metadata     map[string]string `json:"metadata,omitempty"`
 }
 
 // PluginConfig describes plugin configuration schema
 type PluginConfig struct {
-	Schema      json.RawMessage   `json:"schema"`      // JSON Schema for config
-	Default     json.RawMessage   `json:"default"`     // Default configuration
-	Required    []string          `json:"required"`    // Required config fields
-	Examples    []json.RawMessage `json:"examples"`    // Example configurations
+	Schema   json.RawMessage   `json:"schema"`   // JSON Schema for config
+	Default  json.RawMessage   `json:"default"`  // Default configuration
+	Required []string          `json:"required"` // Required config fields
+	Examples []json.RawMessage `json:"examples"` // Example configurations
 }
 
 // Capability represents what a plugin can do
 type Capability string
 
 const (
-	CapabilityTemplateProcessor   Capability = "template_processor"
-	CapabilityOutputConverter     Capability = "output_converter"
-	CapabilityValidator           Capability = "validator"
-	CapabilityUIComponent         Capability = "ui_component"
-	CapabilityIntegration         Capability = "integration"
-	CapabilityTesting             Capability = "testing"
-	CapabilityParser              Capability = "parser"
-	CapabilityGenerator           Capability = "generator"
-	CapabilityMiddleware          Capability = "middleware"
+	CapabilityTemplateProcessor Capability = "template_processor"
+	CapabilityOutputConverter   Capability = "output_converter"
+	CapabilityValidator         Capability = "validator"
+	CapabilityUIComponent       Capability = "ui_component"
+	CapabilityIntegration       Capability = "integration"
+	CapabilityTesting           Capability = "testing"
+	CapabilityParser            Capability = "parser"
+	CapabilityGenerator         Capability = "generator"
+	CapabilityMiddleware        Capability = "middleware"
 )
 
 // Permission represents what system resources a plugin needs
 type Permission string
 
 const (
-	PermissionFileSystem     Permission = "filesystem"
-	PermissionNetwork        Permission = "network"
-	PermissionDatabase       Permission = "database"
-	PermissionSettings       Permission = "settings"
-	PermissionProjects       Permission = "projects"
-	PermissionTemplates      Permission = "templates"
-	PermissionExec           Permission = "exec"
-	PermissionSystemInfo     Permission = "system_info"
-	PermissionClipboard      Permission = "clipboard"
-	PermissionNotifications  Permission = "notifications"
+	PermissionFileSystem    Permission = "filesystem"
+	PermissionNetwork       Permission = "network"
+	PermissionDatabase      Permission = "database"
+	PermissionSettings      Permission = "settings"
+	PermissionProjects      Permission = "projects"
+	PermissionTemplates     Permission = "templates"
+	PermissionExec          Permission = "exec"
+	PermissionSystemInfo    Permission = "system_info"
+	PermissionClipboard     Permission = "clipboard"
+	PermissionNotifications Permission = "notifications"
 )
 
 // Dependency represents plugin dependencies
@@ -95,25 +95,25 @@ type Dependency struct {
 type PluginStatus string
 
 const (
-	PluginStatusUnloaded   PluginStatus = "unloaded"
-	PluginStatusLoading    PluginStatus = "loading"
-	PluginStatusLoaded     PluginStatus = "loaded"
-	PluginStatusActive     PluginStatus = "active"
-	PluginStatusError      PluginStatus = "error"
-	PluginStatusDisabled   PluginStatus = "disabled"
-	PluginStatusUnloading  PluginStatus = "unloading"
+	PluginStatusUnloaded  PluginStatus = "unloaded"
+	PluginStatusLoading   PluginStatus = "loading"
+	PluginStatusLoaded    PluginStatus = "loaded"
+	PluginStatusActive    PluginStatus = "active"
+	PluginStatusError     PluginStatus = "error"
+	PluginStatusDisabled  PluginStatus = "disabled"
+	PluginStatusUnloading PluginStatus = "unloading"
 )
 
 // PluginInstance represents an instance of a loaded plugin
 type PluginInstance struct {
-	Plugin     Plugin           `json:"-"`
-	Info       *PluginInfo      `json:"info"`
-	Status     PluginStatus     `json:"status"`
-	Config     json.RawMessage  `json:"config,omitempty"`
-	LoadedAt   time.Time        `json:"loadedAt"`
-	LastError  string           `json:"lastError,omitempty"`
-	Stats      *PluginStats     `json:"stats"`
-	Manifest   *PluginManifest  `json:"manifest"`
+	Plugin    Plugin          `json:"-"`
+	Info      *PluginInfo     `json:"info"`
+	Status    PluginStatus    `json:"status"`
+	Config    json.RawMessage `json:"config,omitempty"`
+	LoadedAt  time.Time       `json:"loadedAt"`
+	LastError string          `json:"lastError,omitempty"`
+	Stats     *PluginStats    `json:"stats"`
+	Manifest  *PluginManifest `json:"manifest"`
 }
 
 // PluginStats tracks plugin usage statistics
@@ -129,12 +129,12 @@ type PluginStats struct {
 // PluginManifest describes plugin installation package
 type PluginManifest struct {
 	*PluginInfo
-	Files       []PluginFile   `json:"files"`
-	Checksum    string         `json:"checksum"`
-	Size        int64          `json:"size"`
-	InstallPath string         `json:"installPath,omitempty"`
-	Verified    bool           `json:"verified"`
-	Signature   string         `json:"signature,omitempty"`
+	Files       []PluginFile `json:"files"`
+	Checksum    string       `json:"checksum"`
+	Size        int64        `json:"size"`
+	InstallPath string       `json:"installPath,omitempty"`
+	Verified    bool         `json:"verified"`
+	Signature   string       `json:"signature,omitempty"`
 }
 
 // PluginFile describes a file in the plugin package
@@ -142,7 +142,7 @@ type PluginFile struct {
 	Path     string `json:"path"`
 	Size     int64  `json:"size"`
 	Checksum string `json:"checksum"`
-	Type     string `json:"type"` // "binary", "config", "template", "documentation"
+	Type     string `json:"type"`               // "binary", "config", "template", "documentation"
 	Platform string `json:"platform,omitempty"` // "windows", "darwin", "linux", "all"
 	Arch     string `json:"arch,omitempty"`     // "amd64", "arm64", "all"
 }
@@ -177,11 +177,11 @@ type Validator interface {
 
 // ValidationResult represents validation output
 type ValidationResult struct {
-	Valid    bool               `json:"valid"`
-	Errors   []ValidationError  `json:"errors,omitempty"`
-	Warnings []ValidationError  `json:"warnings,omitempty"`
-	Info     []ValidationError  `json:"info,omitempty"`
-	Stats    *ValidationStats   `json:"stats,omitempty"`
+	Valid    bool              `json:"valid"`
+	Errors   []ValidationError `json:"errors,omitempty"`
+	Warnings []ValidationError `json:"warnings,omitempty"`
+	Info     []ValidationError `json:"info,omitempty"`
+	Stats    *ValidationStats  `json:"stats,omitempty"`
 }
 
 // ValidationError represents a validation issue
@@ -209,11 +209,11 @@ type ValidationRule struct {
 
 // ValidationStats provides validation statistics
 type ValidationStats struct {
-	TotalChecks   int           `json:"totalChecks"`
-	Duration      time.Duration `json:"duration"`
-	RulesApplied  int           `json:"rulesApplied"`
-	FilesChecked  int           `json:"filesChecked"`
-	LinesChecked  int           `json:"linesChecked"`
+	TotalChecks  int           `json:"totalChecks"`
+	Duration     time.Duration `json:"duration"`
+	RulesApplied int           `json:"rulesApplied"`
+	FilesChecked int           `json:"filesChecked"`
+	LinesChecked int           `json:"linesChecked"`
 }
 
 // UIComponent plugins can provide custom UI components
@@ -225,15 +225,15 @@ type UIComponent interface {
 
 // ComponentDefinition describes a UI component
 type ComponentDefinition struct {
-	Name        string                 `json:"name"`
-	Type        string                 `json:"type"` // "react", "vue", "html"
-	Props       map[string]interface{} `json:"props"`
-	Events      []string               `json:"events"`
-	Slots       []string               `json:"slots"`
-	Styles      string                 `json:"styles,omitempty"`
-	Script      string                 `json:"script,omitempty"`
-	Template    string                 `json:"template"`
-	Dependencies []string              `json:"dependencies,omitempty"`
+	Name         string                 `json:"name"`
+	Type         string                 `json:"type"` // "react", "vue", "html"
+	Props        map[string]interface{} `json:"props"`
+	Events       []string               `json:"events"`
+	Slots        []string               `json:"slots"`
+	Styles       string                 `json:"styles,omitempty"`
+	Script       string                 `json:"script,omitempty"`
+	Template     string                 `json:"template"`
+	Dependencies []string               `json:"dependencies,omitempty"`
 }
 
 // Integration plugins can integrate with external services
@@ -274,12 +274,12 @@ type Testing interface {
 
 // TestResult represents test execution results
 type TestResult struct {
-	Passed       bool          `json:"passed"`
-	Duration     time.Duration `json:"duration"`
-	Tests        []TestCase    `json:"tests"`
-	Coverage     *Coverage     `json:"coverage,omitempty"`
-	Performance  *Performance  `json:"performance,omitempty"`
-	Summary      string        `json:"summary"`
+	Passed      bool          `json:"passed"`
+	Duration    time.Duration `json:"duration"`
+	Tests       []TestCase    `json:"tests"`
+	Coverage    *Coverage     `json:"coverage,omitempty"`
+	Performance *Performance  `json:"performance,omitempty"`
+	Summary     string        `json:"summary"`
 }
 
 // TestCase represents an individual test
@@ -312,12 +312,12 @@ type Performance struct {
 
 // TestSuite describes a collection of tests
 type TestSuite struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Tests       []string          `json:"tests"`
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Tests       []string               `json:"tests"`
 	Config      map[string]interface{} `json:"config,omitempty"`
-	Tags        []string          `json:"tags,omitempty"`
+	Tags        []string               `json:"tags,omitempty"`
 }
 
 // ParserPlugin plugins can extend OpenAPI parsing capabilities
@@ -328,7 +328,7 @@ type ParserPlugin interface {
 	ValidateExtension(extension string, value interface{}) error
 }
 
-// GeneratorPlugin plugins can extend code generation capabilities  
+// GeneratorPlugin plugins can extend code generation capabilities
 type GeneratorPlugin interface {
 	Plugin
 	GenerateCode(ctx context.Context, api *parser.ParsedAPI, tools []mapping.MCPTool, config map[string]interface{}) (map[string][]byte, error)
@@ -369,8 +369,8 @@ type PluginResponse struct {
 // PluginEvent represents events that plugins can emit or listen to
 type PluginEvent struct {
 	Type      string                 `json:"type"`
-	Source    string                 `json:"source"`    // Plugin ID
-	Target    string                 `json:"target"`    // Target plugin ID or "*" for broadcast
+	Source    string                 `json:"source"` // Plugin ID
+	Target    string                 `json:"target"` // Target plugin ID or "*" for broadcast
 	Timestamp time.Time              `json:"timestamp"`
 	Data      map[string]interface{} `json:"data,omitempty"`
 	Context   context.Context        `json:"-"`

@@ -18,14 +18,14 @@ import (
 
 // Compiled regex patterns for preprocessing (cached for performance)
 var (
-	tupleRegexOnce      sync.Once
-	tupleRegex          *regexp.Regexp
-	additionalItemsOnce sync.Once
+	tupleRegexOnce       sync.Once
+	tupleRegex           *regexp.Regexp
+	additionalItemsOnce  sync.Once
 	additionalItemsRegex *regexp.Regexp
-	lookAheadOnce       sync.Once
-	lookAheadRegex      *regexp.Regexp
-	negLookAheadOnce    sync.Once
-	negLookAheadRegex   *regexp.Regexp
+	lookAheadOnce        sync.Once
+	lookAheadRegex       *regexp.Regexp
+	negLookAheadOnce     sync.Once
+	negLookAheadRegex    *regexp.Regexp
 )
 
 // getTupleRegex returns the compiled tuple regex pattern

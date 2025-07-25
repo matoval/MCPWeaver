@@ -13,15 +13,15 @@ import (
 // Security constants and configuration
 const (
 	// Maximum allowed sizes
-	MaxURLLength        = 2048
-	MaxFileNameLength   = 255
-	MaxContentLength    = 10 * 1024 * 1024 // 10MB
-	MaxRegexLength      = 1000
+	MaxURLLength         = 2048
+	MaxFileNameLength    = 255
+	MaxContentLength     = 10 * 1024 * 1024 // 10MB
+	MaxRegexLength       = 1000
 	MaxTemplateVarLength = 500
-	
+
 	// Rate limiting
 	MaxURLRequestsPerMinute = 10
-	
+
 	// Allowed patterns
 	AllowedTemplateNamePattern = `^[a-zA-Z0-9_-]+$`
 	AllowedFileNamePattern     = `^[a-zA-Z0-9._-]+$`
@@ -33,21 +33,21 @@ var (
 	templateNameRegex = regexp.MustCompile(AllowedTemplateNamePattern)
 	fileNameRegex     = regexp.MustCompile(AllowedFileNamePattern)
 	projectNameRegex  = regexp.MustCompile(AllowedProjectNamePattern)
-	
+
 	// Dangerous patterns to block
 	dangerousRegexPatterns = []string{
-		`(?=.*(?=.*(?=.*`,     // Nested lookaheads (ReDoS risk)
-		`(.*){10,}`,           // High repetition (ReDoS risk)
-		`(.*)*`,              // Nested quantifiers (ReDoS risk)
-		`(.+)+`,              // Nested quantifiers (ReDoS risk)
-		`(.*)*$`,             // Catastrophic backtracking
+		`(?=.*(?=.*(?=.*`, // Nested lookaheads (ReDoS risk)
+		`(.*){10,}`,       // High repetition (ReDoS risk)
+		`(.*)*`,           // Nested quantifiers (ReDoS risk)
+		`(.+)+`,           // Nested quantifiers (ReDoS risk)
+		`(.*)*$`,          // Catastrophic backtracking
 	}
-	
+
 	// Private IP ranges to block in SSRF protection
 	privateIPRanges = []string{
 		"127.0.0.0/8",    // Loopback
 		"10.0.0.0/8",     // Private Class A
-		"172.16.0.0/12",  // Private Class B  
+		"172.16.0.0/12",  // Private Class B
 		"192.168.0.0/16", // Private Class C
 		"169.254.0.0/16", // Link-local
 		"224.0.0.0/4",    // Multicast
@@ -56,7 +56,7 @@ var (
 		"fc00::/7",       // IPv6 private
 		"fe80::/10",      // IPv6 link-local
 	}
-	
+
 	// Compiled private IP networks
 	privateNetworks []*net.IPNet
 )
@@ -86,14 +86,14 @@ func (sv *SecurityValidator) ValidateURL(rawURL string) error {
 	if rawURL == "" {
 		return sv.app.createAPIError("validation", "INVALID_URL", "URL cannot be empty", nil)
 	}
-	
+
 	if len(rawURL) > MaxURLLength {
 		return sv.app.createAPIError("validation", "URL_TOO_LONG", "URL exceeds maximum length", map[string]string{
 			"maxLength": fmt.Sprintf("%d", MaxURLLength),
 			"length":    fmt.Sprintf("%d", len(rawURL)),
 		})
 	}
-	
+
 	// Parse URL
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
@@ -101,19 +101,19 @@ func (sv *SecurityValidator) ValidateURL(rawURL string) error {
 			"error": err.Error(),
 		})
 	}
-	
+
 	// Only allow HTTP and HTTPS schemes
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 		return sv.app.createAPIError("security", "INVALID_URL_SCHEME", "Only HTTP and HTTPS URLs are allowed", map[string]string{
 			"scheme": parsedURL.Scheme,
 		})
 	}
-	
+
 	// Check for SSRF vulnerabilities
 	if err := sv.checkSSRF(parsedURL); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -123,7 +123,7 @@ func (sv *SecurityValidator) checkSSRF(parsedURL *url.URL) error {
 	if host == "" {
 		return sv.app.createAPIError("security", "INVALID_HOST", "URL must contain a valid hostname", nil)
 	}
-	
+
 	// Block localhost variations
 	localhostPatterns := []string{
 		"localhost",
@@ -132,7 +132,7 @@ func (sv *SecurityValidator) checkSSRF(parsedURL *url.URL) error {
 		"[::1]",
 		"::1",
 	}
-	
+
 	for _, pattern := range localhostPatterns {
 		if strings.EqualFold(host, pattern) {
 			return sv.app.createAPIError("security", "SSRF_LOCALHOST_BLOCKED", "Access to localhost is not allowed", map[string]string{
@@ -140,7 +140,7 @@ func (sv *SecurityValidator) checkSSRF(parsedURL *url.URL) error {
 			})
 		}
 	}
-	
+
 	// Parse IP address if possible
 	ip := net.ParseIP(host)
 	if ip != nil {
@@ -154,14 +154,14 @@ func (sv *SecurityValidator) checkSSRF(parsedURL *url.URL) error {
 			}
 		}
 	}
-	
+
 	// Block common metadata endpoints
 	metadataHosts := []string{
 		"169.254.169.254", // AWS, GCP metadata
 		"metadata.google.internal",
 		"metadata.azure.com",
 	}
-	
+
 	for _, metadataHost := range metadataHosts {
 		if strings.EqualFold(host, metadataHost) {
 			return sv.app.createAPIError("security", "SSRF_METADATA_BLOCKED", "Access to cloud metadata endpoints is not allowed", map[string]string{
@@ -169,7 +169,7 @@ func (sv *SecurityValidator) checkSSRF(parsedURL *url.URL) error {
 			})
 		}
 	}
-	
+
 	return nil
 }
 
@@ -178,14 +178,14 @@ func (sv *SecurityValidator) ValidateFilePath(filePath string) error {
 	if filePath == "" {
 		return sv.app.createAPIError("validation", "EMPTY_FILE_PATH", "File path cannot be empty", nil)
 	}
-	
+
 	// Check for path traversal attempts
 	if strings.Contains(filePath, "..") {
 		return sv.app.createAPIError("security", "PATH_TRAVERSAL_DETECTED", "Path traversal attempts are not allowed", map[string]string{
 			"path": filePath,
 		})
 	}
-	
+
 	// Clean the path
 	cleanPath := filepath.Clean(filePath)
 	if cleanPath != filePath {
@@ -194,7 +194,7 @@ func (sv *SecurityValidator) ValidateFilePath(filePath string) error {
 			"cleaned":  cleanPath,
 		})
 	}
-	
+
 	// Check file name length
 	fileName := filepath.Base(filePath)
 	if len(fileName) > MaxFileNameLength {
@@ -203,7 +203,7 @@ func (sv *SecurityValidator) ValidateFilePath(filePath string) error {
 			"maxLength": fmt.Sprintf("%d", MaxFileNameLength),
 		})
 	}
-	
+
 	// Validate file name characters
 	if !fileNameRegex.MatchString(fileName) {
 		return sv.app.createAPIError("validation", "INVALID_FILENAME", "File name contains invalid characters", map[string]string{
@@ -211,7 +211,7 @@ func (sv *SecurityValidator) ValidateFilePath(filePath string) error {
 			"pattern":  AllowedFileNamePattern,
 		})
 	}
-	
+
 	return nil
 }
 
@@ -220,14 +220,14 @@ func (sv *SecurityValidator) ValidateTemplateName(templateName string) error {
 	if templateName == "" {
 		return sv.app.createAPIError("validation", "EMPTY_TEMPLATE_NAME", "Template name cannot be empty", nil)
 	}
-	
+
 	if len(templateName) > 100 {
 		return sv.app.createAPIError("validation", "TEMPLATE_NAME_TOO_LONG", "Template name is too long", map[string]string{
 			"name":      templateName,
 			"maxLength": "100",
 		})
 	}
-	
+
 	// Use whitelist approach for template names
 	if !templateNameRegex.MatchString(templateName) {
 		return sv.app.createAPIError("validation", "INVALID_TEMPLATE_NAME", "Template name contains invalid characters", map[string]string{
@@ -235,7 +235,7 @@ func (sv *SecurityValidator) ValidateTemplateName(templateName string) error {
 			"pattern": AllowedTemplateNamePattern,
 		})
 	}
-	
+
 	// Block reserved names
 	reservedNames := []string{
 		"con", "prn", "aux", "nul", // Windows reserved
@@ -243,7 +243,7 @@ func (sv *SecurityValidator) ValidateTemplateName(templateName string) error {
 		"lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
 		"admin", "root", "system", "config", // Common reserved
 	}
-	
+
 	lowerName := strings.ToLower(templateName)
 	for _, reserved := range reservedNames {
 		if lowerName == reserved {
@@ -252,7 +252,7 @@ func (sv *SecurityValidator) ValidateTemplateName(templateName string) error {
 			})
 		}
 	}
-	
+
 	return nil
 }
 
@@ -261,21 +261,21 @@ func (sv *SecurityValidator) ValidateProjectName(projectName string) error {
 	if projectName == "" {
 		return sv.app.createAPIError("validation", "EMPTY_PROJECT_NAME", "Project name cannot be empty", nil)
 	}
-	
+
 	if len(projectName) > 100 {
 		return sv.app.createAPIError("validation", "PROJECT_NAME_TOO_LONG", "Project name is too long", map[string]string{
 			"name":      projectName,
 			"maxLength": "100",
 		})
 	}
-	
+
 	if !projectNameRegex.MatchString(projectName) {
 		return sv.app.createAPIError("validation", "INVALID_PROJECT_NAME", "Project name contains invalid characters", map[string]string{
 			"name":    projectName,
 			"pattern": AllowedProjectNamePattern,
 		})
 	}
-	
+
 	return nil
 }
 
@@ -284,14 +284,14 @@ func (sv *SecurityValidator) ValidateRegexPattern(pattern string) error {
 	if pattern == "" {
 		return nil // Empty patterns are allowed
 	}
-	
+
 	if len(pattern) > MaxRegexLength {
 		return sv.app.createAPIError("validation", "REGEX_TOO_LONG", "Regex pattern is too long", map[string]string{
 			"pattern":   pattern,
 			"maxLength": fmt.Sprintf("%d", MaxRegexLength),
 		})
 	}
-	
+
 	// Check for dangerous patterns that could cause ReDoS
 	for _, dangerous := range dangerousRegexPatterns {
 		if strings.Contains(pattern, dangerous) {
@@ -301,7 +301,7 @@ func (sv *SecurityValidator) ValidateRegexPattern(pattern string) error {
 			})
 		}
 	}
-	
+
 	// Try to compile the regex to ensure it's valid
 	_, err := regexp.Compile(pattern)
 	if err != nil {
@@ -310,7 +310,7 @@ func (sv *SecurityValidator) ValidateRegexPattern(pattern string) error {
 			"error":   err.Error(),
 		})
 	}
-	
+
 	return nil
 }
 
@@ -319,7 +319,7 @@ func (sv *SecurityValidator) SanitizeTemplateVariable(variable string) string {
 	if len(variable) > MaxTemplateVarLength {
 		variable = variable[:MaxTemplateVarLength]
 	}
-	
+
 	// Remove control characters except newline, carriage return, and tab
 	sanitized := strings.Map(func(r rune) rune {
 		if unicode.IsControl(r) && r != '\n' && r != '\r' && r != '\t' {
@@ -327,13 +327,13 @@ func (sv *SecurityValidator) SanitizeTemplateVariable(variable string) string {
 		}
 		return r
 	}, variable)
-	
+
 	// Escape template-specific characters to prevent injection
 	sanitized = strings.ReplaceAll(sanitized, "{{", "&#123;&#123;")
 	sanitized = strings.ReplaceAll(sanitized, "}}", "&#125;&#125;")
 	sanitized = strings.ReplaceAll(sanitized, "<%", "&#60;&#37;")
 	sanitized = strings.ReplaceAll(sanitized, "%>", "&#37;&#62;")
-	
+
 	return sanitized
 }
 
@@ -341,7 +341,7 @@ func (sv *SecurityValidator) SanitizeTemplateVariable(variable string) string {
 func (sv *SecurityValidator) SanitizeInput(input string) string {
 	// Remove null bytes
 	input = strings.ReplaceAll(input, "\x00", "")
-	
+
 	// Remove or replace control characters (except common whitespace)
 	sanitized := strings.Map(func(r rune) rune {
 		if unicode.IsControl(r) && r != '\n' && r != '\r' && r != '\t' {
@@ -349,10 +349,10 @@ func (sv *SecurityValidator) SanitizeInput(input string) string {
 		}
 		return r
 	}, input)
-	
+
 	// Trim whitespace
 	sanitized = strings.TrimSpace(sanitized)
-	
+
 	return sanitized
 }
 
@@ -361,14 +361,14 @@ func (sv *SecurityValidator) ValidateContentLength(content string, maxLength int
 	if maxLength <= 0 {
 		maxLength = MaxContentLength
 	}
-	
+
 	if len(content) > maxLength {
 		return sv.app.createAPIError("validation", "CONTENT_TOO_LARGE", "Content exceeds maximum allowed length", map[string]string{
 			"length":    fmt.Sprintf("%d", len(content)),
 			"maxLength": fmt.Sprintf("%d", maxLength),
 		})
 	}
-	
+
 	return nil
 }
 
@@ -385,7 +385,7 @@ func (sv *SecurityValidator) ValidateJSONContent(content string) error {
 	maxDepth := 50
 	depth := 0
 	maxDepthReached := 0
-	
+
 	for _, char := range content {
 		switch char {
 		case '{', '[':
@@ -395,7 +395,7 @@ func (sv *SecurityValidator) ValidateJSONContent(content string) error {
 			}
 			if depth > maxDepth {
 				return sv.app.createAPIError("security", "JSON_TOO_DEEP", "JSON content has excessive nesting depth", map[string]string{
-					"maxDepth":     fmt.Sprintf("%d", maxDepth),
+					"maxDepth":      fmt.Sprintf("%d", maxDepth),
 					"detectedDepth": fmt.Sprintf("%d", depth),
 				})
 			}
@@ -403,7 +403,7 @@ func (sv *SecurityValidator) ValidateJSONContent(content string) error {
 			depth--
 		}
 	}
-	
+
 	return nil
 }
 
@@ -413,16 +413,16 @@ func (sv *SecurityValidator) ValidateYAMLContent(content string) error {
 	if strings.Count(content, "&") > 100 {
 		return sv.app.createAPIError("security", "YAML_EXCESSIVE_REFERENCES", "YAML content has too many references", nil)
 	}
-	
+
 	// Check for potentially dangerous YAML constructs
 	dangerousPatterns := []string{
-		"!!python/",     // Python object serialization
-		"!!java/",       // Java object serialization
-		"!!js/",         // JavaScript object serialization
-		"!!ruby/",       // Ruby object serialization
-		"!<tag:",        // Custom tag URIs
+		"!!python/", // Python object serialization
+		"!!java/",   // Java object serialization
+		"!!js/",     // JavaScript object serialization
+		"!!ruby/",   // Ruby object serialization
+		"!<tag:",    // Custom tag URIs
 	}
-	
+
 	lowerContent := strings.ToLower(content)
 	for _, pattern := range dangerousPatterns {
 		if strings.Contains(lowerContent, pattern) {
@@ -431,7 +431,7 @@ func (sv *SecurityValidator) ValidateYAMLContent(content string) error {
 			})
 		}
 	}
-	
+
 	return nil
 }
 
@@ -440,11 +440,11 @@ func (sv *SecurityValidator) ValidateHTTPHeaders(headers map[string]string) erro
 	// Check for dangerous headers
 	dangerousHeaders := []string{
 		"x-forwarded-for",
-		"x-real-ip", 
+		"x-real-ip",
 		"x-forwarded-proto",
 		"x-forwarded-host",
 	}
-	
+
 	for headerName := range headers {
 		lowerName := strings.ToLower(headerName)
 		for _, dangerous := range dangerousHeaders {
@@ -455,6 +455,6 @@ func (sv *SecurityValidator) ValidateHTTPHeaders(headers map[string]string) erro
 			}
 		}
 	}
-	
+
 	return nil
 }

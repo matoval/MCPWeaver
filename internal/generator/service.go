@@ -36,10 +36,10 @@ type Service struct {
 
 // ValidationResult represents the result of code validation
 type ValidationResult struct {
-	IsValid bool     `json:"isValid"`
-	Errors  []string `json:"errors,omitempty"`
-	Warnings []string `json:"warnings,omitempty"`
-	FilesValidated int `json:"filesValidated"`
+	IsValid        bool     `json:"isValid"`
+	Errors         []string `json:"errors,omitempty"`
+	Warnings       []string `json:"warnings,omitempty"`
+	FilesValidated int      `json:"filesValidated"`
 }
 
 // NewService creates a new code generator service
@@ -313,9 +313,9 @@ func isPathSafe(targetPath, baseDir string) bool {
 // ValidateGeneratedCode validates the generated server code
 func (s *Service) ValidateGeneratedCode() (*ValidationResult, error) {
 	result := &ValidationResult{
-		IsValid: true,
-		Errors:  []string{},
-		Warnings: []string{},
+		IsValid:        true,
+		Errors:         []string{},
+		Warnings:       []string{},
 		FilesValidated: 0,
 	}
 
@@ -400,7 +400,7 @@ func (s *Service) validateGoSyntax(filePath string, result *ValidationResult) er
 
 	// Basic syntax checks
 	contentStr := string(content)
-	
+
 	// Check for package declaration
 	if !strings.Contains(contentStr, "package main") {
 		result.Errors = append(result.Errors, "Missing 'package main' declaration")
@@ -453,7 +453,7 @@ func (s *Service) validateGoMod(filePath string, result *ValidationResult) error
 	}
 
 	contentStr := string(content)
-	
+
 	// Check for module declaration
 	if !strings.Contains(contentStr, "module ") {
 		result.Errors = append(result.Errors, "Missing 'module' declaration in go.mod")
@@ -484,7 +484,7 @@ func (s *Service) validateBraces(content string) bool {
 	stack := 0
 	inString := false
 	inComment := false
-	
+
 	for i, char := range content {
 		if inComment {
 			if char == '\n' {
@@ -492,21 +492,21 @@ func (s *Service) validateBraces(content string) bool {
 			}
 			continue
 		}
-		
+
 		if char == '/' && i+1 < len(content) && content[i+1] == '/' {
 			inComment = true
 			continue
 		}
-		
+
 		if char == '"' && (i == 0 || content[i-1] != '\\') {
 			inString = !inString
 			continue
 		}
-		
+
 		if inString {
 			continue
 		}
-		
+
 		switch char {
 		case '{':
 			stack++
@@ -517,7 +517,7 @@ func (s *Service) validateBraces(content string) bool {
 			}
 		}
 	}
-	
+
 	return stack == 0
 }
 

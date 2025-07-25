@@ -37,7 +37,7 @@ func (s *ProjectServiceTestSuite) TestNewService() {
 func (s *ProjectServiceTestSuite) TestProject_Structure() {
 	proj := project.Project{
 		ID:        "test-id",
-		Name:      "Test Project", 
+		Name:      "Test Project",
 		SpecPath:  "/path/to/spec.yaml",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -68,11 +68,11 @@ func (s *ProjectServiceTestSuite) TestCreateProject_CurrentImplementation() {
 	}
 
 	proj, err := s.service.Create(s.ctx, req)
-	
+
 	// Current implementation returns an error but also creates a project struct
 	s.helper.AssertError(err)
 	s.helper.AssertContains(err.Error(), "not yet implemented")
-	
+
 	// But it still returns a project with the data filled in
 	s.helper.AssertNotNil(proj)
 	s.helper.AssertEqual("Test Project", proj.Name)
@@ -85,7 +85,7 @@ func (s *ProjectServiceTestSuite) TestCreateProject_CurrentImplementation() {
 func (s *ProjectServiceTestSuite) TestGetAll_CurrentImplementation() {
 	// Test the current implementation that returns "not yet implemented"
 	projects, err := s.service.GetAll(s.ctx)
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertContains(err.Error(), "not yet implemented")
 	s.helper.AssertNil(projects)
@@ -94,7 +94,7 @@ func (s *ProjectServiceTestSuite) TestGetAll_CurrentImplementation() {
 func (s *ProjectServiceTestSuite) TestGetByID_CurrentImplementation() {
 	// Test the current implementation that returns "not yet implemented"
 	proj, err := s.service.GetByID(s.ctx, "test-id")
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertContains(err.Error(), "not yet implemented")
 	s.helper.AssertNil(proj)
@@ -103,7 +103,7 @@ func (s *ProjectServiceTestSuite) TestGetByID_CurrentImplementation() {
 func (s *ProjectServiceTestSuite) TestGetByID_EmptyID() {
 	// Test with empty ID
 	proj, err := s.service.GetByID(s.ctx, "")
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertContains(err.Error(), "not yet implemented")
 	s.helper.AssertNil(proj)
@@ -122,14 +122,14 @@ func (s *ProjectServiceTestSuite) TestProjectIDGeneration() {
 		proj, err := s.service.Create(s.ctx, req)
 		s.helper.AssertError(err) // Still expecting "not implemented" error
 		s.helper.AssertNotNil(proj)
-		
+
 		// Check that ID is unique
 		s.helper.AssertEqual(false, ids[proj.ID], "ID should be unique")
 		ids[proj.ID] = true
-		
+
 		// Check ID format
 		s.helper.AssertContains(proj.ID, "proj_")
-		
+
 		// Add small delay to ensure different timestamps
 		time.Sleep(time.Nanosecond)
 	}
@@ -144,10 +144,10 @@ func (s *ProjectServiceTestSuite) TestProjectTimestamps() {
 	beforeCreate := time.Now()
 	proj, err := s.service.Create(s.ctx, req)
 	afterCreate := time.Now()
-	
+
 	s.helper.AssertError(err) // Expected for current implementation
 	s.helper.AssertNotNil(proj)
-	
+
 	// Verify timestamps are reasonable
 	s.helper.AssertEqual(true, proj.CreatedAt.After(beforeCreate) || proj.CreatedAt.Equal(beforeCreate))
 	s.helper.AssertEqual(true, proj.CreatedAt.Before(afterCreate) || proj.CreatedAt.Equal(afterCreate))
@@ -160,10 +160,10 @@ func (s *ProjectServiceTestSuite) TestCreateProject_WithEmptyRequest() {
 	req := project.CreateProjectRequest{}
 
 	proj, err := s.service.Create(s.ctx, req)
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertContains(err.Error(), "not yet implemented")
-	
+
 	// Even with empty request, current implementation creates project struct
 	s.helper.AssertNotNil(proj)
 	s.helper.AssertEqual("", proj.Name)
@@ -179,7 +179,7 @@ func (s *ProjectServiceTestSuite) TestCreateProject_WithSpecialCharacters() {
 	}
 
 	proj, err := s.service.Create(s.ctx, req)
-	
+
 	s.helper.AssertError(err)
 	s.helper.AssertNotNil(proj)
 	s.helper.AssertEqual("Test Project!@#$%^&*()", proj.Name)
@@ -201,7 +201,7 @@ func (s *ProjectServiceTestSuite) TestContextHandling() {
 	// Test with canceled context
 	cancelCtx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
-	
+
 	proj2, err2 := s.service.Create(cancelCtx, req)
 	s.helper.AssertError(err2)
 	s.helper.AssertNotNil(proj2)
@@ -249,7 +249,7 @@ func (s *ProjectServiceTestSuite) TestProject_MemoryUsage() {
 
 	// Verify we created 1000 projects
 	s.helper.AssertEqual(1000, len(projects))
-	
+
 	// Verify each project has unique ID
 	ids := make(map[string]bool)
 	for _, proj := range projects {

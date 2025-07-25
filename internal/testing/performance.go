@@ -27,7 +27,7 @@ func NewPerformanceTester(config *TestConfig) *PerformanceTester {
 // TestPerformance runs comprehensive performance tests
 func (pt *PerformanceTester) TestPerformance(ctx context.Context, serverPath string) (*PerformanceTestResult, error) {
 	startTime := time.Now()
-	
+
 	result := &PerformanceTestResult{
 		Success:         true,
 		LoadTestResults: make(map[string]*LoadTestMetric),
@@ -81,7 +81,7 @@ func (pt *PerformanceTester) testResponseTime(ctx context.Context, serverPath st
 		"capabilities":    map[string]interface{}{},
 		"clientInfo":      map[string]interface{}{"name": "Performance Test", "version": "1.0.0"},
 	}
-	
+
 	if _, err := client.Call(ctx, "initialize", initRequest); err != nil {
 		return fmt.Errorf("initialization failed: %w", err)
 	}
@@ -94,11 +94,11 @@ func (pt *PerformanceTester) testResponseTime(ctx context.Context, serverPath st
 		start := time.Now()
 		_, err := client.Call(ctx, "tools/list", map[string]interface{}{})
 		responseTime := time.Since(start)
-		
+
 		if err == nil {
 			responseTimes = append(responseTimes, responseTime)
 		}
-		
+
 		// Small delay between requests
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -124,7 +124,7 @@ func (pt *PerformanceTester) testResponseTime(ctx context.Context, serverPath st
 // testMemoryUsage measures memory usage during operation
 func (pt *PerformanceTester) testMemoryUsage(ctx context.Context, serverPath string, result *PerformanceTestResult) error {
 	sch := NewSecureCommandHelper()
-	
+
 	// Compile server using secure command execution
 	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "memory-test-server", "main.go")
 	if err != nil {
@@ -186,7 +186,7 @@ func (pt *PerformanceTester) testMemoryUsage(ctx context.Context, serverPath str
 		"capabilities":    map[string]interface{}{},
 		"clientInfo":      map[string]interface{}{"name": "Memory Test", "version": "1.0.0"},
 	}
-	
+
 	if _, err := client.Call(monitorCtx, "initialize", initRequest); err != nil {
 		return fmt.Errorf("initialization failed: %w", err)
 	}
@@ -199,7 +199,7 @@ func (pt *PerformanceTester) testMemoryUsage(ctx context.Context, serverPath str
 	defer requestTicker.Stop()
 
 	var wg sync.WaitGroup
-	
+
 	// Memory monitoring goroutine
 	wg.Add(1)
 	go func() {
@@ -266,7 +266,7 @@ func (pt *PerformanceTester) testThroughput(ctx context.Context, serverPath stri
 		"capabilities":    map[string]interface{}{},
 		"clientInfo":      map[string]interface{}{"name": "Throughput Test", "version": "1.0.0"},
 	}
-	
+
 	if _, err := client.Call(ctx, "initialize", initRequest); err != nil {
 		return fmt.Errorf("initialization failed: %w", err)
 	}
@@ -346,7 +346,7 @@ func (pt *PerformanceTester) runLoadScenario(ctx context.Context, serverPath str
 		"capabilities":    map[string]interface{}{},
 		"clientInfo":      map[string]interface{}{"name": "Load Test", "version": "1.0.0"},
 	}
-	
+
 	if _, err := client.Call(ctx, "initialize", initRequest); err != nil {
 		return nil, fmt.Errorf("initialization failed: %w", err)
 	}
@@ -409,15 +409,15 @@ done:
 func (pt *PerformanceTester) validatePerformanceThresholds(result *PerformanceTestResult) {
 	if result.AverageResponseTime > pt.config.MaxResponseTime {
 		result.Success = false
-		result.Errors = append(result.Errors, 
-			fmt.Sprintf("Average response time %v exceeds threshold %v", 
+		result.Errors = append(result.Errors,
+			fmt.Sprintf("Average response time %v exceeds threshold %v",
 				result.AverageResponseTime, pt.config.MaxResponseTime))
 	}
 
 	if result.PeakMemoryUsage > pt.config.MaxMemoryUsage {
 		result.Success = false
-		result.Errors = append(result.Errors, 
-			fmt.Sprintf("Peak memory usage %d bytes exceeds threshold %d bytes", 
+		result.Errors = append(result.Errors,
+			fmt.Sprintf("Peak memory usage %d bytes exceeds threshold %d bytes",
 				result.PeakMemoryUsage, pt.config.MaxMemoryUsage))
 	}
 
@@ -434,7 +434,7 @@ func (pt *PerformanceTester) calculateAverage(durations []time.Duration) time.Du
 	if len(durations) == 0 {
 		return 0
 	}
-	
+
 	var total time.Duration
 	for _, d := range durations {
 		total += d
@@ -447,7 +447,7 @@ func (pt *PerformanceTester) calculateAverageMemory(memoryUsages []int64) int64 
 	if len(memoryUsages) == 0 {
 		return 0
 	}
-	
+
 	var total int64
 	for _, mem := range memoryUsages {
 		total += mem
@@ -460,7 +460,7 @@ func (pt *PerformanceTester) findMaxMemory(memoryUsages []int64) int64 {
 	if len(memoryUsages) == 0 {
 		return 0
 	}
-	
+
 	max := memoryUsages[0]
 	for _, mem := range memoryUsages {
 		if mem > max {
@@ -475,16 +475,16 @@ func (pt *PerformanceTester) detectMemoryLeak(memoryUsages []int64) bool {
 	if len(memoryUsages) < 10 {
 		return false
 	}
-	
+
 	// Simple leak detection: check if memory usage consistently increases
 	// over the last portion of the test
 	quarterPoint := len(memoryUsages) / 4
 	firstQuarter := memoryUsages[:quarterPoint]
 	lastQuarter := memoryUsages[len(memoryUsages)-quarterPoint:]
-	
+
 	firstAvg := pt.calculateAverageMemory(firstQuarter)
 	lastAvg := pt.calculateAverageMemory(lastQuarter)
-	
+
 	// If memory usage increased by more than 50%, consider it a potential leak
 	threshold := firstAvg + (firstAvg / 2)
 	return lastAvg > threshold
@@ -495,10 +495,10 @@ func (pt *PerformanceTester) getProcessMemoryUsage(pid int) int64 {
 	// This is a simplified implementation
 	// In a real implementation, you would use proper system calls or libraries
 	// to get accurate memory usage information
-	
+
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	// Return allocated memory as a rough approximation
 	// This is not accurate for the specific process, but gives an idea
 	return int64(m.Alloc)
@@ -509,7 +509,7 @@ func (pt *PerformanceTester) getProcessMemoryUsage(pid int) int64 {
 // startPerformanceTestServer starts a server for performance testing
 func (pt *PerformanceTester) startPerformanceTestServer(ctx context.Context, serverPath string) (*exec.Cmd, *os.File, *os.File, *os.File, error) {
 	sch := NewSecureCommandHelper()
-	
+
 	// Compile server using secure command execution
 	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "perf-test-server", "main.go")
 	if err != nil {
@@ -562,7 +562,7 @@ func (pt *PerformanceTester) stopPerformanceTestServer(cmd *exec.Cmd, serverPath
 		cmd.Process.Kill()
 		cmd.Wait()
 	}
-	
+
 	// Clean up binary
 	os.Remove(filepath.Join(serverPath, "perf-test-server"))
 }

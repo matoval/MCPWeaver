@@ -164,7 +164,7 @@ func (s *TypesTestSuite) TestAPIError_ErrorInterface() {
 
 func (s *TypesTestSuite) TestAPIError_IsRetryable() {
 	retryDelay := 5 * time.Second
-	
+
 	// Retryable error
 	retryableError := app.APIError{
 		Recoverable: true,
@@ -200,7 +200,7 @@ func (s *TypesTestSuite) TestErrorCollection_Methods() {
 
 func (s *TypesTestSuite) TestDefaultRetryPolicy() {
 	policy := app.DefaultRetryPolicy()
-	
+
 	s.helper.AssertEqual(3, policy.MaxRetries)
 	s.helper.AssertEqual(time.Second, policy.InitialDelay)
 	s.helper.AssertEqual(30*time.Second, policy.MaxDelay)
@@ -343,7 +343,7 @@ func (s *TypesTestSuite) TestTypeSerialization_Performance() {
 		for i := 0; i < 1000; i++ {
 			jsonData, err := json.Marshal(project)
 			s.helper.AssertNoError(err)
-			
+
 			var deserializedProject app.Project
 			err = json.Unmarshal(jsonData, &deserializedProject)
 			s.helper.AssertNoError(err)

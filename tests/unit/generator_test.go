@@ -115,7 +115,7 @@ func (s *GeneratorTestSuite) TestSanitizePackageName() {
 				name = strings.ToLower(name)
 				name = strings.ReplaceAll(name, " ", "-")
 				name = strings.ReplaceAll(name, "_", "-")
-				
+
 				// Remove invalid characters (simplified)
 				var result strings.Builder
 				for _, r := range name {
@@ -124,17 +124,17 @@ func (s *GeneratorTestSuite) TestSanitizePackageName() {
 					}
 				}
 				name = result.String()
-				
+
 				// Handle invalid starting characters
 				if len(name) > 0 && (name[0] >= '0' && name[0] <= '9' || name[0] == '-') {
 					name = "mcp-" + strings.TrimLeft(name, "-")
 				}
-				
+
 				if name == "" {
 					name = "generated-mcp-server"
 				}
 			}
-			
+
 			s.helper.AssertEqual(tc.expected, name)
 		})
 	}
@@ -158,9 +158,9 @@ func (s *GeneratorTestSuite) TestIsValidTemplateName() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			// Mock the validation logic
-			isValid := !strings.Contains(tc.name, "..") && 
-					   !strings.Contains(tc.name, "/") && 
-					   !strings.Contains(tc.name, "\\")
+			isValid := !strings.Contains(tc.name, "..") &&
+				!strings.Contains(tc.name, "/") &&
+				!strings.Contains(tc.name, "\\")
 			s.helper.AssertEqual(tc.valid, isValid)
 		})
 	}
@@ -169,7 +169,7 @@ func (s *GeneratorTestSuite) TestIsValidTemplateName() {
 func (s *GeneratorTestSuite) TestIsPathSafe() {
 	// Test path safety validation logic
 	baseDir := "/safe/base"
-	
+
 	testCases := []struct {
 		targetPath string
 		safe       bool
@@ -186,20 +186,20 @@ func (s *GeneratorTestSuite) TestIsPathSafe() {
 			// Mock the path safety logic
 			cleanTarget := filepath.Clean(tc.targetPath)
 			cleanBase := filepath.Clean(baseDir)
-			
+
 			// Check for path traversal
 			if strings.Contains(cleanTarget, "..") {
 				s.helper.AssertEqual(false, tc.safe)
 				return
 			}
-			
+
 			// Check if target is within base
 			rel, err := filepath.Rel(cleanBase, cleanTarget)
 			if err != nil {
 				s.helper.AssertEqual(false, tc.safe)
 				return
 			}
-			
+
 			isWithinBase := !strings.HasPrefix(rel, "..") && !strings.HasPrefix(rel, "/")
 			s.helper.AssertEqual(tc.safe, isWithinBase)
 		})
@@ -229,7 +229,7 @@ func (s *GeneratorTestSuite) TestValidateBraces() {
 			stack := 0
 			inString := false
 			inComment := false
-			
+
 			for i, char := range tc.content {
 				if inComment {
 					if char == '\n' {
@@ -237,21 +237,21 @@ func (s *GeneratorTestSuite) TestValidateBraces() {
 					}
 					continue
 				}
-				
+
 				if char == '/' && i+1 < len(tc.content) && tc.content[i+1] == '/' {
 					inComment = true
 					continue
 				}
-				
+
 				if char == '"' && (i == 0 || tc.content[i-1] != '\\') {
 					inString = !inString
 					continue
 				}
-				
+
 				if inString {
 					continue
 				}
-				
+
 				switch char {
 				case '{':
 					stack++
@@ -263,7 +263,7 @@ func (s *GeneratorTestSuite) TestValidateBraces() {
 					}
 				}
 			}
-			
+
 			isValid := stack == 0
 			s.helper.AssertEqual(tc.valid, isValid)
 		})
@@ -303,7 +303,7 @@ func test() {}`,
 			// Mock the Go syntax validation logic
 			hasPackageMain := strings.Contains(tc.content, "package main")
 			hasMainFunc := strings.Contains(tc.content, "func main()")
-			
+
 			isValid := hasPackageMain && hasMainFunc
 			s.helper.AssertEqual(tc.valid, isValid)
 		})
@@ -385,7 +385,7 @@ func (s *GeneratorTestSuite) TestTemplateFunction_Title() {
 				s.helper.AssertEqual(tc.expected, tc.input)
 				return
 			}
-			
+
 			runes := []rune(tc.input)
 			for i, r := range runes {
 				if i == 0 || !unicode.IsLetter(runes[i-1]) {
@@ -412,7 +412,7 @@ func (s *GeneratorTestSuite) TestPackageNameSanitization_Performance() {
 
 func (s *GeneratorTestSuite) TestBraceValidation_Performance() {
 	content := strings.Repeat("{}", 1000)
-	
+
 	s.helper.AssertPerformance(func() {
 		// Mock brace validation
 		stack := 0
@@ -443,7 +443,7 @@ func (s *GeneratorTestSuite) TestTemplateData_MemoryUsage() {
 			},
 		}
 	}
-	
+
 	data := generator.TemplateData{
 		PackageName: "test-server",
 		APITitle:    "Large API",
@@ -451,7 +451,7 @@ func (s *GeneratorTestSuite) TestTemplateData_MemoryUsage() {
 		BaseURL:     "https://api.test.com",
 		Tools:       tools,
 	}
-	
+
 	// Basic validation that data was created successfully
 	s.helper.AssertEqual(100, len(data.Tools))
 	s.helper.AssertEqual("test-server", data.PackageName)

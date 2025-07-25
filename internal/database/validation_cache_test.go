@@ -11,7 +11,7 @@ func TestValidationCacheRepository_StoreAndGet(t *testing.T) {
 	// Create temporary database
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -63,7 +63,7 @@ func TestValidationCacheRepository_GetByHash_NotFound(t *testing.T) {
 	// Create temporary database
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -87,7 +87,7 @@ func TestValidationCacheRepository_ExpiredEntry(t *testing.T) {
 	// Create temporary database
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -127,7 +127,7 @@ func TestValidationCacheRepository_CleanExpired(t *testing.T) {
 	// Create temporary database
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -198,7 +198,7 @@ func TestValidationCacheRepository_GetStats(t *testing.T) {
 	// Create temporary database
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -277,7 +277,7 @@ func TestValidationCacheRepository_GenerateSpecHash(t *testing.T) {
 	// Create temporary database
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -347,7 +347,7 @@ func TestValidationCacheRepository_GenerateURLHash(t *testing.T) {
 	// Create temporary database
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
@@ -383,7 +383,7 @@ func TestValidationCacheRepository_GenerateSpecHash_NonExistentFile(t *testing.T
 	// Create temporary database
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test.db")
-	
+
 	db, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)

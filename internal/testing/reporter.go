@@ -43,7 +43,7 @@ func (tr *TestReporter) GenerateReport(result *TestResult) error {
 // generateJSONReport generates a JSON format report
 func (tr *TestReporter) generateJSONReport(result *TestResult) error {
 	reportData := tr.prepareReportData(result)
-	
+
 	jsonData, err := json.MarshalIndent(reportData, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal report data: %w", err)
@@ -60,7 +60,7 @@ func (tr *TestReporter) generateJSONReport(result *TestResult) error {
 // generateHTMLReport generates an HTML format report
 func (tr *TestReporter) generateHTMLReport(result *TestResult) error {
 	reportData := tr.prepareReportData(result)
-	
+
 	htmlTemplate := `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -336,7 +336,7 @@ func (tr *TestReporter) generateHTMLReport(result *TestResult) error {
 // generateXMLReport generates an XML format report
 func (tr *TestReporter) generateXMLReport(result *TestResult) error {
 	reportData := tr.prepareReportData(result)
-	
+
 	xmlTemplate := `<?xml version="1.0" encoding="UTF-8"?>
 <testReport>
     <metadata>
@@ -448,7 +448,7 @@ func (tr *TestReporter) getReportPath(format string) string {
 	// Generate default path
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("mcp_test_report_%s.%s", timestamp, format)
-	
+
 	// Use current directory by default
 	return filepath.Join(".", filename)
 }
@@ -456,14 +456,14 @@ func (tr *TestReporter) getReportPath(format string) string {
 // GenerateMetricsReport generates a metrics-focused report
 func (tr *TestReporter) GenerateMetricsReport(result *TestResult) (*TestMetrics, error) {
 	metrics := &TestMetrics{
-		TestID:        result.TestID,
-		Timestamp:     result.Timestamp,
-		Duration:      result.Duration,
-		OverallScore:  tr.calculateOverallScore(result),
-		QualityScore:  tr.calculateQualityScore(result),
+		TestID:           result.TestID,
+		Timestamp:        result.Timestamp,
+		Duration:         result.Duration,
+		OverallScore:     tr.calculateOverallScore(result),
+		QualityScore:     tr.calculateQualityScore(result),
 		PerformanceScore: tr.calculatePerformanceScore(result),
-		ComplianceScore: tr.calculateComplianceScore(result),
-		Categories:    make(map[string]*CategoryMetrics),
+		ComplianceScore:  tr.calculateComplianceScore(result),
+		Categories:       make(map[string]*CategoryMetrics),
 	}
 
 	// Calculate category metrics
@@ -488,24 +488,24 @@ func (tr *TestReporter) GenerateMetricsReport(result *TestResult) (*TestMetrics,
 
 // TestMetrics represents comprehensive test metrics
 type TestMetrics struct {
-	TestID           string                        `json:"testId"`
-	Timestamp        time.Time                     `json:"timestamp"`
-	Duration         time.Duration                 `json:"duration"`
-	OverallScore     float64                       `json:"overallScore"`
-	QualityScore     float64                       `json:"qualityScore"`
-	PerformanceScore float64                       `json:"performanceScore"`
-	ComplianceScore  float64                       `json:"complianceScore"`
-	Categories       map[string]*CategoryMetrics   `json:"categories"`
+	TestID           string                      `json:"testId"`
+	Timestamp        time.Time                   `json:"timestamp"`
+	Duration         time.Duration               `json:"duration"`
+	OverallScore     float64                     `json:"overallScore"`
+	QualityScore     float64                     `json:"qualityScore"`
+	PerformanceScore float64                     `json:"performanceScore"`
+	ComplianceScore  float64                     `json:"complianceScore"`
+	Categories       map[string]*CategoryMetrics `json:"categories"`
 }
 
 // CategoryMetrics represents metrics for a specific test category
 type CategoryMetrics struct {
-	Score        float64                 `json:"score"`
-	TotalTests   int                     `json:"totalTests"`
-	PassedTests  int                     `json:"passedTests"`
-	FailedTests  int                     `json:"failedTests"`
-	Duration     time.Duration           `json:"duration"`
-	Details      map[string]interface{}  `json:"details,omitempty"`
+	Score       float64                `json:"score"`
+	TotalTests  int                    `json:"totalTests"`
+	PassedTests int                    `json:"passedTests"`
+	FailedTests int                    `json:"failedTests"`
+	Duration    time.Duration          `json:"duration"`
+	Details     map[string]interface{} `json:"details,omitempty"`
 }
 
 // Calculate various scores and metrics
@@ -514,21 +514,21 @@ func (tr *TestReporter) calculateOverallScore(result *TestResult) float64 {
 	if result.TotalTests == 0 {
 		return 0.0
 	}
-	
+
 	// Basic success rate
 	baseScore := float64(result.PassedTests) / float64(result.TotalTests) * 100
-	
+
 	// Apply penalties for errors
 	errorPenalty := float64(len(result.Errors)) * 5.0
-	
+
 	// Apply bonus for comprehensive testing
 	comprehensiveBonus := 0.0
 	if result.ProtocolResults != nil && result.PerformanceResults != nil {
 		comprehensiveBonus = 5.0
 	}
-	
+
 	score := baseScore - errorPenalty + comprehensiveBonus
-	
+
 	// Clamp between 0 and 100
 	if score < 0 {
 		return 0.0
@@ -536,7 +536,7 @@ func (tr *TestReporter) calculateOverallScore(result *TestResult) float64 {
 	if score > 100 {
 		return 100.0
 	}
-	
+
 	return score
 }
 
@@ -544,10 +544,10 @@ func (tr *TestReporter) calculateQualityScore(result *TestResult) float64 {
 	if len(result.ValidationResults) == 0 {
 		return 0.0
 	}
-	
+
 	totalScore := 0.0
 	validationCount := 0
-	
+
 	for _, validation := range result.ValidationResults {
 		if validation.Success {
 			totalScore += 100.0
@@ -560,11 +560,11 @@ func (tr *TestReporter) calculateQualityScore(result *TestResult) float64 {
 		}
 		validationCount++
 	}
-	
+
 	if validationCount == 0 {
 		return 0.0
 	}
-	
+
 	return totalScore / float64(validationCount)
 }
 
@@ -572,42 +572,42 @@ func (tr *TestReporter) calculatePerformanceScore(result *TestResult) float64 {
 	if result.PerformanceResults == nil {
 		return 0.0
 	}
-	
+
 	perf := result.PerformanceResults
 	score := 100.0
-	
+
 	// Response time scoring (assuming target is 1 second)
 	targetResponseTime := time.Second
 	if perf.AverageResponseTime > targetResponseTime {
 		penalty := float64(perf.AverageResponseTime) / float64(targetResponseTime) * 20
 		score -= penalty
 	}
-	
+
 	// Memory usage scoring (assuming target is 100MB)
 	targetMemory := int64(100 * 1024 * 1024)
 	if perf.PeakMemoryUsage > targetMemory {
 		penalty := float64(perf.PeakMemoryUsage) / float64(targetMemory) * 15
 		score -= penalty
 	}
-	
+
 	// Memory leak penalty
 	if perf.MemoryLeakDetected {
 		score -= 30.0
 	}
-	
+
 	// Success rate bonus
 	if perf.SuccessfulRequests > 0 {
-		successRate := float64(perf.SuccessfulRequests) / float64(perf.SuccessfulRequests + perf.FailedRequests)
+		successRate := float64(perf.SuccessfulRequests) / float64(perf.SuccessfulRequests+perf.FailedRequests)
 		score = score * successRate
 	}
-	
+
 	if score < 0 {
 		return 0.0
 	}
 	if score > 100 {
 		return 100.0
 	}
-	
+
 	return score
 }
 
@@ -615,14 +615,14 @@ func (tr *TestReporter) calculateComplianceScore(result *TestResult) float64 {
 	if result.ProtocolResults == nil {
 		return 0.0
 	}
-	
+
 	protocol := result.ProtocolResults
 	if !protocol.Success {
 		return 0.0
 	}
-	
+
 	score := 100.0
-	
+
 	// Check required methods support
 	requiredMethods := tr.config.RequiredMethods
 	supportedCount := 0
@@ -634,23 +634,23 @@ func (tr *TestReporter) calculateComplianceScore(result *TestResult) float64 {
 			}
 		}
 	}
-	
+
 	if len(requiredMethods) > 0 {
 		methodScore := float64(supportedCount) / float64(len(requiredMethods)) * 50
 		score = 50 + methodScore
 	}
-	
+
 	// Penalty for protocol errors
 	errorPenalty := float64(len(protocol.Errors)) * 10
 	score -= errorPenalty
-	
+
 	if score < 0 {
 		return 0.0
 	}
 	if score > 100 {
 		return 100.0
 	}
-	
+
 	return score
 }
 
@@ -658,10 +658,10 @@ func (tr *TestReporter) calculateValidationMetrics(validationResults map[string]
 	metrics := &CategoryMetrics{
 		Details: make(map[string]interface{}),
 	}
-	
+
 	totalDuration := time.Duration(0)
 	totalFiles := 0
-	
+
 	for _, result := range validationResults {
 		metrics.TotalTests++
 		if result.Success {
@@ -672,62 +672,62 @@ func (tr *TestReporter) calculateValidationMetrics(validationResults map[string]
 		totalDuration += result.Duration
 		totalFiles += result.FilesValidated
 	}
-	
+
 	metrics.Duration = totalDuration
 	metrics.Score = tr.calculateQualityScore(&TestResult{ValidationResults: validationResults})
 	metrics.Details["totalFilesValidated"] = totalFiles
-	
+
 	return metrics
 }
 
 func (tr *TestReporter) calculateProtocolMetrics(protocolResults *ProtocolTestResult) *CategoryMetrics {
 	metrics := &CategoryMetrics{
-		TotalTests:  1,
-		Duration:    protocolResults.Duration,
-		Details:     make(map[string]interface{}),
+		TotalTests: 1,
+		Duration:   protocolResults.Duration,
+		Details:    make(map[string]interface{}),
 	}
-	
+
 	if protocolResults.Success {
 		metrics.PassedTests = 1
 	} else {
 		metrics.FailedTests = 1
 	}
-	
+
 	metrics.Score = tr.calculateComplianceScore(&TestResult{ProtocolResults: protocolResults})
 	metrics.Details["supportedMethods"] = len(protocolResults.SupportedMethods)
 	metrics.Details["supportedCapabilities"] = len(protocolResults.SupportedCapabilities)
-	
+
 	return metrics
 }
 
 func (tr *TestReporter) calculatePerformanceMetrics(performanceResults *PerformanceTestResult) *CategoryMetrics {
 	metrics := &CategoryMetrics{
-		TotalTests:  1,
-		Duration:    performanceResults.Duration,
-		Details:     make(map[string]interface{}),
+		TotalTests: 1,
+		Duration:   performanceResults.Duration,
+		Details:    make(map[string]interface{}),
 	}
-	
+
 	if performanceResults.Success {
 		metrics.PassedTests = 1
 	} else {
 		metrics.FailedTests = 1
 	}
-	
+
 	metrics.Score = tr.calculatePerformanceScore(&TestResult{PerformanceResults: performanceResults})
 	metrics.Details["averageResponseTime"] = performanceResults.AverageResponseTime.String()
 	metrics.Details["peakMemoryUsage"] = performanceResults.PeakMemoryUsage
 	metrics.Details["requestsPerSecond"] = performanceResults.RequestsPerSecond
-	
+
 	return metrics
 }
 
 func (tr *TestReporter) calculateIntegrationMetrics(integrationResults *IntegrationTestResult) *CategoryMetrics {
 	metrics := &CategoryMetrics{
-		TotalTests:  len(integrationResults.ScenarioResults),
-		Duration:    integrationResults.Duration,
-		Details:     make(map[string]interface{}),
+		TotalTests: len(integrationResults.ScenarioResults),
+		Duration:   integrationResults.Duration,
+		Details:    make(map[string]interface{}),
 	}
-	
+
 	for _, scenario := range integrationResults.ScenarioResults {
 		if scenario.Success {
 			metrics.PassedTests++
@@ -735,13 +735,13 @@ func (tr *TestReporter) calculateIntegrationMetrics(integrationResults *Integrat
 			metrics.FailedTests++
 		}
 	}
-	
+
 	if metrics.TotalTests > 0 {
 		metrics.Score = float64(metrics.PassedTests) / float64(metrics.TotalTests) * 100
 	}
-	
+
 	metrics.Details["scenarioCount"] = len(integrationResults.ScenarioResults)
 	metrics.Details["clientCompatibility"] = integrationResults.ClientCompatibility
-	
+
 	return metrics
 }

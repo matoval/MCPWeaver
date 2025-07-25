@@ -28,7 +28,7 @@ func NewProtocolTester(config *TestConfig) *ProtocolTester {
 // TestCompliance tests MCP protocol compliance
 func (pt *ProtocolTester) TestCompliance(ctx context.Context, serverPath string) (*ProtocolTestResult, error) {
 	startTime := time.Now()
-	
+
 	result := &ProtocolTestResult{
 		Success:               true,
 		ProtocolVersion:       pt.config.MCPProtocolVersion,
@@ -88,7 +88,7 @@ func (pt *ProtocolTester) TestCompliance(ctx context.Context, serverPath string)
 func (pt *ProtocolTester) startServer(ctx context.Context, serverPath string) (*exec.Cmd, io.WriteCloser, io.ReadCloser, io.ReadCloser, error) {
 	// Create security helper
 	sch := NewSecureCommandHelper()
-	
+
 	// First compile the server using secure command execution
 	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "test-mcp-server", "main.go")
 	if err != nil {
@@ -247,7 +247,7 @@ func (pt *ProtocolTester) testMethod(ctx context.Context, client *JSONRPCClient,
 	}
 
 	response, err := client.Call(ctx, method, request)
-	
+
 	methodTest := &MethodTest{
 		Method:       method,
 		Success:      err == nil,

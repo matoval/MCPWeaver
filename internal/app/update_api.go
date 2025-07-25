@@ -25,8 +25,8 @@ func (a *App) CheckForUpdates() (*UpdateInfo, error) {
 func (a *App) GetUpdateStatus() *UpdateProgress {
 	if a.updateService == nil {
 		return &UpdateProgress{
-			Status:     UpdateStatusIdle,
-			Progress:   0.0,
+			Status:   UpdateStatusIdle,
+			Progress: 0.0,
 			Error: &APIError{
 				Type:    ErrorTypeSystem,
 				Code:    "UPDATE_SERVICE_NOT_AVAILABLE",
@@ -57,7 +57,7 @@ func (a *App) UpdateUpdateSettings(settings *UpdateSettings) error {
 
 	err := a.updateService.UpdateSettings(settings)
 	if err != nil {
-		apiErr := a.createAPIError(ErrorTypeSystem, "UPDATE_SETTINGS_FAILED", 
+		apiErr := a.createAPIError(ErrorTypeSystem, "UPDATE_SETTINGS_FAILED",
 			fmt.Sprintf("Failed to update settings: %v", err), nil)
 		a.emitError(apiErr)
 		return apiErr
@@ -127,7 +127,7 @@ func (a *App) SkipUpdateVersion(version string) error {
 
 	// TODO: Implement version skipping persistence
 	// For now, just emit an event
-	a.emitNotification("info", "Version Skipped", 
+	a.emitNotification("info", "Version Skipped",
 		fmt.Sprintf("Version %s has been skipped", version))
 
 	return nil
@@ -154,7 +154,7 @@ func (a *App) ScheduleUpdate(updateInfo *UpdateInfo, schedule *UpdateSchedule) e
 		return err
 	}
 
-	a.emitNotification("info", "Update Scheduled", 
+	a.emitNotification("info", "Update Scheduled",
 		fmt.Sprintf("Update to version %s has been scheduled for %s", updateInfo.Version, job.NextRun.Format("2006-01-02 15:04:05")))
 
 	return nil
@@ -258,7 +258,7 @@ func (a *App) TestUpdateConnection() (*UpdateConnectionTest, error) {
 	// TODO: Implement connection test
 	// For now, return a mock successful test
 	return &UpdateConnectionTest{
-		Success:     true,
+		Success:      true,
 		ResponseTime: 100, // milliseconds
 		ServerInfo: &UpdateServerInfo{
 			Version: "1.0.0",
@@ -416,7 +416,7 @@ func (a *App) RollbackToVersion(version string) error {
 	}
 
 	if targetBackup == nil {
-		return a.createAPIError(ErrorTypeSystem, "BACKUP_NOT_FOUND", 
+		return a.createAPIError(ErrorTypeSystem, "BACKUP_NOT_FOUND",
 			fmt.Sprintf("No backup found for version %s", version), nil)
 	}
 
@@ -436,7 +436,7 @@ func (a *App) RollbackToVersion(version string) error {
 		return err
 	}
 
-	a.emitNotification("info", "Rollback Completed", 
+	a.emitNotification("info", "Rollback Completed",
 		fmt.Sprintf("Application has been rolled back to version %s", version))
 	return nil
 }
@@ -519,7 +519,7 @@ func (a *App) ScheduleUpdateCheck(schedule *UpdateSchedule) error {
 		return err
 	}
 
-	a.emitNotification("info", "Update Check Scheduled", 
+	a.emitNotification("info", "Update Check Scheduled",
 		fmt.Sprintf("Automatic update checks have been scheduled for %s", job.NextRun.Format("2006-01-02 15:04:05")))
 
 	return nil
@@ -529,11 +529,11 @@ func (a *App) ScheduleUpdateCheck(schedule *UpdateSchedule) error {
 
 // UpdateConnectionTest represents the result of testing update server connection
 type UpdateConnectionTest struct {
-	Success      bool               `json:"success"`
-	ResponseTime int64              `json:"responseTime"` // milliseconds
-	Error        *APIError          `json:"error,omitempty"`
-	ServerInfo   *UpdateServerInfo  `json:"serverInfo,omitempty"`
-	TestedAt     string             `json:"testedAt"`
+	Success      bool              `json:"success"`
+	ResponseTime int64             `json:"responseTime"` // milliseconds
+	Error        *APIError         `json:"error,omitempty"`
+	ServerInfo   *UpdateServerInfo `json:"serverInfo,omitempty"`
+	TestedAt     string            `json:"testedAt"`
 }
 
 // UpdateServerInfo contains information about the update server

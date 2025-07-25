@@ -20,38 +20,38 @@ type Service struct {
 
 // ValidationResult represents comprehensive validation results
 type ValidationResult struct {
-	Valid           bool                `json:"valid"`
-	Errors          []ValidationError   `json:"errors"`
-	Warnings        []ValidationWarning `json:"warnings"`
-	Suggestions     []string            `json:"suggestions"`
-	SpecInfo        *SpecInfo           `json:"specInfo,omitempty"`
-	ValidationTime  time.Duration       `json:"validationTime"`
-	CacheHit        bool                `json:"cacheHit"`
-	ValidatedAt     time.Time           `json:"validatedAt"`
+	Valid          bool                `json:"valid"`
+	Errors         []ValidationError   `json:"errors"`
+	Warnings       []ValidationWarning `json:"warnings"`
+	Suggestions    []string            `json:"suggestions"`
+	SpecInfo       *SpecInfo           `json:"specInfo,omitempty"`
+	ValidationTime time.Duration       `json:"validationTime"`
+	CacheHit       bool                `json:"cacheHit"`
+	ValidatedAt    time.Time           `json:"validatedAt"`
 }
 
 // ValidationError represents a validation error with detailed information
 type ValidationError struct {
-	Type        string         `json:"type"`
-	Code        string         `json:"code"`
-	Message     string         `json:"message"`
-	Path        string         `json:"path"`
-	Line        int            `json:"line,omitempty"`
-	Column      int            `json:"column,omitempty"`
-	Severity    SeverityLevel  `json:"severity"`
-	Location    *ErrorLocation `json:"location,omitempty"`
-	Context     string         `json:"context,omitempty"`
-	Suggestion  string         `json:"suggestion,omitempty"`
+	Type       string         `json:"type"`
+	Code       string         `json:"code"`
+	Message    string         `json:"message"`
+	Path       string         `json:"path"`
+	Line       int            `json:"line,omitempty"`
+	Column     int            `json:"column,omitempty"`
+	Severity   SeverityLevel  `json:"severity"`
+	Location   *ErrorLocation `json:"location,omitempty"`
+	Context    string         `json:"context,omitempty"`
+	Suggestion string         `json:"suggestion,omitempty"`
 }
 
 // ValidationWarning represents a validation warning
 type ValidationWarning struct {
-	Type        string `json:"type"`
-	Code        string `json:"code"`
-	Message     string `json:"message"`
-	Path        string `json:"path"`
-	Suggestion  string `json:"suggestion"`
-	Context     string `json:"context,omitempty"`
+	Type       string `json:"type"`
+	Code       string `json:"code"`
+	Message    string `json:"message"`
+	Path       string `json:"path"`
+	Suggestion string `json:"suggestion"`
+	Context    string `json:"context,omitempty"`
 }
 
 // SeverityLevel represents the severity of a validation issue
@@ -73,33 +73,33 @@ type ErrorLocation struct {
 
 // SpecInfo provides information about the validated specification
 type SpecInfo struct {
-	Version         string              `json:"version"`
-	Title           string              `json:"title"`
-	Description     string              `json:"description"`
-	OperationCount  int                 `json:"operationCount"`
-	SchemaCount     int                 `json:"schemaCount"`
+	Version         string               `json:"version"`
+	Title           string               `json:"title"`
+	Description     string               `json:"description"`
+	OperationCount  int                  `json:"operationCount"`
+	SchemaCount     int                  `json:"schemaCount"`
 	SecuritySchemes []SecuritySchemeInfo `json:"securitySchemes"`
-	Servers         []ServerInfo        `json:"servers"`
-	Tags            []TagInfo           `json:"tags"`
-	Complexity      ComplexityLevel     `json:"complexity"`
-	EstimatedSize   string              `json:"estimatedSize"`
+	Servers         []ServerInfo         `json:"servers"`
+	Tags            []TagInfo            `json:"tags"`
+	Complexity      ComplexityLevel      `json:"complexity"`
+	EstimatedSize   string               `json:"estimatedSize"`
 }
 
 // SecuritySchemeInfo provides information about security schemes
 type SecuritySchemeInfo struct {
-	Type         string `json:"type"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	In           string `json:"in,omitempty"`
-	Scheme       string `json:"scheme,omitempty"`
-	BearerFormat string `json:"bearerFormat,omitempty"`
+	Type             string `json:"type"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	In               string `json:"in,omitempty"`
+	Scheme           string `json:"scheme,omitempty"`
+	BearerFormat     string `json:"bearerFormat,omitempty"`
 	OpenIDConnectURL string `json:"openIdConnectUrl,omitempty"`
 }
 
 // ServerInfo provides information about servers
 type ServerInfo struct {
-	URL         string                    `json:"url"`
-	Description string                    `json:"description"`
+	URL         string                     `json:"url"`
+	Description string                     `json:"description"`
 	Variables   map[string]*ServerVariable `json:"variables,omitempty"`
 }
 
@@ -142,7 +142,7 @@ func New() *Service {
 // ValidateSpec validates an OpenAPI specification document
 func (s *Service) ValidateSpec(ctx context.Context, spec *openapi3.T) (*ValidationResult, error) {
 	startTime := time.Now()
-	
+
 	result := &ValidationResult{
 		Valid:          true,
 		Errors:         []ValidationError{},
@@ -263,7 +263,7 @@ func (s *Service) ValidateURL(ctx context.Context, specURL string) (*ValidationR
 			Suggestions: []string{"Please provide a valid URL"},
 		}, nil
 	}
-	
+
 	spec, err := s.loader.LoadFromURI(parsedURL)
 	if err != nil {
 		return &ValidationResult{
@@ -289,11 +289,11 @@ func (s *Service) ValidateURL(ctx context.Context, specURL string) (*ValidationR
 // parseValidationError parses validation errors from kin-openapi
 func (s *Service) parseValidationError(err error, result *ValidationResult) {
 	errorMsg := err.Error()
-	
+
 	// Try to extract line and column information
 	lineRegex := regexp.MustCompile(`line (\d+)`)
 	columnRegex := regexp.MustCompile(`column (\d+)`)
-	
+
 	var line, column int
 	if matches := lineRegex.FindStringSubmatch(errorMsg); len(matches) > 1 {
 		fmt.Sscanf(matches[1], "%d", &line)
@@ -331,7 +331,7 @@ func (s *Service) extractSpecInfo(spec *openapi3.T, result *ValidationResult) {
 		Complexity:      s.assessComplexity(spec),
 		EstimatedSize:   s.estimateSize(spec),
 	}
-	
+
 	result.SpecInfo = info
 }
 
@@ -349,19 +349,19 @@ func (s *Service) validateOperations(spec *openapi3.T, result *ValidationResult)
 	}
 
 	operationIds := make(map[string]bool)
-	
+
 	for path, pathItem := range spec.Paths.Map() {
 		if pathItem == nil {
 			continue
 		}
-		
+
 		for method, operation := range pathItem.Operations() {
 			if operation == nil {
 				continue
 			}
-			
+
 			opPath := fmt.Sprintf("/paths%s/%s", path, strings.ToLower(method))
-			
+
 			// Check for duplicate operation IDs
 			if operation.OperationID != "" {
 				if operationIds[operation.OperationID] {
@@ -445,7 +445,7 @@ func (s *Service) validateSchemas(spec *openapi3.T, result *ValidationResult) {
 // validateSecuritySchemes validates security schemes
 func (s *Service) validateSecuritySchemes(spec *openapi3.T, result *ValidationResult) {
 	if spec.Components == nil || spec.Components.SecuritySchemes == nil {
-		result.Suggestions = append(result.Suggestions, 
+		result.Suggestions = append(result.Suggestions,
 			"Consider adding security schemes if your API requires authentication")
 		return
 	}
@@ -467,7 +467,7 @@ func (s *Service) validateSecuritySchemes(spec *openapi3.T, result *ValidationRe
 // validateServers validates server configurations
 func (s *Service) validateServers(spec *openapi3.T, result *ValidationResult) {
 	if len(spec.Servers) == 0 {
-		result.Suggestions = append(result.Suggestions, 
+		result.Suggestions = append(result.Suggestions,
 			"Consider adding server information to specify the base URL")
 		return
 	}
@@ -502,7 +502,7 @@ func (s *Service) countOperations(spec *openapi3.T) int {
 	if spec.Paths == nil {
 		return 0
 	}
-	
+
 	count := 0
 	for _, pathItem := range spec.Paths.Map() {
 		if pathItem != nil {
@@ -521,23 +521,23 @@ func (s *Service) countSchemas(spec *openapi3.T) int {
 
 func (s *Service) extractSecuritySchemes(spec *openapi3.T) []SecuritySchemeInfo {
 	var schemes []SecuritySchemeInfo
-	
+
 	if spec.Components == nil || spec.Components.SecuritySchemes == nil {
 		return schemes
 	}
-	
+
 	for name, schemeRef := range spec.Components.SecuritySchemes {
 		if schemeRef.Value == nil {
 			continue
 		}
-		
+
 		scheme := schemeRef.Value
 		info := SecuritySchemeInfo{
 			Type:        scheme.Type,
 			Name:        name,
 			Description: scheme.Description,
 		}
-		
+
 		if scheme.In != "" {
 			info.In = scheme.In
 		}
@@ -550,23 +550,23 @@ func (s *Service) extractSecuritySchemes(spec *openapi3.T) []SecuritySchemeInfo 
 		if scheme.OpenIdConnectUrl != "" {
 			info.OpenIDConnectURL = scheme.OpenIdConnectUrl
 		}
-		
+
 		schemes = append(schemes, info)
 	}
-	
+
 	return schemes
 }
 
 func (s *Service) extractServers(spec *openapi3.T) []ServerInfo {
 	var servers []ServerInfo
-	
+
 	for _, server := range spec.Servers {
 		info := ServerInfo{
 			URL:         server.URL,
 			Description: server.Description,
 			Variables:   make(map[string]*ServerVariable),
 		}
-		
+
 		for name, variable := range server.Variables {
 			info.Variables[name] = &ServerVariable{
 				Default:     variable.Default,
@@ -574,41 +574,41 @@ func (s *Service) extractServers(spec *openapi3.T) []ServerInfo {
 				Enum:        variable.Enum,
 			}
 		}
-		
+
 		servers = append(servers, info)
 	}
-	
+
 	return servers
 }
 
 func (s *Service) extractTags(spec *openapi3.T) []TagInfo {
 	var tags []TagInfo
-	
+
 	for _, tag := range spec.Tags {
 		info := TagInfo{
 			Name:        tag.Name,
 			Description: tag.Description,
 		}
-		
+
 		if tag.ExternalDocs != nil {
 			info.ExternalDocs = &ExternalDocsInfo{
 				Description: tag.ExternalDocs.Description,
 				URL:         tag.ExternalDocs.URL,
 			}
 		}
-		
+
 		tags = append(tags, info)
 	}
-	
+
 	return tags
 }
 
 func (s *Service) assessComplexity(spec *openapi3.T) ComplexityLevel {
 	operationCount := s.countOperations(spec)
 	schemaCount := s.countSchemas(spec)
-	
+
 	totalComplexity := operationCount + schemaCount
-	
+
 	if totalComplexity > 100 {
 		return ComplexityHigh
 	} else if totalComplexity > 20 {
@@ -619,7 +619,7 @@ func (s *Service) assessComplexity(spec *openapi3.T) ComplexityLevel {
 
 func (s *Service) estimateSize(spec *openapi3.T) string {
 	operationCount := s.countOperations(spec)
-	
+
 	if operationCount > 100 {
 		return "Large"
 	} else if operationCount > 20 {
@@ -634,10 +634,10 @@ func (s *Service) validateParameters(params openapi3.Parameters, basePath string
 		if paramRef.Value == nil {
 			continue
 		}
-		
+
 		param := paramRef.Value
 		paramPath := fmt.Sprintf("%s/parameters[%d]", basePath, i)
-		
+
 		if param.Description == "" {
 			result.Warnings = append(result.Warnings, ValidationWarning{
 				Type:       "parameters",
@@ -670,7 +670,7 @@ func (s *Service) validateResponses(responses *openapi3.Responses, basePath stri
 			break
 		}
 	}
-	
+
 	if !hasSuccessResponse {
 		result.Warnings = append(result.Warnings, ValidationWarning{
 			Type:       "responses",
@@ -702,19 +702,19 @@ func (s *Service) validateSchemaProperties(schema *openapi3.Schema, schemaPath s
 func (s *Service) generateSuggestions(spec *openapi3.T, result *ValidationResult) {
 	// Check for large specifications
 	if s.countOperations(spec) > 50 {
-		result.Suggestions = append(result.Suggestions, 
+		result.Suggestions = append(result.Suggestions,
 			"Large specifications may result in many MCP tools. Consider grouping related operations")
 	}
-	
+
 	// Check for missing base URL
 	if len(spec.Servers) == 0 {
-		result.Suggestions = append(result.Suggestions, 
+		result.Suggestions = append(result.Suggestions,
 			"Consider adding server information to specify the base URL")
 	}
-	
+
 	// Check for missing OpenAPI version
 	if spec.OpenAPI == "" {
-		result.Suggestions = append(result.Suggestions, 
+		result.Suggestions = append(result.Suggestions,
 			"Specify the OpenAPI version for better compatibility")
 	}
 }
@@ -723,28 +723,28 @@ func (s *Service) generateSuggestions(spec *openapi3.T, result *ValidationResult
 func (s *Service) getParsingErrorSuggestions(err error) []string {
 	errorStr := err.Error()
 	var suggestions []string
-	
+
 	if strings.Contains(errorStr, "array schema") {
-		suggestions = append(suggestions, 
+		suggestions = append(suggestions,
 			"Consider simplifying array schemas to use standard 'items' object definitions")
 	}
 	if strings.Contains(errorStr, "regex") {
-		suggestions = append(suggestions, 
+		suggestions = append(suggestions,
 			"Remove or simplify regex patterns with unsupported features like lookaheads")
 	}
 	if strings.Contains(errorStr, "OpenAPI 2.0") {
-		suggestions = append(suggestions, 
+		suggestions = append(suggestions,
 			"Convert your specification to OpenAPI 3.0+ format")
 	}
 	if strings.Contains(errorStr, "YAML") {
-		suggestions = append(suggestions, 
+		suggestions = append(suggestions,
 			"Check YAML syntax and indentation")
 	}
 	if strings.Contains(errorStr, "JSON") {
-		suggestions = append(suggestions, 
+		suggestions = append(suggestions,
 			"Check JSON syntax and structure")
 	}
-	
+
 	return suggestions
 }
 
@@ -752,19 +752,19 @@ func (s *Service) getParsingErrorSuggestions(err error) []string {
 func (s *Service) getNetworkErrorSuggestions(err error) []string {
 	errorStr := err.Error()
 	var suggestions []string
-	
+
 	if strings.Contains(errorStr, "HTTP error") {
-		suggestions = append(suggestions, 
+		suggestions = append(suggestions,
 			"Check if the URL is accessible and returns a valid OpenAPI specification")
 	}
 	if strings.Contains(errorStr, "timeout") {
-		suggestions = append(suggestions, 
+		suggestions = append(suggestions,
 			"The server may be slow to respond. Try again or check the URL")
 	}
 	if strings.Contains(errorStr, "connection") {
-		suggestions = append(suggestions, 
+		suggestions = append(suggestions,
 			"Check your internet connection and firewall settings")
 	}
-	
+
 	return suggestions
 }

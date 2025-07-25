@@ -14,10 +14,10 @@ import (
 func TestApp_ValidateSpec(t *testing.T) {
 	// Create temporary directory for database
 	tempDir := t.TempDir()
-	
+
 	// Create app instance
 	app := NewApp()
-	
+
 	// Initialize database
 	dbPath := filepath.Join(tempDir, "test.db")
 	db, err := database.Open(dbPath)
@@ -25,7 +25,7 @@ func TestApp_ValidateSpec(t *testing.T) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 	defer db.Close()
-	
+
 	app.db = db.GetConn()
 	app.validationCacheRepo = database.NewValidationCacheRepository(db)
 	app.validatorService = validator.New()
@@ -109,10 +109,10 @@ components:
 func TestApp_ValidateURL(t *testing.T) {
 	// Create temporary directory for database
 	tempDir := t.TempDir()
-	
+
 	// Create app instance
 	app := NewApp()
-	
+
 	// Initialize database
 	dbPath := filepath.Join(tempDir, "test.db")
 	db, err := database.Open(dbPath)
@@ -120,7 +120,7 @@ func TestApp_ValidateURL(t *testing.T) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 	defer db.Close()
-	
+
 	app.db = db.GetConn()
 	app.validationCacheRepo = database.NewValidationCacheRepository(db)
 	app.validatorService = validator.New()
@@ -144,10 +144,10 @@ func TestApp_ValidateURL(t *testing.T) {
 func TestApp_ValidateSpec_FileNotFound(t *testing.T) {
 	// Create temporary directory for database
 	tempDir := t.TempDir()
-	
+
 	// Create app instance
 	app := NewApp()
-	
+
 	// Initialize database
 	dbPath := filepath.Join(tempDir, "test.db")
 	db, err := database.Open(dbPath)
@@ -155,7 +155,7 @@ func TestApp_ValidateSpec_FileNotFound(t *testing.T) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 	defer db.Close()
-	
+
 	app.db = db.GetConn()
 	app.validationCacheRepo = database.NewValidationCacheRepository(db)
 	app.validatorService = validator.New()
@@ -178,7 +178,7 @@ func TestApp_ValidateSpec_FileNotFound(t *testing.T) {
 
 func TestApp_ExportValidationResult(t *testing.T) {
 	app := NewApp()
-	
+
 	// Create test validation result
 	result := &ValidationResult{
 		Valid:          true,
@@ -215,7 +215,7 @@ func TestApp_ExportValidationResult(t *testing.T) {
 
 func TestApp_ExportValidationResult_Nil(t *testing.T) {
 	app := NewApp()
-	
+
 	// Test export with nil result
 	_, err := app.ExportValidationResult(nil)
 	if err == nil {
@@ -226,10 +226,10 @@ func TestApp_ExportValidationResult_Nil(t *testing.T) {
 func TestApp_GetValidationCacheStats(t *testing.T) {
 	// Create temporary directory for database
 	tempDir := t.TempDir()
-	
+
 	// Create app instance
 	app := NewApp()
-	
+
 	// Initialize database
 	dbPath := filepath.Join(tempDir, "test.db")
 	db, err := database.Open(dbPath)
@@ -237,7 +237,7 @@ func TestApp_GetValidationCacheStats(t *testing.T) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 	defer db.Close()
-	
+
 	app.db = db.GetConn()
 	app.validationCacheRepo = database.NewValidationCacheRepository(db)
 	app.ctx = context.Background()
@@ -260,10 +260,10 @@ func TestApp_GetValidationCacheStats(t *testing.T) {
 func TestApp_ClearValidationCache(t *testing.T) {
 	// Create temporary directory for database
 	tempDir := t.TempDir()
-	
+
 	// Create app instance
 	app := NewApp()
-	
+
 	// Initialize database
 	dbPath := filepath.Join(tempDir, "test.db")
 	db, err := database.Open(dbPath)
@@ -271,7 +271,7 @@ func TestApp_ClearValidationCache(t *testing.T) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 	defer db.Close()
-	
+
 	app.db = db.GetConn()
 	app.validationCacheRepo = database.NewValidationCacheRepository(db)
 	app.ctx = context.Background()
@@ -285,7 +285,7 @@ func TestApp_ClearValidationCache(t *testing.T) {
 
 func TestApp_ValidateSpec_EmptyPath(t *testing.T) {
 	app := NewApp()
-	
+
 	// Test with empty path
 	_, err := app.ValidateSpec("")
 	if err == nil {
@@ -295,7 +295,7 @@ func TestApp_ValidateSpec_EmptyPath(t *testing.T) {
 
 func TestApp_ValidateURL_EmptyURL(t *testing.T) {
 	app := NewApp()
-	
+
 	// Test with empty URL
 	_, err := app.ValidateURL("")
 	if err == nil {
@@ -306,10 +306,10 @@ func TestApp_ValidateURL_EmptyURL(t *testing.T) {
 func TestApp_ValidationIntegration(t *testing.T) {
 	// Create temporary directory for database
 	tempDir := t.TempDir()
-	
+
 	// Create app instance
 	app := NewApp()
-	
+
 	// Initialize database
 	dbPath := filepath.Join(tempDir, "test.db")
 	db, err := database.Open(dbPath)
@@ -317,7 +317,7 @@ func TestApp_ValidationIntegration(t *testing.T) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 	defer db.Close()
-	
+
 	app.db = db.GetConn()
 	app.validationCacheRepo = database.NewValidationCacheRepository(db)
 	app.validatorService = validator.New()
@@ -391,11 +391,11 @@ paths:
 
 // Helper function to check if string contains substring
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && 
-		   (s == substr || 
-		    s[:len(substr)] == substr || 
-		    s[len(s)-len(substr):] == substr || 
-		    containsAt(s, substr, 1))
+	return len(s) >= len(substr) &&
+		(s == substr ||
+			s[:len(substr)] == substr ||
+			s[len(s)-len(substr):] == substr ||
+			containsAt(s, substr, 1))
 }
 
 func containsAt(s, substr string, start int) bool {

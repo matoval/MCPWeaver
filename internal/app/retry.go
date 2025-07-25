@@ -25,12 +25,12 @@ func NewRetryManager(errorManager *ErrorManager) *RetryManager {
 
 // RetryResult contains the result of a retry operation
 type RetryResult struct {
-	Success     bool          `json:"success"`
-	Attempts    int           `json:"attempts"`
-	LastError   error         `json:"lastError,omitempty"`
-	TotalDelay  time.Duration `json:"totalDelay"`
-	StartTime   time.Time     `json:"startTime"`
-	EndTime     time.Time     `json:"endTime"`
+	Success    bool          `json:"success"`
+	Attempts   int           `json:"attempts"`
+	LastError  error         `json:"lastError,omitempty"`
+	TotalDelay time.Duration `json:"totalDelay"`
+	StartTime  time.Time     `json:"startTime"`
+	EndTime    time.Time     `json:"endTime"`
 }
 
 // RetryFunc is a function that can be retried
@@ -108,7 +108,7 @@ func (rm *RetryManager) Retry(ctx context.Context, fn RetryFunc) *RetryResult {
 func (rm *RetryManager) RetryWithTimeout(timeout time.Duration, fn RetryFunc) *RetryResult {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	
+
 	return rm.Retry(ctx, fn)
 }
 
@@ -132,27 +132,27 @@ func (rm *RetryManager) RetryWithBackoff(ctx context.Context, maxRetries int, in
 		JitterEnabled:     true,
 		RetryableErrors:   rm.defaultPolicy.RetryableErrors,
 	}
-	
+
 	return rm.RetryWithPolicy(ctx, policy, fn)
 }
 
 // RetryOperation is a high-level wrapper for common retry operations
 func (rm *RetryManager) RetryOperation(ctx context.Context, operationName string, fn RetryFunc) error {
 	result := rm.Retry(ctx, fn)
-	
+
 	if !result.Success {
 		// Create a detailed error with retry information
 		details := map[string]string{
-			"operation":     operationName,
-			"attempts":      fmt.Sprintf("%d", result.Attempts),
-			"total_delay":   result.TotalDelay.String(),
-			"duration":      result.EndTime.Sub(result.StartTime).String(),
+			"operation":   operationName,
+			"attempts":    fmt.Sprintf("%d", result.Attempts),
+			"total_delay": result.TotalDelay.String(),
+			"duration":    result.EndTime.Sub(result.StartTime).String(),
 		}
-		
+
 		if result.LastError != nil {
 			details["last_error"] = result.LastError.Error()
 		}
-		
+
 		return rm.errorManager.CreateError(
 			ErrorTypeSystem,
 			ErrCodeInternalError,
@@ -166,7 +166,7 @@ func (rm *RetryManager) RetryOperation(ctx context.Context, operationName string
 			}),
 		)
 	}
-	
+
 	return nil
 }
 
@@ -183,7 +183,7 @@ func (rm *RetryManager) isRetryableError(err error, policy RetryPolicy) bool {
 		if !apiErr.Recoverable {
 			return false
 		}
-		
+
 		// Check if error code is in the retryable list
 		for _, code := range policy.RetryableErrors {
 			if apiErr.Code == code {
@@ -226,13 +226,13 @@ func (rm *RetryManager) calculateDelay(baseDelay time.Duration, policy RetryPoli
 	if maxJitter <= 0 {
 		return baseDelay
 	}
-	
+
 	jitterInt, err := rand.Int(rand.Reader, big.NewInt(maxJitter))
 	if err != nil {
 		// Fallback to no jitter if crypto/rand fails
 		return baseDelay
 	}
-	
+
 	jitter := time.Duration(jitterInt.Int64())
 	return baseDelay + jitter
 }

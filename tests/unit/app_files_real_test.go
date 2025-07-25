@@ -46,7 +46,7 @@ func (s *AppFilesRealTestSuite) TestConvertFilters() {
 			Extensions:  []string{".yaml", ".yml"},
 		},
 		{
-			DisplayName: "JSON Files", 
+			DisplayName: "JSON Files",
 			Pattern:     "*.json",
 			Extensions:  []string{".json"},
 		},
@@ -70,12 +70,12 @@ func (s *AppFilesRealTestSuite) TestConvertFilters() {
 func (s *AppFilesRealTestSuite) TestFileOperations_Constants() {
 	// Test that constants are properly defined by checking for expected values
 	// We can't access the constants directly, but we can test the logic
-	maxSize := 10 * 1024 * 1024  // 10MB
-	bufferSize := 64 * 1024      // 64KB
-	
+	maxSize := 10 * 1024 * 1024 // 10MB
+	bufferSize := 64 * 1024     // 64KB
+
 	s.helper.AssertEqual(10485760, maxSize)
 	s.helper.AssertEqual(65536, bufferSize)
-	
+
 	// Test that file size validation would work
 	testSizes := []struct {
 		size  int64
@@ -99,10 +99,10 @@ func (s *AppFilesRealTestSuite) TestFilePathValidation() {
 		path     string
 		hasError bool
 	}{
-		{"", true},                          // Empty path
-		{"/valid/path/file.yaml", false},    // Valid path
-		{"relative/path.yaml", false},       // Relative path (valid)
-		{"C:\\Windows\\file.yaml", false},   // Windows path (valid)
+		{"", true},                        // Empty path
+		{"/valid/path/file.yaml", false},  // Valid path
+		{"relative/path.yaml", false},     // Relative path (valid)
+		{"C:\\Windows\\file.yaml", false}, // Windows path (valid)
 	}
 
 	for _, tc := range testCases {
@@ -120,10 +120,10 @@ func (s *AppFilesRealTestSuite) TestDirectoryPathValidation() {
 		path     string
 		hasError bool
 	}{
-		{"", true},                    // Empty path
-		{"/tmp", false},               // Valid path
-		{"./relative", false},         // Relative path
-		{"/valid/directory", false},   // Valid absolute path
+		{"", true},                  // Empty path
+		{"/tmp", false},             // Valid path
+		{"./relative", false},       // Relative path
+		{"/valid/directory", false}, // Valid absolute path
 	}
 
 	for _, tc := range testCases {
@@ -164,7 +164,7 @@ func (s *AppFilesRealTestSuite) TestDialogTitleHandling() {
 		expected string
 	}{
 		{"", "Select Directory"},           // Empty title gets default
-		{"Custom Title", "Custom Title"},  // Non-empty title preserved
+		{"Custom Title", "Custom Title"},   // Non-empty title preserved
 		{"Select Output", "Select Output"}, // Custom title preserved
 	}
 
@@ -249,16 +249,16 @@ func (s *AppFilesRealTestSuite) TestWritableDirectoryCheck() {
 // Test buffer size calculations
 func (s *AppFilesRealTestSuite) TestBufferSizeCalculations() {
 	bufferSize := 64 * 1024 // 64KB
-	
+
 	// Test that buffer size is appropriate for different file sizes
 	testCases := []struct {
-		fileSize     int64
-		numBuffers   int64
+		fileSize   int64
+		numBuffers int64
 	}{
-		{1024, 1},           // 1KB = 1 buffer
-		{65536, 1},          // 64KB = 1 buffer
-		{131072, 2},         // 128KB = 2 buffers
-		{1048576, 16},       // 1MB = 16 buffers
+		{1024, 1},     // 1KB = 1 buffer
+		{65536, 1},    // 64KB = 1 buffer
+		{131072, 2},   // 128KB = 2 buffers
+		{1048576, 16}, // 1MB = 16 buffers
 	}
 
 	for _, tc := range testCases {
@@ -295,9 +295,9 @@ func (s *AppFilesRealTestSuite) TestFileSizeValidation() {
 		size int
 		name string
 	}{
-		{1024, "small.txt"},           // 1KB
-		{10240, "medium.txt"},         // 10KB  
-		{102400, "large.txt"},         // 100KB
+		{1024, "small.txt"},   // 1KB
+		{10240, "medium.txt"}, // 10KB
+		{102400, "large.txt"}, // 100KB
 	}
 
 	for _, tc := range testCases {
@@ -307,10 +307,10 @@ func (s *AppFilesRealTestSuite) TestFileSizeValidation() {
 			for i := range content {
 				content[i] = 'A'
 			}
-			
+
 			err := os.WriteFile(testFile, content, 0644)
 			s.helper.AssertNoError(err)
-			
+
 			// Verify file size
 			info, err := os.Stat(testFile)
 			s.helper.AssertNoError(err)
@@ -323,16 +323,16 @@ func (s *AppFilesRealTestSuite) TestFileSizeValidation() {
 func (s *AppFilesRealTestSuite) TestErrorScenarios() {
 	// Test with non-existent directory parent
 	invalidPath := filepath.Join(s.tempDir, "nonexistent", "subdir", "file.txt")
-	
+
 	// This would fail when trying to write to a non-existent parent directory
 	err := os.WriteFile(invalidPath, []byte("content"), 0644)
 	s.helper.AssertError(err) // Should fail due to missing parent directories
-	
+
 	// Test creating the parent directory first
 	parentDir := filepath.Dir(invalidPath)
 	err = os.MkdirAll(parentDir, 0755)
 	s.helper.AssertNoError(err)
-	
+
 	// Now writing should succeed
 	err = os.WriteFile(invalidPath, []byte("content"), 0644)
 	s.helper.AssertNoError(err)

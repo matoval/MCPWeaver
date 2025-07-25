@@ -27,19 +27,19 @@ func (r *ValidationCacheRepository) GetByHash(specHash string) (*ValidationCache
 		FROM validation_cache 
 		WHERE spec_hash = ? AND expires_at > ?
 	`
-	
+
 	cache := &ValidationCache{}
 	err := r.db.conn.QueryRow(query, specHash, time.Now()).Scan(
-		&cache.SpecHash, &cache.SpecPath, &cache.SpecURL, 
+		&cache.SpecHash, &cache.SpecPath, &cache.SpecURL,
 		&cache.ValidationResult, &cache.CachedAt, &cache.ExpiresAt)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // Cache miss
 		}
 		return nil, fmt.Errorf("failed to get validation cache: %w", err)
 	}
-	
+
 	return cache, nil
 }
 
@@ -50,32 +50,32 @@ func (r *ValidationCacheRepository) Store(cache *ValidationCache) error {
 		(spec_hash, spec_path, spec_url, validation_result, cached_at, expires_at)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`
-	
-	_, err := r.db.conn.Exec(query, 
-		cache.SpecHash, cache.SpecPath, cache.SpecURL, 
+
+	_, err := r.db.conn.Exec(query,
+		cache.SpecHash, cache.SpecPath, cache.SpecURL,
 		cache.ValidationResult, cache.CachedAt, cache.ExpiresAt)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to store validation cache: %w", err)
 	}
-	
+
 	return nil
 }
 
 // CleanExpired removes expired validation cache entries
 func (r *ValidationCacheRepository) CleanExpired() error {
 	query := `DELETE FROM validation_cache WHERE expires_at <= ?`
-	
+
 	result, err := r.db.conn.Exec(query, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to clean expired validation cache: %w", err)
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
-	
+
 	fmt.Printf("Cleaned %d expired validation cache entries\n", rowsAffected)
 	return nil
 }
@@ -89,17 +89,17 @@ func (r *ValidationCacheRepository) GetStats() (*ValidationCacheStats, error) {
 			COUNT(CASE WHEN expires_at <= ? THEN 1 END) as expired_entries
 		FROM validation_cache
 	`
-	
+
 	stats := &ValidationCacheStats{}
 	now := time.Now()
-	
+
 	err := r.db.conn.QueryRow(query, now, now).Scan(
 		&stats.TotalEntries, &stats.ActiveEntries, &stats.ExpiredEntries)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cache stats: %w", err)
 	}
-	
+
 	return stats, nil
 }
 
@@ -110,12 +110,12 @@ func (r *ValidationCacheRepository) GenerateSpecHash(specPath string) (string, e
 		return "", fmt.Errorf("failed to open spec file: %w", err)
 	}
 	defer file.Close()
-	
+
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		return "", fmt.Errorf("failed to hash spec file: %w", err)
 	}
-	
+
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 

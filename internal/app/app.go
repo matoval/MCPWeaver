@@ -12,7 +12,7 @@ import (
 	"MCPWeaver/internal/parser"
 	"MCPWeaver/internal/plugin"
 	"MCPWeaver/internal/validator"
-	
+
 	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -47,7 +47,7 @@ func NewApp() *App {
 		errorManager:       NewErrorManager(),
 		performanceMonitor: NewPerformanceMonitor(),
 	}
-	
+
 	// Initialize activity log service with default config
 	logConfig := LogConfig{
 		Level:         LogLevelInfo,
@@ -58,21 +58,21 @@ func NewApp() *App {
 		FlushInterval: 5 * time.Minute,
 	}
 	app.activityLogService = NewActivityLogService(app, logConfig)
-	
+
 	return app
 }
 
 // OnStartup is called when the app starts, before the frontend is loaded
 func (a *App) OnStartup(ctx context.Context) error {
 	a.ctx = ctx
-	
+
 	// Record startup time
 	startupStart := time.Now()
-	
+
 	// Log startup begin
 	a.LogActivity(LogLevelInfo, "System", "Startup", "Application startup initiated",
 		WithUserAction(true))
-	
+
 	// Initialize database
 	dbPath := "./mcpweaver.db"
 	dbWrapper, err := database.Open(dbPath)
@@ -80,18 +80,18 @@ func (a *App) OnStartup(ctx context.Context) error {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 	a.db = dbWrapper.GetConn()
-	
+
 	// Initialize repositories
 	a.projectRepo = database.NewProjectRepository(dbWrapper)
 	a.templateRepo = database.NewTemplateRepository(dbWrapper)
 	a.validationCacheRepo = database.NewValidationCacheRepository(dbWrapper)
-	
+
 	// Initialize update service
 	a.updateService = NewUpdateService(ctx)
-	
+
 	// Initialize notification service
 	a.notificationService = NewNotificationService(ctx, a.db)
-	
+
 	// Load settings
 	settings, err := a.loadSettings()
 	if err != nil {
@@ -100,26 +100,26 @@ func (a *App) OnStartup(ctx context.Context) error {
 		settings = getDefaultSettings()
 	}
 	a.settings = settings
-	
+
 	// Start update service
 	if err := a.updateService.Start(); err != nil {
 		runtime.LogWarning(a.ctx, "Failed to start update service: "+err.Error())
 	}
-	
+
 	// Start notification service
 	if err := a.notificationService.Start(); err != nil {
 		runtime.LogWarning(a.ctx, "Failed to start notification service: "+err.Error())
 	}
-	
+
 	// Initialize plugin service
 	if err := a.pluginService.Initialize(); err != nil {
 		runtime.LogWarning(a.ctx, "Failed to initialize plugin service: "+err.Error())
 	}
-	
+
 	// Record startup time
 	startupDuration := time.Since(startupStart)
 	a.performanceMonitor.RecordStartupTime(startupDuration)
-	
+
 	// Log startup completion
 	a.LogActivity(LogLevelInfo, "System", "Startup", "Application startup completed",
 		WithDuration(startupDuration),
@@ -127,14 +127,14 @@ func (a *App) OnStartup(ctx context.Context) error {
 			"startupTime": startupDuration.String(),
 			"version":     "1.0.0",
 		}))
-	
+
 	// Emit startup event
 	runtime.EventsEmit(a.ctx, "system:startup", map[string]interface{}{
-		"timestamp": time.Now(),
-		"version":   "1.0.0",
+		"timestamp":    time.Now(),
+		"version":      "1.0.0",
 		"startup_time": startupDuration.String(),
 	})
-	
+
 	return nil
 }
 
@@ -143,51 +143,51 @@ func (a *App) OnShutdown(ctx context.Context) error {
 	// Log shutdown initiation
 	a.LogActivity(LogLevelInfo, "System", "Shutdown", "Application shutdown initiated",
 		WithUserAction(true))
-		
+
 	// Emit shutdown event
 	runtime.EventsEmit(a.ctx, "system:shutdown", map[string]interface{}{
 		"timestamp": time.Now(),
 	})
-	
+
 	// Stop update service
 	if a.updateService != nil {
 		if err := a.updateService.Stop(); err != nil {
 			runtime.LogError(a.ctx, "Failed to stop update service: "+err.Error())
 		}
 	}
-	
+
 	// Stop notification service
 	if a.notificationService != nil {
 		if err := a.notificationService.Stop(); err != nil {
 			runtime.LogError(a.ctx, "Failed to stop notification service: "+err.Error())
 		}
 	}
-	
+
 	// Shutdown plugin service
 	if a.pluginService != nil {
 		if err := a.pluginService.Shutdown(); err != nil {
 			runtime.LogError(a.ctx, "Failed to shutdown plugin service: "+err.Error())
 		}
 	}
-	
+
 	// Save settings
 	if err := a.saveSettingsToFile(); err != nil {
 		runtime.LogError(a.ctx, "Failed to save settings: "+err.Error())
 	}
-	
+
 	// Close database connection
 	if a.db != nil {
 		if err := a.db.Close(); err != nil {
 			runtime.LogError(a.ctx, "Failed to close database: "+err.Error())
 		}
 	}
-	
+
 	// Close activity log service
 	if a.activityLogService != nil {
 		a.LogActivity(LogLevelInfo, "System", "Shutdown", "Application shutdown completed")
 		a.activityLogService.Close()
 	}
-	
+
 	return nil
 }
 
@@ -247,7 +247,7 @@ func (a *App) emitError(err *APIError) {
 func (a *App) ReportError(errorReport map[string]interface{}) error {
 	// Log the error
 	fmt.Printf("Frontend Error Report: %+v\n", errorReport)
-	
+
 	// Here you could send the error to a logging service, database, or monitoring system
 	// For now, we'll just emit it as a system event
 	if a.ctx != nil {
@@ -258,7 +258,7 @@ func (a *App) ReportError(errorReport map[string]interface{}) error {
 		}()
 		runtime.EventsEmit(a.ctx, "system:error-report", errorReport)
 	}
-	
+
 	return nil
 }
 
@@ -269,7 +269,7 @@ func (a *App) GetActivityLogs(ctx context.Context, filter LogFilter) ([]Activity
 	if a.activityLogService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Activity log service not initialized", nil)
 	}
-	
+
 	logs := a.activityLogService.GetLogs(filter)
 	return logs, nil
 }
@@ -279,7 +279,7 @@ func (a *App) SearchActivityLogs(ctx context.Context, request LogSearchRequest) 
 	if a.activityLogService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Activity log service not initialized", nil)
 	}
-	
+
 	return a.activityLogService.SearchLogs(ctx, request)
 }
 
@@ -288,7 +288,7 @@ func (a *App) ExportActivityLogs(ctx context.Context, request LogExportRequest) 
 	if a.activityLogService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Activity log service not initialized", nil)
 	}
-	
+
 	return a.activityLogService.ExportLogs(ctx, request)
 }
 
@@ -297,7 +297,7 @@ func (a *App) GetApplicationStatus(ctx context.Context) (*ApplicationStatus, err
 	if a.activityLogService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Activity log service not initialized", nil)
 	}
-	
+
 	return a.activityLogService.GetApplicationStatus(), nil
 }
 
@@ -306,7 +306,7 @@ func (a *App) UpdateLogConfig(ctx context.Context, config LogConfig) error {
 	if a.activityLogService == nil {
 		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Activity log service not initialized", nil)
 	}
-	
+
 	return a.activityLogService.UpdateLogConfig(config)
 }
 
@@ -315,12 +315,12 @@ func (a *App) ClearActivityLogs(ctx context.Context, olderThanHours int) (int, e
 	if a.activityLogService == nil {
 		return 0, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Activity log service not initialized", nil)
 	}
-	
+
 	var olderThan time.Duration
 	if olderThanHours > 0 {
 		olderThan = time.Duration(olderThanHours) * time.Hour
 	}
-	
+
 	cleared := a.activityLogService.ClearLogs(olderThan)
 	return cleared, nil
 }
@@ -337,7 +337,7 @@ func (a *App) CreateErrorReport(ctx context.Context, errorType ErrorType, severi
 	if a.activityLogService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Activity log service not initialized", nil)
 	}
-	
+
 	report := a.activityLogService.ReportError(errorType, severity, component, operation, message, err)
 	return report, nil
 }
@@ -347,7 +347,7 @@ func (a *App) GetErrorReports(ctx context.Context, includeResolved bool) ([]Erro
 	if a.activityLogService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Activity log service not initialized", nil)
 	}
-	
+
 	reports := a.activityLogService.GetErrorReports(includeResolved)
 	return reports, nil
 }
@@ -361,9 +361,9 @@ func (a *App) emitNotification(notificationType, title, message string) {
 			}
 		}()
 		runtime.EventsEmit(a.ctx, "system:notification", map[string]interface{}{
-			"type":    notificationType,
-			"title":   title,
-			"message": message,
+			"type":      notificationType,
+			"title":     title,
+			"message":   message,
 			"timestamp": time.Now(),
 		})
 	}
@@ -442,7 +442,7 @@ func (a *App) GetPlugins(ctx context.Context) (map[string]*plugin.PluginInstance
 	if a.pluginService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.GetPlugins()
 }
 
@@ -451,7 +451,7 @@ func (a *App) GetPlugin(ctx context.Context, pluginID string) (*plugin.PluginIns
 	if a.pluginService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.GetPlugin(pluginID)
 }
 
@@ -460,7 +460,7 @@ func (a *App) LoadPlugin(ctx context.Context, pluginPath string) error {
 	if a.pluginService == nil {
 		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.LoadPlugin(pluginPath)
 }
 
@@ -469,7 +469,7 @@ func (a *App) UnloadPlugin(ctx context.Context, pluginID string) error {
 	if a.pluginService == nil {
 		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.UnloadPlugin(pluginID)
 }
 
@@ -478,7 +478,7 @@ func (a *App) EnablePlugin(ctx context.Context, pluginID string) error {
 	if a.pluginService == nil {
 		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.EnablePlugin(pluginID)
 }
 
@@ -487,7 +487,7 @@ func (a *App) DisablePlugin(ctx context.Context, pluginID string) error {
 	if a.pluginService == nil {
 		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.DisablePlugin(pluginID)
 }
 
@@ -496,7 +496,7 @@ func (a *App) GetPluginsByCapability(ctx context.Context, capability string) ([]
 	if a.pluginService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.GetPluginsByCapability(capability)
 }
 
@@ -505,7 +505,7 @@ func (a *App) SearchPlugins(ctx context.Context, query string, category string, 
 	if a.pluginService == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.SearchPlugins(ctx, query, category, tags, limit)
 }
 
@@ -514,7 +514,7 @@ func (a *App) InstallPlugin(ctx context.Context, pluginID string) error {
 	if a.pluginService == nil {
 		return a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Plugin service not initialized", nil)
 	}
-	
+
 	return a.pluginService.InstallPlugin(ctx, pluginID)
 }
 
@@ -523,7 +523,7 @@ func (a *App) GetPluginCapabilities(ctx context.Context) []string {
 	if a.pluginService == nil {
 		return []string{}
 	}
-	
+
 	return a.pluginService.GetPluginCapabilities()
 }
 
@@ -532,7 +532,7 @@ func (a *App) GetPluginPermissions(ctx context.Context) []string {
 	if a.pluginService == nil {
 		return []string{}
 	}
-	
+
 	return a.pluginService.GetPluginPermissions()
 }
 
@@ -543,7 +543,7 @@ func (a *App) GetAllTemplates() ([]*database.AppTemplate, error) {
 	if a.templateRepo == nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Template repository not initialized", nil)
 	}
-	
+
 	templates, err := a.templateRepo.GetAll()
 	if err != nil {
 		return nil, a.createAPIError(ErrorTypeSystem, ErrCodeInternalError, "Failed to retrieve templates", map[string]string{"error": err.Error()})
@@ -646,9 +646,9 @@ func (a *App) DuplicateTemplate(id string, newName string) (*database.AppTemplat
 			}
 		}()
 		runtime.EventsEmit(a.ctx, "template:duplicated", map[string]interface{}{
-			"originalId": original.ID,
+			"originalId":  original.ID,
 			"duplicateId": duplicate.ID,
-			"name":       duplicate.Name,
+			"name":        duplicate.Name,
 		})
 	}
 

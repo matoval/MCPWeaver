@@ -66,21 +66,21 @@ var settingsMigrations = []SettingsMigration{
 func (a *App) migrateSettings(settings *AppSettings) error {
 	// Get current settings version (stored in the settings file)
 	currentVersion := a.getSettingsVersion(settings)
-	
+
 	log.Printf("Current settings version: %d", currentVersion)
 
 	// Apply pending migrations
 	for _, migration := range settingsMigrations {
 		if migration.Version > currentVersion {
 			log.Printf("Applying settings migration %d: %s", migration.Version, migration.Name)
-			
+
 			if err := migration.Migrate(settings); err != nil {
 				return fmt.Errorf("failed to apply settings migration %d: %w", migration.Version, err)
 			}
-			
+
 			// Update settings version
 			a.setSettingsVersion(settings, migration.Version)
-			
+
 			log.Printf("Successfully applied settings migration %d", migration.Version)
 		}
 	}
@@ -93,12 +93,12 @@ func (a *App) migrateSettings(settings *AppSettings) error {
 func (a *App) getSettingsVersion(settings *AppSettings) int {
 	// For now, we'll use a simple heuristic to determine version
 	// In the future, this could be stored as a dedicated field
-	
+
 	// Version 0: Original settings without notification/appearance settings
 	if settings.NotificationSettings == (NotificationSettings{}) {
 		return 0
 	}
-	
+
 	// Version 1: Has notification and appearance settings
 	return 1
 }
@@ -145,7 +145,7 @@ func (a *App) BackupSettings() error {
 
 	// Create backup path
 	backupPath := a.GetSettingsFilePath() + ".backup"
-	
+
 	// Marshal settings to JSON
 	data, err := json.MarshalIndent(a.settings, "", "  ")
 	if err != nil {
@@ -159,7 +159,7 @@ func (a *App) BackupSettings() error {
 // RestoreSettingsFromBackup restores settings from backup
 func (a *App) RestoreSettingsFromBackup() error {
 	backupPath := a.GetSettingsFilePath() + ".backup"
-	
+
 	// Check if backup exists
 	if a.fileExists(backupPath) != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Settings backup not found", map[string]string{
@@ -171,7 +171,7 @@ func (a *App) RestoreSettingsFromBackup() error {
 	data, err := a.ReadFile(backupPath)
 	if err != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to read settings backup", map[string]string{
-			"path": backupPath,
+			"path":  backupPath,
 			"error": err.Error(),
 		})
 	}
@@ -180,7 +180,7 @@ func (a *App) RestoreSettingsFromBackup() error {
 	var settings AppSettings
 	if err := json.Unmarshal([]byte(data), &settings); err != nil {
 		return a.createAPIError("validation", ErrCodeValidation, "Invalid settings backup format", map[string]string{
-			"path": backupPath,
+			"path":  backupPath,
 			"error": err.Error(),
 		})
 	}

@@ -14,11 +14,11 @@ import (
 
 type WorkflowIntegrationTestSuite struct {
 	suite.Suite
-	helper          *helpers.TestHelper
-	parserService   *parser.Service
+	helper           *helpers.TestHelper
+	parserService    *parser.Service
 	validatorService *validator.Service
-	mappingService  *mapping.Service
-	ctx             context.Context
+	mappingService   *mapping.Service
+	ctx              context.Context
 }
 
 func (s *WorkflowIntegrationTestSuite) SetupTest() {
@@ -110,18 +110,18 @@ func (s *WorkflowIntegrationTestSuite) TestCompleteWorkflow_LargeSpec() {
 func (s *WorkflowIntegrationTestSuite) TestWorkflow_ValidationAndParsing_Consistency() {
 	// Test that validation and parsing are consistent
 	testCases := []struct {
-		name     string
-		content  string
+		name          string
+		content       string
 		shouldSucceed bool
 	}{
 		{
-			name:     "Valid spec",
-			content:  helpers.ValidateOpenAPISpec(),
+			name:          "Valid spec",
+			content:       helpers.ValidateOpenAPISpec(),
 			shouldSucceed: true,
 		},
 		{
-			name:     "Invalid spec",
-			content:  helpers.InvalidOpenAPISpec(),
+			name:          "Invalid spec",
+			content:       helpers.InvalidOpenAPISpec(),
 			shouldSucceed: false,
 		},
 	}
@@ -172,13 +172,13 @@ func (s *WorkflowIntegrationTestSuite) TestWorkflow_ParsingAndMapping_Integratio
 
 	// Verify mapping results
 	s.helper.AssertEqual(len(parseResult.Operations), len(tools))
-	
+
 	// Check that each tool has required fields
 	for i, tool := range tools {
 		s.helper.AssertNotEqual("", tool.Name)
 		s.helper.AssertNotEqual("", tool.Description)
 		s.helper.AssertNotNil(tool.InputSchema)
-		
+
 		// Tool name should be related to operation
 		operation := parseResult.Operations[i]
 		s.helper.AssertContains(tool.Name, operation.Method)
@@ -187,7 +187,7 @@ func (s *WorkflowIntegrationTestSuite) TestWorkflow_ParsingAndMapping_Integratio
 
 func (s *WorkflowIntegrationTestSuite) TestWorkflow_ErrorPropagation() {
 	// Test that errors propagate correctly through the workflow
-	
+
 	// Test with non-existent file
 	nonExistentPath := "/non/existent/file.yaml"
 
@@ -204,12 +204,12 @@ func (s *WorkflowIntegrationTestSuite) TestWorkflow_ErrorPropagation() {
 
 func (s *WorkflowIntegrationTestSuite) TestWorkflow_ServiceInstantiation() {
 	// Test that all services can be instantiated and work together
-	
+
 	// Test parser service
 	parser := parser.NewService()
 	s.helper.AssertNotNil(parser)
 
-	// Test validator service  
+	// Test validator service
 	validator := validator.New()
 	s.helper.AssertNotNil(validator)
 
@@ -273,10 +273,10 @@ func (s *WorkflowIntegrationTestSuite) TestWorkflow_SequentialOperations() {
 func (s *WorkflowIntegrationTestSuite) TestWorkflow_MemoryManagement() {
 	// Test memory management across multiple workflow executions
 	specContent := helpers.ValidateOpenAPISpec()
-	
+
 	for i := 0; i < 5; i++ {
 		filePath, cleanup := s.helper.CreateTempFile(specContent, ".yaml")
-		
+
 		// Execute complete workflow
 		validationResult, err := s.validatorService.ValidateFile(s.ctx, filePath)
 		s.helper.AssertNoError(err)
@@ -291,7 +291,7 @@ func (s *WorkflowIntegrationTestSuite) TestWorkflow_MemoryManagement() {
 			s.helper.AssertNoError(err)
 			s.helper.AssertNotNil(tools)
 		}
-		
+
 		cleanup() // Clean up immediately to test memory management
 	}
 }

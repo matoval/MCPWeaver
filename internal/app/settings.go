@@ -75,7 +75,7 @@ func (a *App) GetSettingsFilePath() string {
 // saveSettingsToFile saves settings to a JSON file
 func (a *App) saveSettingsToFile() error {
 	settingsPath := a.GetSettingsFilePath()
-	
+
 	// Ensure directory exists
 	dir := filepath.Dir(settingsPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -95,7 +95,7 @@ func (a *App) saveSettingsToFile() error {
 // loadSettingsFromFile loads settings from a JSON file
 func (a *App) loadSettingsFromFile() (*AppSettings, error) {
 	settingsPath := a.GetSettingsFilePath()
-	
+
 	// Check if file exists
 	if _, err := os.Stat(settingsPath); os.IsNotExist(err) {
 		return getDefaultSettings(), nil
@@ -366,7 +366,7 @@ func (a *App) ImportSettings() error {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return a.createAPIError("file_system", ErrCodeFileAccess, "Failed to read settings file", map[string]string{
-			"path": filePath,
+			"path":  filePath,
 			"error": err.Error(),
 		})
 	}
@@ -375,7 +375,7 @@ func (a *App) ImportSettings() error {
 	var settings AppSettings
 	if err := json.Unmarshal(data, &settings); err != nil {
 		return a.createAPIError("validation", ErrCodeValidation, "Invalid settings file format", map[string]string{
-			"path": filePath,
+			"path":  filePath,
 			"error": err.Error(),
 		})
 	}

@@ -154,7 +154,7 @@ func (db *DB) migrate() error {
 	for _, migration := range migrations {
 		if migration.Version > currentVersion {
 			log.Printf("Applying migration %d: %s", migration.Version, migration.Name)
-			
+
 			// Begin transaction
 			tx, err := db.conn.Begin()
 			if err != nil {
@@ -207,7 +207,7 @@ func (db *DB) rollback(targetVersion int) error {
 		migration := migrations[i]
 		if migration.Version > targetVersion && migration.Version <= currentVersion {
 			log.Printf("Rolling back migration %d: %s", migration.Version, migration.Name)
-			
+
 			// Begin transaction
 			tx, err := db.conn.Begin()
 			if err != nil {

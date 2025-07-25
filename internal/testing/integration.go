@@ -25,7 +25,7 @@ func NewIntegrationTester(config *TestConfig) *IntegrationTester {
 // TestIntegration runs integration tests with real MCP clients
 func (it *IntegrationTester) TestIntegration(ctx context.Context, serverPath string) (*IntegrationTestResult, error) {
 	startTime := time.Now()
-	
+
 	result := &IntegrationTestResult{
 		Success:             true,
 		ScenarioResults:     make(map[string]*ScenarioTestResult),
@@ -65,7 +65,7 @@ func (it *IntegrationTester) TestIntegration(ctx context.Context, serverPath str
 // runScenario executes a specific test scenario
 func (it *IntegrationTester) runScenario(ctx context.Context, serverPath string, scenario string, result *IntegrationTestResult) error {
 	startTime := time.Now()
-	
+
 	scenarioResult := &ScenarioTestResult{
 		Scenario: scenario,
 		Success:  true,
@@ -123,13 +123,13 @@ func (it *IntegrationTester) runScenario(ctx context.Context, serverPath string,
 // testServerStartup tests server startup process
 func (it *IntegrationTester) testServerStartup(ctx context.Context, serverPath string, scenario *ScenarioTestResult) error {
 	stepStart := time.Now()
-	
+
 	// Step 1: Compile server
 	step1 := StepResult{
 		Step:    "compile_server",
 		Success: true,
 	}
-	
+
 	sch := NewSecureCommandHelper()
 	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "integration-test-server", "main.go")
 	if err != nil {
@@ -155,7 +155,7 @@ func (it *IntegrationTester) testServerStartup(ctx context.Context, serverPath s
 		Step:    "start_server",
 		Success: true,
 	}
-	
+
 	cmd, err := sch.SecureRunExecutable(ctx, serverPath, "integration-test-server")
 	if err != nil {
 		step2.Success = false
@@ -164,7 +164,7 @@ func (it *IntegrationTester) testServerStartup(ctx context.Context, serverPath s
 		scenario.Steps = append(scenario.Steps, step2)
 		return err
 	}
-	
+
 	if err := cmd.Start(); err != nil {
 		step2.Success = false
 		step2.ErrorMessage = fmt.Sprintf("Failed to start server: %v", err)
@@ -172,10 +172,10 @@ func (it *IntegrationTester) testServerStartup(ctx context.Context, serverPath s
 		scenario.Steps = append(scenario.Steps, step2)
 		return err
 	}
-	
+
 	// Give server time to start
 	time.Sleep(500 * time.Millisecond)
-	
+
 	// Step 3: Verify server is running
 	if cmd.Process == nil {
 		step2.Success = false
@@ -186,7 +186,7 @@ func (it *IntegrationTester) testServerStartup(ctx context.Context, serverPath s
 		cmd.Wait()
 		os.Remove(filepath.Join(serverPath, "integration-test-server"))
 	}
-	
+
 	step2.Duration = time.Since(stepStart)
 	scenario.Steps = append(scenario.Steps, step2)
 
@@ -208,7 +208,7 @@ func (it *IntegrationTester) testClientConnection(ctx context.Context, serverPat
 	defer it.stopTestServer(serverProcess, serverPath)
 
 	stepStart := time.Now()
-	
+
 	// Create client and test connection
 	client := NewJSONRPCClient(stdin, stdout, stderr)
 	defer client.Close()
@@ -224,7 +224,7 @@ func (it *IntegrationTester) testClientConnection(ctx context.Context, serverPat
 	}
 
 	response, err := client.Call(ctx, "initialize", initRequest)
-	
+
 	step := StepResult{
 		Step:     "initialize_connection",
 		Success:  err == nil,
@@ -234,11 +234,11 @@ func (it *IntegrationTester) testClientConnection(ctx context.Context, serverPat
 			"response": response,
 		},
 	}
-	
+
 	if err != nil {
 		step.ErrorMessage = err.Error()
 	}
-	
+
 	scenario.Steps = append(scenario.Steps, step)
 	return err
 }
@@ -261,16 +261,16 @@ func (it *IntegrationTester) testToolsDiscovery(ctx context.Context, serverPath 
 		"capabilities":    map[string]interface{}{},
 		"clientInfo":      map[string]interface{}{"name": "Test", "version": "1.0.0"},
 	}
-	
+
 	if _, err := client.Call(ctx, "initialize", initRequest); err != nil {
 		return fmt.Errorf("initialization failed: %w", err)
 	}
 
 	stepStart := time.Now()
-	
+
 	// Test tools/list
 	response, err := client.Call(ctx, "tools/list", map[string]interface{}{})
-	
+
 	step := StepResult{
 		Step:     "list_tools",
 		Success:  err == nil,
@@ -279,7 +279,7 @@ func (it *IntegrationTester) testToolsDiscovery(ctx context.Context, serverPath 
 			"response": response,
 		},
 	}
-	
+
 	if err != nil {
 		step.ErrorMessage = err.Error()
 	} else {
@@ -292,7 +292,7 @@ func (it *IntegrationTester) testToolsDiscovery(ctx context.Context, serverPath 
 			}
 		}
 	}
-	
+
 	scenario.Steps = append(scenario.Steps, step)
 	return err
 }
@@ -315,7 +315,7 @@ func (it *IntegrationTester) testToolExecution(ctx context.Context, serverPath s
 		"capabilities":    map[string]interface{}{},
 		"clientInfo":      map[string]interface{}{"name": "Test", "version": "1.0.0"},
 	}
-	
+
 	if _, err := client.Call(ctx, "initialize", initRequest); err != nil {
 		return fmt.Errorf("initialization failed: %w", err)
 	}
@@ -347,15 +347,15 @@ func (it *IntegrationTester) testToolExecution(ctx context.Context, serverPath s
 	}
 
 	stepStart := time.Now()
-	
+
 	// Test tool execution
 	callRequest := map[string]interface{}{
 		"name":      firstToolName,
 		"arguments": map[string]interface{}{},
 	}
-	
+
 	response, err := client.Call(ctx, "tools/call", callRequest)
-	
+
 	step := StepResult{
 		Step:     "execute_tool",
 		Success:  err == nil,
@@ -366,7 +366,7 @@ func (it *IntegrationTester) testToolExecution(ctx context.Context, serverPath s
 			"response":  response,
 		},
 	}
-	
+
 	if err != nil {
 		step.ErrorMessage = err.Error()
 		// Tool execution failures might be expected for some tools without proper parameters
@@ -375,7 +375,7 @@ func (it *IntegrationTester) testToolExecution(ctx context.Context, serverPath s
 			step.ErrorMessage = "Expected error due to missing required parameters"
 		}
 	}
-	
+
 	scenario.Steps = append(scenario.Steps, step)
 	return nil
 }
@@ -398,7 +398,7 @@ func (it *IntegrationTester) testErrorHandling(ctx context.Context, serverPath s
 		"capabilities":    map[string]interface{}{},
 		"clientInfo":      map[string]interface{}{"name": "Test", "version": "1.0.0"},
 	}
-	
+
 	if _, err := client.Call(ctx, "initialize", initRequest); err != nil {
 		return fmt.Errorf("initialization failed: %w", err)
 	}
@@ -406,13 +406,13 @@ func (it *IntegrationTester) testErrorHandling(ctx context.Context, serverPath s
 	// Test invalid method
 	stepStart := time.Now()
 	_, err = client.Call(ctx, "invalid/method", map[string]interface{}{})
-	
+
 	step1 := StepResult{
 		Step:     "test_invalid_method",
 		Success:  err != nil, // We expect an error
 		Duration: time.Since(stepStart),
 	}
-	
+
 	if err == nil {
 		step1.Success = false
 		step1.ErrorMessage = "Expected error for invalid method, but got success"
@@ -426,13 +426,13 @@ func (it *IntegrationTester) testErrorHandling(ctx context.Context, serverPath s
 	// Test invalid parameters
 	stepStart = time.Now()
 	_, err = client.Call(ctx, "tools/call", "invalid_params")
-	
+
 	step2 := StepResult{
 		Step:     "test_invalid_params",
 		Success:  err != nil, // We expect an error
 		Duration: time.Since(stepStart),
 	}
-	
+
 	if err == nil {
 		step2.Success = false
 		step2.ErrorMessage = "Expected error for invalid parameters, but got success"
@@ -448,9 +448,9 @@ func (it *IntegrationTester) testErrorHandling(ctx context.Context, serverPath s
 
 // testConcurrentRequests tests concurrent request handling
 func (it *IntegrationTester) testConcurrentRequests(ctx context.Context, serverPath string, scenario *ScenarioTestResult) error {
-	// For simplicity, we'll test sequential requests since true concurrency 
+	// For simplicity, we'll test sequential requests since true concurrency
 	// requires multiple connections which is complex with stdio-based servers
-	
+
 	// Start server for testing
 	serverProcess, stdin, stdout, stderr, err := it.startTestServer(ctx, serverPath)
 	if err != nil {
@@ -467,24 +467,24 @@ func (it *IntegrationTester) testConcurrentRequests(ctx context.Context, serverP
 		"capabilities":    map[string]interface{}{},
 		"clientInfo":      map[string]interface{}{"name": "Test", "version": "1.0.0"},
 	}
-	
+
 	if _, err := client.Call(ctx, "initialize", initRequest); err != nil {
 		return fmt.Errorf("initialization failed: %w", err)
 	}
 
 	stepStart := time.Now()
-	
+
 	// Send multiple sequential requests rapidly
 	requestCount := 5
 	successCount := 0
-	
+
 	for i := 0; i < requestCount; i++ {
 		_, err := client.Call(ctx, "tools/list", map[string]interface{}{})
 		if err == nil {
 			successCount++
 		}
 	}
-	
+
 	step := StepResult{
 		Step:     "multiple_sequential_requests",
 		Success:  successCount == requestCount,
@@ -495,11 +495,11 @@ func (it *IntegrationTester) testConcurrentRequests(ctx context.Context, serverP
 			"success_rate":        float64(successCount) / float64(requestCount),
 		},
 	}
-	
+
 	if successCount != requestCount {
 		step.ErrorMessage = fmt.Sprintf("Only %d out of %d requests succeeded", successCount, requestCount)
 	}
-	
+
 	scenario.Steps = append(scenario.Steps, step)
 	return nil
 }
@@ -508,26 +508,26 @@ func (it *IntegrationTester) testConcurrentRequests(ctx context.Context, serverP
 func (it *IntegrationTester) testClientCompatibility(ctx context.Context, serverPath string, result *IntegrationTestResult) error {
 	// This would test with actual MCP clients if available
 	// For now, we'll simulate compatibility tests
-	
+
 	clients := []string{"claude-desktop", "generic-mcp-client"}
-	
+
 	for _, clientName := range clients {
 		compatible := true
-		
+
 		// Simulate compatibility check
 		// In a real implementation, this would start the actual client
 		// and test integration
-		
+
 		result.ClientCompatibility[clientName] = compatible
 	}
-	
+
 	return nil
 }
 
 // startTestServer starts a server for testing
 func (it *IntegrationTester) startTestServer(ctx context.Context, serverPath string) (*exec.Cmd, *os.File, *os.File, *os.File, error) {
 	sch := NewSecureCommandHelper()
-	
+
 	// Compile server first using secure command execution
 	compileCmd, err := sch.SecureCompileCommand(ctx, serverPath, "integration-test-server", "main.go")
 	if err != nil {
@@ -585,7 +585,7 @@ func (it *IntegrationTester) stopTestServer(cmd *exec.Cmd, serverPath string) {
 		cmd.Process.Kill()
 		cmd.Wait()
 	}
-	
+
 	// Clean up binary
 	os.Remove(filepath.Join(serverPath, "integration-test-server"))
 }

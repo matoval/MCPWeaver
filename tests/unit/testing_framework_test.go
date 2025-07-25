@@ -18,19 +18,19 @@ func createTestConfig() *mcptesting.TestConfig {
 		EnableParallelTesting:    false,
 		ContinueOnFailure:        true,
 		EnableSecurityScanning:   false,
-		EnableLinting:           false,
+		EnableLinting:            false,
 		EnablePerformanceTesting: false,
 		EnableIntegrationTesting: false,
-		MCPProtocolVersion:      "2024-11-05",
-		RequiredMethods:         []string{"initialize", "tools/list"},
-		RequiredCapabilities:    []string{"tools"},
-		MaxResponseTime:         time.Second,
-		MaxMemoryUsage:          100 * 1024 * 1024,
-		GenerateReport:          false,
-		ReportFormat:           "json",
-		LogLevel:               "error",
-		RetryAttempts:          1,
-		RetryDelay:             100 * time.Millisecond,
+		MCPProtocolVersion:       "2024-11-05",
+		RequiredMethods:          []string{"initialize", "tools/list"},
+		RequiredCapabilities:     []string{"tools"},
+		MaxResponseTime:          time.Second,
+		MaxMemoryUsage:           100 * 1024 * 1024,
+		GenerateReport:           false,
+		ReportFormat:             "json",
+		LogLevel:                 "error",
+		RetryAttempts:            1,
+		RetryDelay:               100 * time.Millisecond,
 	}
 }
 
@@ -480,17 +480,17 @@ func TestTestReporter(t *testing.T) {
 
 	// Create mock test result
 	testResult := &mcptesting.TestResult{
-		TestID:       "test_001",
-		ServerPath:   "/test/server",
-		Timestamp:    time.Now(),
-		Duration:     30 * time.Second,
-		Success:      true,
-		TotalTests:   5,
-		PassedTests:  4,
-		FailedTests:  1,
-		SkippedTests: 0,
-		Errors:       []string{"Minor test error"},
-		Warnings:     []string{"Test warning"},
+		TestID:          "test_001",
+		ServerPath:      "/test/server",
+		Timestamp:       time.Now(),
+		Duration:        30 * time.Second,
+		Success:         true,
+		TotalTests:      5,
+		PassedTests:     4,
+		FailedTests:     1,
+		SkippedTests:    0,
+		Errors:          []string{"Minor test error"},
+		Warnings:        []string{"Test warning"},
 		Recommendations: []string{"Consider optimization"},
 	}
 
@@ -526,10 +526,10 @@ func TestDiagnosticsEngine(t *testing.T) {
 
 	// Create mock failed test result
 	testResult := &mcptesting.TestResult{
-		TestID:    "failed_test",
-		Success:   false,
-		Errors:    []string{"compilation failed: syntax error", "undefined: fmt"},
-		Warnings:  []string{"go fmt issues"},
+		TestID:   "failed_test",
+		Success:  false,
+		Errors:   []string{"compilation failed: syntax error", "undefined: fmt"},
+		Warnings: []string{"go fmt issues"},
 	}
 
 	// Create mock failed pipeline result

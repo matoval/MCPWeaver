@@ -20,16 +20,16 @@ type ScheduleCallback func(jobType ScheduledJobType) error
 
 // ScheduledJob represents a scheduled update operation
 type ScheduledJob struct {
-	ID          string             `json:"id"`
-	Type        ScheduledJobType   `json:"type"`
-	Schedule    *UpdateSchedule    `json:"schedule"`
-	UpdateInfo  *UpdateInfo        `json:"updateInfo,omitempty"`
-	CreatedAt   time.Time          `json:"createdAt"`
-	LastRun     *time.Time         `json:"lastRun,omitempty"`
-	NextRun     time.Time          `json:"nextRun"`
-	RunCount    int                `json:"runCount"`
-	Status      ScheduledJobStatus `json:"status"`
-	Error       *APIError          `json:"error,omitempty"`
+	ID         string             `json:"id"`
+	Type       ScheduledJobType   `json:"type"`
+	Schedule   *UpdateSchedule    `json:"schedule"`
+	UpdateInfo *UpdateInfo        `json:"updateInfo,omitempty"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	LastRun    *time.Time         `json:"lastRun,omitempty"`
+	NextRun    time.Time          `json:"nextRun"`
+	RunCount   int                `json:"runCount"`
+	Status     ScheduledJobStatus `json:"status"`
+	Error      *APIError          `json:"error,omitempty"`
 }
 
 // ScheduledJobType defines the type of scheduled job
@@ -254,7 +254,7 @@ func (s *UpdateScheduler) startScheduler() {
 	// Calculate duration until next run
 	now := time.Now()
 	duration := s.scheduledJob.NextRun.Sub(now)
-	
+
 	if duration <= 0 {
 		// Should run immediately
 		go s.executeJob()
@@ -263,7 +263,7 @@ func (s *UpdateScheduler) startScheduler() {
 
 	// Create ticker for the next run
 	s.ticker = time.NewTicker(duration)
-	
+
 	go func() {
 		select {
 		case <-s.ticker.C:
@@ -305,7 +305,7 @@ func (s *UpdateScheduler) executeJob() {
 
 	// Execute the callback
 	err := s.callback(s.scheduledJob.Type)
-	
+
 	now := time.Now()
 	s.scheduledJob.LastRun = &now
 	s.scheduledJob.RunCount++
@@ -359,9 +359,9 @@ func (s *UpdateScheduler) calculateNextRun(schedule *UpdateSchedule) (time.Time,
 		}
 
 		// Calculate next daily run
-		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 
+		nextRun := time.Date(now.Year(), now.Month(), now.Day(),
 			targetTime.Hour(), targetTime.Minute(), 0, 0, now.Location())
-		
+
 		// If the time has already passed today, schedule for tomorrow
 		if nextRun.Before(now) {
 			nextRun = nextRun.Add(24 * time.Hour)
@@ -410,7 +410,7 @@ func (s *UpdateScheduler) calculateNextRun(schedule *UpdateSchedule) (time.Time,
 
 		// Calculate next monthly run
 		year, month := now.Year(), now.Month()
-		
+
 		// Try current month first
 		nextRun := time.Date(year, month, schedule.DayOfMonth,
 			targetTime.Hour(), targetTime.Minute(), 0, 0, now.Location())
@@ -425,7 +425,7 @@ func (s *UpdateScheduler) calculateNextRun(schedule *UpdateSchedule) (time.Time,
 			}
 			nextRun = time.Date(year, month, schedule.DayOfMonth,
 				targetTime.Hour(), targetTime.Minute(), 0, 0, now.Location())
-			
+
 			// If day doesn't exist in next month, use last day of month
 			if nextRun.Day() != schedule.DayOfMonth {
 				nextRun = time.Date(year, month+1, 0,
