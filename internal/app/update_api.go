@@ -233,9 +233,14 @@ func (a *App) GetUpdateHistory() ([]UpdateResult, error) {
 		return nil, a.createAPIError(ErrorTypeSystem, "UPDATE_SERVICE_NOT_AVAILABLE", "Update service is not available", nil)
 	}
 
-	// TODO: Implement update history retrieval
-	// For now, return empty history
-	return []UpdateResult{}, nil
+	// Get update history from the service
+	history, err := a.updateService.GetUpdateHistory()
+	if err != nil {
+		a.emitError(err.(*APIError))
+		return nil, err
+	}
+
+	return history, nil
 }
 
 // GetUpdateAnalytics returns update analytics data
@@ -244,9 +249,14 @@ func (a *App) GetUpdateAnalytics() ([]UpdateAnalytics, error) {
 		return nil, a.createAPIError(ErrorTypeSystem, "UPDATE_SERVICE_NOT_AVAILABLE", "Update service is not available", nil)
 	}
 
-	// TODO: Implement analytics retrieval
-	// For now, return empty analytics
-	return []UpdateAnalytics{}, nil
+	// Get analytics data from the service
+	analytics, err := a.updateService.GetUpdateAnalytics()
+	if err != nil {
+		a.emitError(err.(*APIError))
+		return nil, err
+	}
+
+	return analytics, nil
 }
 
 // TestUpdateConnection tests the connection to the update server
@@ -273,8 +283,30 @@ func (a *App) PauseUpdateDownload() error {
 		return a.createAPIError(ErrorTypeSystem, "UPDATE_SERVICE_NOT_AVAILABLE", "Update service is not available", nil)
 	}
 
-	// TODO: Implement download pause functionality
-	return a.createAPIError(ErrorTypeSystem, "NOT_IMPLEMENTED", "Download pause functionality is not yet implemented", nil)
+	// Get current progress to check if download is in progress
+	progress := a.updateService.GetUpdateProgress()
+	if progress.Status != UpdateStatusDownloading {
+		return a.createAPIError(ErrorTypeValidation, "INVALID_DOWNLOAD_STATE", 
+			"No download is currently in progress to pause", map[string]string{
+				"current_status": string(progress.Status),
+			})
+	}
+
+	// Pause the download by changing status
+	err := a.updateService.PauseDownload()
+	if err != nil {
+		a.emitError(err.(*APIError))
+		return err
+	}
+
+	// Emit notification
+	a.emitNotification("info", "Download Paused", "Update download has been paused")
+
+	// Emit progress event
+	pausedProgress := a.updateService.GetUpdateProgress()
+	a.emitEvent("update:download_paused", pausedProgress)
+
+	return nil
 }
 
 // ResumeUpdateDownload resumes a paused update download
@@ -283,8 +315,30 @@ func (a *App) ResumeUpdateDownload() error {
 		return a.createAPIError(ErrorTypeSystem, "UPDATE_SERVICE_NOT_AVAILABLE", "Update service is not available", nil)
 	}
 
-	// TODO: Implement download resume functionality
-	return a.createAPIError(ErrorTypeSystem, "NOT_IMPLEMENTED", "Download resume functionality is not yet implemented", nil)
+	// Get current progress to check if download is paused
+	progress := a.updateService.GetUpdateProgress()
+	if progress.Status != UpdateStatusPaused {
+		return a.createAPIError(ErrorTypeValidation, "INVALID_DOWNLOAD_STATE", 
+			"No paused download to resume", map[string]string{
+				"current_status": string(progress.Status),
+			})
+	}
+
+	// Resume the download
+	err := a.updateService.ResumeDownload()
+	if err != nil {
+		a.emitError(err.(*APIError))
+		return err
+	}
+
+	// Emit notification
+	a.emitNotification("info", "Download Resumed", "Update download has been resumed")
+
+	// Emit progress event
+	resumedProgress := a.updateService.GetUpdateProgress()
+	a.emitEvent("update:download_resumed", resumedProgress)
+
+	return nil
 }
 
 // CancelUpdateDownload cancels an ongoing update download
@@ -293,8 +347,30 @@ func (a *App) CancelUpdateDownload() error {
 		return a.createAPIError(ErrorTypeSystem, "UPDATE_SERVICE_NOT_AVAILABLE", "Update service is not available", nil)
 	}
 
-	// TODO: Implement download cancellation
-	return a.createAPIError(ErrorTypeSystem, "NOT_IMPLEMENTED", "Download cancellation functionality is not yet implemented", nil)
+	// Get current progress to check if download can be cancelled
+	progress := a.updateService.GetUpdateProgress()
+	if progress.Status != UpdateStatusDownloading && progress.Status != UpdateStatusPaused {
+		return a.createAPIError(ErrorTypeValidation, "INVALID_DOWNLOAD_STATE", 
+			"No active or paused download to cancel", map[string]string{
+				"current_status": string(progress.Status),
+			})
+	}
+
+	// Cancel the download
+	err := a.updateService.CancelDownload()
+	if err != nil {
+		a.emitError(err.(*APIError))
+		return err
+	}
+
+	// Emit notification
+	a.emitNotification("info", "Download Cancelled", "Update download has been cancelled")
+
+	// Emit progress event
+	cancelledProgress := a.updateService.GetUpdateProgress()
+	a.emitEvent("update:download_cancelled", cancelledProgress)
+
+	return nil
 }
 
 // GetUpdateConfiguration returns the current update configuration

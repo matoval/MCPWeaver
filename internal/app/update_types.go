@@ -28,6 +28,8 @@ const (
 	UpdateStatusChecking         UpdateStatus = "checking"
 	UpdateStatusAvailable        UpdateStatus = "available"
 	UpdateStatusDownloading      UpdateStatus = "downloading"
+	UpdateStatusPaused           UpdateStatus = "paused"
+	UpdateStatusCancelled        UpdateStatus = "cancelled"
 	UpdateStatusVerifying        UpdateStatus = "verifying"
 	UpdateStatusReady            UpdateStatus = "ready"
 	UpdateStatusInstalling       UpdateStatus = "installing"
