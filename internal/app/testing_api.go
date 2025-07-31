@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"MCPWeaver/internal/testing"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // RunServerTests runs comprehensive tests on a generated MCP server
@@ -66,7 +66,7 @@ func (a *App) RunServerTests(serverPath string, configOptions *TestConfigOptions
 }
 
 // ValidateGeneratedServer performs quick validation of a generated server
-func (a *App) ValidateGeneratedServer(serverPath string) (*ValidationResult, error) {
+func (a *App) ValidateGeneratedServer(serverPath string) (*TestingValidationResult, error) {
 	if serverPath == "" {
 		return nil, a.createAPIError("validation", ErrCodeValidation, "Server path is required", nil)
 	}
@@ -266,8 +266,8 @@ func (a *App) convertTestResult(internal *testing.TestResult) *TestResult {
 	}
 }
 
-func (a *App) convertValidationResult(internal *testing.ValidationResult) *ValidationResult {
-	return &ValidationResult{
+func (a *App) convertValidationResult(internal *testing.ValidationResult) *TestingValidationResult {
+	return &TestingValidationResult{
 		ValidatorName:  internal.ValidatorName,
 		Success:        internal.Success,
 		Duration:       internal.Duration,
@@ -278,8 +278,8 @@ func (a *App) convertValidationResult(internal *testing.ValidationResult) *Valid
 	}
 }
 
-func (a *App) convertValidationResults(internal map[string]*testing.ValidationResult) map[string]*ValidationResult {
-	results := make(map[string]*ValidationResult)
+func (a *App) convertValidationResults(internal map[string]*testing.ValidationResult) map[string]*TestingValidationResult {
+	results := make(map[string]*TestingValidationResult)
 	for name, result := range internal {
 		results[name] = a.convertValidationResult(result)
 	}
@@ -321,11 +321,19 @@ func (a *App) convertMethodTests(internal map[string]*testing.MethodTest) map[st
 func (a *App) convertCapabilityTests(internal map[string]*testing.CapabilityTest) map[string]*CapabilityTest {
 	tests := make(map[string]*CapabilityTest)
 	for name, test := range internal {
+		// Handle type assertion for TestDetails
+		var testDetails map[string]interface{}
+		if test.TestDetails != nil {
+			if details, ok := test.TestDetails.(map[string]interface{}); ok {
+				testDetails = details
+			}
+		}
+		
 		tests[name] = &CapabilityTest{
 			Capability:   test.Capability,
 			Success:      test.Success,
 			Supported:    test.Supported,
-			TestDetails:  test.TestDetails,
+			TestDetails:  testDetails,
 			ErrorMessage: test.ErrorMessage,
 		}
 	}
@@ -337,11 +345,17 @@ func (a *App) convertIntegrationTestResult(internal *testing.IntegrationTestResu
 		return nil
 	}
 
+	// Convert ClientCompatibility from map[string]bool to map[string]interface{}
+	clientCompatibility := make(map[string]interface{})
+	for k, v := range internal.ClientCompatibility {
+		clientCompatibility[k] = v
+	}
+
 	return &IntegrationTestResult{
 		Success:             internal.Success,
 		Duration:            internal.Duration,
 		ScenarioResults:     a.convertScenarioResults(internal.ScenarioResults),
-		ClientCompatibility: internal.ClientCompatibility,
+		ClientCompatibility: clientCompatibility,
 		Errors:              internal.Errors,
 	}
 }
@@ -363,11 +377,22 @@ func (a *App) convertScenarioResults(internal map[string]*testing.ScenarioTestRe
 func (a *App) convertStepResults(internal []testing.StepResult) []StepResult {
 	results := make([]StepResult, len(internal))
 	for i, step := range internal {
+		// Handle type assertion for Details
+		var details string
+		if step.Details != nil {
+			if detailsStr, ok := step.Details.(string); ok {
+				details = detailsStr
+			} else {
+				// Convert to string if it's not already a string
+				details = fmt.Sprintf("%v", step.Details)
+			}
+		}
+		
 		results[i] = StepResult{
 			Step:         step.Step,
 			Success:      step.Success,
 			Duration:     step.Duration,
-			Details:      step.Details,
+			Details:      details,
 			ErrorMessage: step.ErrorMessage,
 		}
 	}
@@ -496,23 +521,10 @@ func (a *App) validateTestConfig(config *TestConfig) error {
 	return nil
 }
 
-// fileExists helper (reused from existing code)
-func (a *App) fileExists(path string) error {
-	if path == "" {
-		return a.createAPIError("validation", ErrCodeValidation, "File path is required", nil)
+// emitEvent emits a Wails event
+func (a *App) emitEvent(eventName string, data interface{}) {
+	if a.ctx != nil {
+		runtime.EventsEmit(a.ctx, eventName, data)
 	}
-
-	// Check if the path is absolute, if not make it relative to current directory
-	if !filepath.IsAbs(path) {
-		return a.createAPIError("validation", ErrCodeValidation, "File path must be absolute", nil)
-	}
-
-	// Check if file exists
-	if _, err := filepath.Stat(path); err != nil {
-		return a.createAPIError("file_system", ErrCodeFileAccess, "File does not exist", map[string]string{
-			"path": path,
-		})
-	}
-
-	return nil
 }
+

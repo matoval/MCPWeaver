@@ -934,13 +934,25 @@ func (u *UpdateService) GetUpdateHistory() ([]UpdateResult, error) {
 		
 		// Only include completed installs in history
 		if analytics.EventType == AnalyticsEventInstallCompleted {
+			var errorPtr *APIError
+			if analytics.Error != "" {
+				// Convert string error to APIError
+				errorPtr = &APIError{
+					Type:      ErrorTypeSystem,
+					Code:      ErrCodeInternalError,
+					Message:   analytics.Error,
+					Timestamp: analytics.Timestamp,
+					Severity:  ErrorSeverityMedium,
+				}
+			}
+			
 			result := UpdateResult{
 				Success:      analytics.Success,
 				UpdatedAt:    analytics.Timestamp,
 				Version:      analytics.Version,
 				PreviousVersion: analytics.PreviousVersion,
 				Duration:     time.Hour, // Mock duration
-				Error:        analytics.Error,
+				Error:        errorPtr,
 				RollbackInfo: nil, // Would be populated from actual rollback data
 			}
 			history = append(history, result)

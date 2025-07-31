@@ -625,3 +625,4 @@ type UpdateConfigurationValidation struct {
 	Errors   []string `json:"errors"`
 	Warnings []string `json:"warnings"`
 }
+
