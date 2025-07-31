@@ -781,3 +781,158 @@ type LogExportResult struct {
 	ExportTime   time.Duration `json:"exportTime"`
 	Format       string        `json:"format"`
 }
+
+// Testing Framework Types
+type TestConfigOptions struct {
+	Timeout                   *time.Duration `json:"timeout,omitempty"`
+	EnablePerformanceTesting  *bool          `json:"enablePerformanceTesting,omitempty"`
+	EnableIntegrationTesting  *bool          `json:"enableIntegrationTesting,omitempty"`
+	EnableSecurityScanning    *bool          `json:"enableSecurityScanning,omitempty"`
+	EnableLinting             *bool          `json:"enableLinting,omitempty"`
+	GenerateReport            *bool          `json:"generateReport,omitempty"`
+	ReportFormat              *string        `json:"reportFormat,omitempty"`
+}
+
+type PerformanceTestOptions struct {
+	MaxResponseTime *time.Duration `json:"maxResponseTime,omitempty"`
+	MaxMemoryUsage  *int64         `json:"maxMemoryUsage,omitempty"`
+}
+
+type TestResult struct {
+	TestID           string                              `json:"testId"`
+	ServerPath       string                              `json:"serverPath"`
+	Timestamp        time.Time                           `json:"timestamp"`
+	Duration         time.Duration                       `json:"duration"`
+	Success          bool                                `json:"success"`
+	ValidationResults map[string]*TestingValidationResult `json:"validationResults,omitempty"`
+	ProtocolResults  *ProtocolTestResult                 `json:"protocolResults,omitempty"`
+	IntegrationResults *IntegrationTestResult            `json:"integrationResults,omitempty"`
+	PerformanceResults *PerformanceTestResult            `json:"performanceResults,omitempty"`
+	TotalTests       int                                 `json:"totalTests"`
+	PassedTests      int                                 `json:"passedTests"`
+	FailedTests      int                                 `json:"failedTests"`
+	SkippedTests     int                                 `json:"skippedTests"`
+	Errors           []string                            `json:"errors"`
+	Warnings         []string                            `json:"warnings"`
+	Recommendations  []string                            `json:"recommendations"`
+}
+
+type ProtocolTestResult struct {
+	Success               bool                        `json:"success"`
+	Duration              time.Duration               `json:"duration"`
+	ProtocolVersion       string                      `json:"protocolVersion"`
+	SupportedMethods      []string                    `json:"supportedMethods"`
+	SupportedCapabilities []string                    `json:"supportedCapabilities"`
+	MethodTests           map[string]*MethodTest      `json:"methodTests"`
+	CapabilityTests       map[string]*CapabilityTest  `json:"capabilityTests"`
+	Errors                []string                    `json:"errors"`
+}
+
+type MethodTest struct {
+	Method       string      `json:"method"`
+	Success      bool        `json:"success"`
+	ResponseTime time.Duration `json:"responseTime"`
+	Request      interface{} `json:"request"`
+	Response     interface{} `json:"response"`
+	ErrorMessage string      `json:"errorMessage,omitempty"`
+}
+
+type CapabilityTest struct {
+	Capability   string                 `json:"capability"`
+	Success      bool                   `json:"success"`
+	Supported    bool                   `json:"supported"`
+	TestDetails  map[string]interface{} `json:"testDetails,omitempty"`
+	ErrorMessage string                 `json:"errorMessage,omitempty"`
+}
+
+type IntegrationTestResult struct {
+	Success             bool                               `json:"success"`
+	Duration            time.Duration                      `json:"duration"`
+	ScenarioResults     map[string]*ScenarioTestResult    `json:"scenarioResults"`
+	ClientCompatibility map[string]interface{}            `json:"clientCompatibility"`
+	Errors              []string                          `json:"errors"`
+}
+
+type ScenarioTestResult struct {
+	Scenario     string       `json:"scenario"`
+	Success      bool         `json:"success"`
+	Duration     time.Duration `json:"duration"`
+	Steps        []StepResult `json:"steps"`
+	ErrorMessage string       `json:"errorMessage,omitempty"`
+}
+
+type StepResult struct {
+	Step         string        `json:"step"`
+	Success      bool          `json:"success"`
+	Duration     time.Duration `json:"duration"`
+	Details      string        `json:"details,omitempty"`
+	ErrorMessage string        `json:"errorMessage,omitempty"`
+}
+
+type PerformanceTestResult struct {
+	Success  bool          `json:"success"`
+	Duration time.Duration `json:"duration"`
+
+	AverageResponseTime time.Duration `json:"averageResponseTime"`
+	MedianResponseTime  time.Duration `json:"medianResponseTime"`
+	P95ResponseTime     time.Duration `json:"p95ResponseTime"`
+	P99ResponseTime     time.Duration `json:"p99ResponseTime"`
+	MaxResponseTime     time.Duration `json:"maxResponseTime"`
+
+	AverageMemoryUsage int64 `json:"averageMemoryUsage"`
+	PeakMemoryUsage    int64 `json:"peakMemoryUsage"`
+	MemoryLeakDetected bool  `json:"memoryLeakDetected"`
+
+	RequestsPerSecond     float64 `json:"requestsPerSecond"`
+	ConcurrentConnections int     `json:"concurrentConnections"`
+	SuccessfulRequests    int     `json:"successfulRequests"`
+	FailedRequests        int     `json:"failedRequests"`
+
+	LoadTestResults map[string]*LoadTestMetric `json:"loadTestResults"`
+	Errors          []string                   `json:"errors"`
+}
+
+type LoadTestMetric struct {
+	Scenario            string        `json:"scenario"`
+	Duration            time.Duration `json:"duration"`
+	TotalRequests       int           `json:"totalRequests"`
+	SuccessfulRequests  int           `json:"successfulRequests"`
+	FailedRequests      int           `json:"failedRequests"`
+	AverageResponseTime time.Duration `json:"averageResponseTime"`
+	RequestsPerSecond   float64       `json:"requestsPerSecond"`
+	ErrorRate           float64       `json:"errorRate"`
+}
+
+type TestConfig struct {
+	Timeout                  time.Duration `json:"timeout"`
+	MaxConcurrentTests       int           `json:"maxConcurrentTests"`
+	EnableParallelTesting    bool          `json:"enableParallelTesting"`
+	ContinueOnFailure        bool          `json:"continueOnFailure"`
+	EnableSecurityScanning   bool          `json:"enableSecurityScanning"`
+	EnableLinting            bool          `json:"enableLinting"`
+	EnablePerformanceTesting bool          `json:"enablePerformanceTesting"`
+	EnableIntegrationTesting bool          `json:"enableIntegrationTesting"`
+	MCPProtocolVersion       string        `json:"mcpProtocolVersion"`
+	RequiredMethods          []string      `json:"requiredMethods"`
+	RequiredCapabilities     []string      `json:"requiredCapabilities"`
+	MaxResponseTime          time.Duration `json:"maxResponseTime"`
+	MaxMemoryUsage           int64         `json:"maxMemoryUsage"`
+	TestDataPath             string        `json:"testDataPath"`
+	MCPClientPath            string        `json:"mcpClientPath"`
+	GenerateReport           bool          `json:"generateReport"`
+	ReportFormat             string        `json:"reportFormat"`
+	ReportOutputPath         string        `json:"reportOutputPath"`
+	LogLevel                 string        `json:"logLevel"`
+	RetryAttempts            int           `json:"retryAttempts"`
+	RetryDelay               time.Duration `json:"retryDelay"`
+}
+
+type TestingValidationResult struct {
+	ValidatorName  string        `json:"validatorName"`
+	Success        bool          `json:"success"`
+	Duration       time.Duration `json:"duration"`
+	Errors         []string      `json:"errors,omitempty"`
+	Warnings       []string      `json:"warnings,omitempty"`
+	FilesValidated int           `json:"filesValidated"`
+	Details        interface{}   `json:"details,omitempty"`
+}
