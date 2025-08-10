@@ -1,55 +1,26 @@
 package main
 
 import (
-	"context"
-	"embed"
+	"fmt"
+	"os"
 
-	"MCPWeaver/internal/app"
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"MCPWeaver/internal/cmd"
 )
 
-// TODO: Re-enable frontend embedding once build system is stable
-// //go:embed all:frontend/dist
-// var assets embed.FS
-
-// Temporary empty assets for build compatibility
-var assets embed.FS
+// Version information - will be set during build
+var (
+	version   = "dev"
+	buildTime = "unknown"
+	commit    = "unknown"
+)
 
 func main() {
-	// Create an instance of the app structure
-	application := app.NewApp()
+	// Set version information for the CLI
+	cmd.SetVersionInfo(version, buildTime, commit)
 
-	// Create application with options
-	err := wails.Run(&options.App{
-		Title:             "MCPWeaver",
-		Width:             1200,
-		Height:            800,
-		MinWidth:          800,
-		MinHeight:         600,
-		MaxWidth:          0,
-		MaxHeight:         0,
-		DisableResize:     false,
-		Fullscreen:        false,
-		Frameless:         false,
-		StartHidden:       false,
-		HideWindowOnClose: false,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
-		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup:        func(ctx context.Context) { application.OnStartup(ctx) },
-		OnDomReady:       application.OnDomReady,
-		OnBeforeClose:    application.OnBeforeClose,
-		OnShutdown:       func(ctx context.Context) { application.OnShutdown(ctx) },
-		WindowStartState: options.Normal,
-		Bind: []interface{}{
-			application,
-		},
-	})
-
-	if err != nil {
-		println("Error:", err.Error())
+	// Execute the root command
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 }
